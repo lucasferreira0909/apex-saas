@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { User, Lock, Camera, Save, Shield, AlertTriangle } from "lucide-react";
+import { User, Lock, Camera, Save, Shield, AlertTriangle, Check, X } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { toast } from "@/hooks/use-toast";
@@ -44,21 +44,45 @@ export default function ApexSettings() {
     confirmPassword: ''
   });
   const [passwordStrength, setPasswordStrength] = useState<string>("");
+  const [passwordChecks, setPasswordChecks] = useState({
+    length: false,
+    uppercase: false,
+    lowercase: false,
+    number: false,
+    special: false
+  });
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  // Password strength indicator
+  // Password strength indicator and checklist
   const checkPasswordStrength = (pwd: string) => {
     if (pwd.length === 0) {
       setPasswordStrength("");
+      setPasswordChecks({
+        length: false,
+        uppercase: false,
+        lowercase: false,
+        number: false,
+        special: false
+      });
       return;
     }
     
+    const checks = {
+      length: pwd.length >= 8,
+      uppercase: /[A-Z]/.test(pwd),
+      lowercase: /[a-z]/.test(pwd),
+      number: /[0-9]/.test(pwd),
+      special: /[^A-Za-z0-9]/.test(pwd)
+    };
+    
+    setPasswordChecks(checks);
+    
     let strength = 0;
-    if (pwd.length >= 8) strength++;
-    if (/[A-Z]/.test(pwd)) strength++;
-    if (/[a-z]/.test(pwd)) strength++;
-    if (/[0-9]/.test(pwd)) strength++;
-    if (/[^A-Za-z0-9]/.test(pwd)) strength++;
+    if (checks.length) strength++;
+    if (checks.uppercase) strength++;
+    if (checks.lowercase) strength++;
+    if (checks.number) strength++;
+    if (checks.special) strength++;
     
     const levels = ["Muito fraca", "Fraca", "Razoável", "Boa", "Forte"];
     setPasswordStrength(levels[strength - 1] || "Muito fraca");
@@ -359,6 +383,71 @@ export default function ApexSettings() {
                           </span>
                         </div>
                       )}
+                    </div>
+                    
+                    {passwordData.newPassword && (
+                      <Card className="bg-muted/30 border-muted mb-4">
+                        <CardContent className="p-4">
+                          <p className="text-sm font-medium text-muted-foreground mb-3">
+                            Sua nova senha deve conter:
+                          </p>
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-2 text-sm">
+                              {passwordChecks.length ? (
+                                <Check className="h-4 w-4 text-green-600" />
+                              ) : (
+                                <X className="h-4 w-4 text-red-500" />
+                              )}
+                              <span className={passwordChecks.length ? "text-green-600" : "text-muted-foreground"}>
+                                Pelo menos 8 caracteres
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm">
+                              {passwordChecks.uppercase ? (
+                                <Check className="h-4 w-4 text-green-600" />
+                              ) : (
+                                <X className="h-4 w-4 text-red-500" />
+                              )}
+                              <span className={passwordChecks.uppercase ? "text-green-600" : "text-muted-foreground"}>
+                                Uma letra maiúscula (A-Z)
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm">
+                              {passwordChecks.lowercase ? (
+                                <Check className="h-4 w-4 text-green-600" />
+                              ) : (
+                                <X className="h-4 w-4 text-red-500" />
+                              )}
+                              <span className={passwordChecks.lowercase ? "text-green-600" : "text-muted-foreground"}>
+                                Uma letra minúscula (a-z)
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm">
+                              {passwordChecks.number ? (
+                                <Check className="h-4 w-4 text-green-600" />
+                              ) : (
+                                <X className="h-4 w-4 text-red-500" />
+                              )}
+                              <span className={passwordChecks.number ? "text-green-600" : "text-muted-foreground"}>
+                                Um número (0-9)
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-2 text-sm">
+                              {passwordChecks.special ? (
+                                <Check className="h-4 w-4 text-green-600" />
+                              ) : (
+                                <X className="h-4 w-4 text-red-500" />
+                              )}
+                              <span className={passwordChecks.special ? "text-green-600" : "text-muted-foreground"}>
+                                Um caractere especial (!@#$%^&*)
+                              </span>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )}
+
+                    <div className="space-y-2 mb-4">
                     </div>
                     <div className="space-y-2 mb-4">
                       <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
