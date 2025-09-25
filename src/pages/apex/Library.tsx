@@ -203,13 +203,7 @@ export default function Library() {
                             
                           </div>
                           
-                          <div className="text-xs text-muted-foreground">
-                            {Object.entries(project.stats).map(([key, value], i) => (
-                              <span key={key} className="mr-3">
-                                {key}: {value}
-                              </span>
-                            ))}
-                          </div>
+                          
                           
                           <div className="flex items-center justify-between">
                             <span className="text-xs text-muted-foreground">
