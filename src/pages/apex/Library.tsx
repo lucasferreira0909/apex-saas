@@ -30,7 +30,6 @@ export default function Library() {
 
   // Filter only funnel projects
   const funnelProjects = projects.filter(project => project.type === 'funnel');
-  
   const getProjectIcon = () => {
     return <Zap className="h-4 w-4 text-primary" />;
   };
@@ -52,18 +51,13 @@ export default function Library() {
   // Filter projects based on search, folder and status
   const filteredProjects = funnelProjects.filter(project => {
     // Filter by search term
-    const searchMatch = searchTerm === "" || 
-      project.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-      (project.folder && project.folder.toLowerCase().includes(searchTerm.toLowerCase()));
+    const searchMatch = searchTerm === "" || project.name.toLowerCase().includes(searchTerm.toLowerCase()) || project.folder && project.folder.toLowerCase().includes(searchTerm.toLowerCase());
 
     // Filter by folder
-    const folderMatch = selectedFolder === "all" || 
-      (selectedFolder === "no-folder" && !project.folder) || 
-      project.folder === selectedFolder;
+    const folderMatch = selectedFolder === "all" || selectedFolder === "no-folder" && !project.folder || project.folder === selectedFolder;
 
     // Filter by status
     const statusMatch = selectedStatus === "all" || project.status === selectedStatus;
-    
     return searchMatch && folderMatch && statusMatch;
   });
   const clearAllFilters = () => {
@@ -72,12 +66,10 @@ export default function Library() {
     setSelectedStatus("all");
   };
   const hasActiveFilters = searchTerm !== "" || selectedFolder !== "all" || selectedStatus !== "all";
-  
   const handleDeleteClick = (projectId: string) => {
     setProjectToDelete(projectId);
     setDeleteDialogOpen(true);
   };
-
   const handleConfirmDelete = async () => {
     if (projectToDelete) {
       await deleteProject(projectToDelete);
@@ -85,7 +77,6 @@ export default function Library() {
     }
     setDeleteDialogOpen(false);
   };
-
   const handleEditClick = (projectId: string) => {
     navigate(`/funnel-editor/${projectId}`);
   };
@@ -189,16 +180,13 @@ export default function Library() {
           <CardDescription>Todos os seus funis organizados</CardDescription>
         </CardHeader>
         <CardContent className="mt-6">
-          {filteredProjects.length === 0 ? (
-            <div className="text-center py-12">
+          {filteredProjects.length === 0 ? <div className="text-center py-12">
               <Folder className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium text-card-foreground mb-2">Nenhum funil encontrado</h3>
               <p className="text-muted-foreground">
                 {hasActiveFilters ? "Tente ajustar os filtros ou criar um novo funil" : "Crie seu primeiro funil para começar"}
               </p>
-            </div>
-          ) : viewMode === "grid" ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            </div> : viewMode === "grid" ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredProjects.map(project => <Card key={project.id} className="bg-muted/30 border-border hover:shadow-lg transition-all">
                       <CardContent className="p-0">
                         <div className="relative">
@@ -212,11 +200,11 @@ export default function Library() {
                         <div className="p-4 space-y-3">
                           <div>
                             <h4 className="font-medium text-card-foreground">{project.name}</h4>
-                            <p className="text-sm text-muted-foreground">{project.folder || "Sem pasta"}</p>
+                            
                           </div>
                           
                           <div className="text-xs text-muted-foreground">
-                            {Object.entries(project.stats).map(([key, value], i) => <div key={i}>{key}: {value}</div>)}
+                            {Object.entries(project.stats).map(([key, value], i) => {})}
                           </div>
                           
                           <div className="flex items-center justify-between">
@@ -244,9 +232,7 @@ export default function Library() {
                         </div>
                       </CardContent>
                     </Card>)}
-                </div>
-              ) : (
-                <div className="space-y-2">
+                </div> : <div className="space-y-2">
                   {filteredProjects.map(project => <div key={project.id} className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-muted/30 transition-colors">
                       <div className="flex items-center space-x-4">
                         {getProjectIcon()}
@@ -280,18 +266,11 @@ export default function Library() {
                         </DropdownMenu>
                       </div>
                     </div>)}
-                </div>
-              )}
+                </div>}
         </CardContent>
       </Card>
 
       {/* Delete Confirmation Dialog */}
-      <DeleteConfirmationDialog
-        open={deleteDialogOpen}
-        onOpenChange={setDeleteDialogOpen}
-        onConfirm={handleConfirmDelete}
-        title="Excluir Funil"
-        description="Tem certeza que deseja excluir este funil? Esta ação não pode ser desfeita e todos os elementos do funil serão perdidos."
-      />
+      <DeleteConfirmationDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen} onConfirm={handleConfirmDelete} title="Excluir Funil" description="Tem certeza que deseja excluir este funil? Esta ação não pode ser desfeita e todos os elementos do funil serão perdidos." />
     </div>;
 }
