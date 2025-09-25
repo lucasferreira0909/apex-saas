@@ -10,7 +10,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useProjects } from "@/hooks/useProjects";
 import { useFolders } from "@/hooks/useFolders";
-
 export default function Library() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [activeTab, setActiveTab] = useState("all");
@@ -18,8 +17,13 @@ export default function Library() {
   const [selectedFolder, setSelectedFolder] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const { projects, deleteProject } = useProjects();
-  const { folders } = useFolders();
+  const {
+    projects,
+    deleteProject
+  } = useProjects();
+  const {
+    folders
+  } = useFolders();
 
   // Group projects by folder and count them
   const folderCounts = projects.reduce((acc, project) => {
@@ -27,22 +31,19 @@ export default function Library() {
     acc[folderName] = (acc[folderName] || 0) + 1;
     return acc;
   }, {} as Record<string, number>);
-
   const allProjects = projects;
-
   const getProjectIcon = (type: string) => {
     switch (type) {
       case 'funnel':
-        return <Zap className="h-4 w-4 text-purple-600" />;
+        return;
       case 'video':
-        return <Video className="h-4 w-4 text-green-600" />;
+        return;
       case 'message':
         return <MessageSquare className="h-4 w-4 text-blue-600" />;
       default:
         return <Folder className="h-4 w-4 text-muted-foreground" />;
     }
   };
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
@@ -62,38 +63,28 @@ export default function Library() {
   const filteredProjects = allProjects.filter(project => {
     // Filter by tab
     const tabMatch = activeTab === "all" || project.type === activeTab;
-    
+
     // Filter by search term
-    const searchMatch = searchTerm === "" || 
-      project.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (project.folder && project.folder.toLowerCase().includes(searchTerm.toLowerCase()));
-    
+    const searchMatch = searchTerm === "" || project.name.toLowerCase().includes(searchTerm.toLowerCase()) || project.folder && project.folder.toLowerCase().includes(searchTerm.toLowerCase());
+
     // Filter by folder
-    const folderMatch = selectedFolder === "all" || 
-      (selectedFolder === "no-folder" && !project.folder) ||
-      project.folder === selectedFolder;
-    
+    const folderMatch = selectedFolder === "all" || selectedFolder === "no-folder" && !project.folder || project.folder === selectedFolder;
+
     // Filter by status
     const statusMatch = selectedStatus === "all" || project.status === selectedStatus;
-    
     return tabMatch && searchMatch && folderMatch && statusMatch;
   });
-
   const clearAllFilters = () => {
     setSearchTerm("");
     setSelectedFolder("all");
     setSelectedStatus("all");
   };
-
   const hasActiveFilters = searchTerm !== "" || selectedFolder !== "all" || selectedStatus !== "all";
-
   const getTabCount = (type: string) => {
     if (type === "all") return allProjects.length;
     return allProjects.filter(p => p.type === type).length;
   };
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -116,12 +107,7 @@ export default function Library() {
       <div className="flex items-center space-x-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Buscar projetos..." 
-            className="pl-10 bg-input border-border" 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+          <Input placeholder="Buscar projetos..." className="pl-10 bg-input border-border" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
         </div>
         
         <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
@@ -129,23 +115,19 @@ export default function Library() {
             <Button variant="outline" className={hasActiveFilters ? "border-primary" : ""}>
               <Filter className="mr-2 h-4 w-4" />
               Filtros
-              {hasActiveFilters && (
-                <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
+              {hasActiveFilters && <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
                   !
-                </Badge>
-              )}
+                </Badge>}
             </Button>
           </PopoverTrigger>
           <PopoverContent className="w-80" align="end">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h4 className="font-medium text-card-foreground">Filtros</h4>
-                {hasActiveFilters && (
-                  <Button variant="ghost" size="sm" onClick={clearAllFilters}>
+                {hasActiveFilters && <Button variant="ghost" size="sm" onClick={clearAllFilters}>
                     <X className="h-4 w-4 mr-1" />
                     Limpar
-                  </Button>
-                )}
+                  </Button>}
               </div>
               
               <div className="space-y-2">
@@ -157,11 +139,9 @@ export default function Library() {
                   <SelectContent>
                     <SelectItem value="all">Todas as pastas</SelectItem>
                     <SelectItem value="no-folder">Sem pasta</SelectItem>
-                    {folders.map(folder => (
-                      <SelectItem key={folder.id} value={folder.name}>
+                    {folders.map(folder => <SelectItem key={folder.id} value={folder.name}>
                         {folder.name}
-                      </SelectItem>
-                    ))}
+                      </SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -187,29 +167,21 @@ export default function Library() {
       </div>
 
       {/* Active Filters Display */}
-      {hasActiveFilters && (
-        <div className="flex items-center space-x-2 text-sm">
+      {hasActiveFilters && <div className="flex items-center space-x-2 text-sm">
           <span className="text-muted-foreground">Filtros ativos:</span>
-          {searchTerm && (
-            <Badge variant="secondary" className="flex items-center space-x-1">
+          {searchTerm && <Badge variant="secondary" className="flex items-center space-x-1">
               <span>Busca: "{searchTerm}"</span>
               <X className="h-3 w-3 cursor-pointer" onClick={() => setSearchTerm("")} />
-            </Badge>
-          )}
-          {selectedFolder !== "all" && (
-            <Badge variant="secondary" className="flex items-center space-x-1">
+            </Badge>}
+          {selectedFolder !== "all" && <Badge variant="secondary" className="flex items-center space-x-1">
               <span>Pasta: {selectedFolder === "no-folder" ? "Sem pasta" : selectedFolder}</span>
               <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedFolder("all")} />
-            </Badge>
-          )}
-          {selectedStatus !== "all" && (
-            <Badge variant="secondary" className="flex items-center space-x-1">
+            </Badge>}
+          {selectedStatus !== "all" && <Badge variant="secondary" className="flex items-center space-x-1">
               <span>Status: {selectedStatus}</span>
               <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedStatus("all")} />
-            </Badge>
-          )}
-        </div>
-      )}
+            </Badge>}
+        </div>}
 
       {/* Projects Section */}
       <Card className="bg-card border-border">
@@ -228,24 +200,18 @@ export default function Library() {
               <TabsTrigger value="video">
                 Vídeos ({getTabCount("video")})
               </TabsTrigger>
-              <TabsTrigger value="message">
-                Mensagens ({getTabCount("message")})
-              </TabsTrigger>
+              
             </TabsList>
 
             <TabsContent value={activeTab} className="mt-6">
-              {filteredProjects.length === 0 ? (
-                <div className="text-center py-12">
-                  {activeTab === "all" ? (
-                    <>
+              {filteredProjects.length === 0 ? <div className="text-center py-12">
+                  {activeTab === "all" ? <>
                       <Folder className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                       <h3 className="text-lg font-medium text-card-foreground mb-2">Nenhum projeto encontrado</h3>
                       <p className="text-muted-foreground">
                         {hasActiveFilters ? "Tente ajustar os filtros ou criar um novo projeto" : "Crie seu primeiro projeto para começar"}
                       </p>
-                    </>
-                  ) : (
-                    <>
+                    </> : <>
                       {getProjectIcon(activeTab as any)}
                       <h3 className="text-lg font-medium text-card-foreground mb-2">
                         Nenhum projeto de {activeTab === "funnel" ? "funil" : activeTab === "video" ? "vídeo" : "mensagem"} encontrado
@@ -253,13 +219,9 @@ export default function Library() {
                       <p className="text-muted-foreground">
                         Crie um novo projeto na aba específica
                       </p>
-                    </>
-                  )}
-                </div>
-              ) : viewMode === "grid" ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredProjects.map(project => (
-                    <Card key={project.id} className="bg-muted/30 border-border hover:shadow-lg transition-all">
+                    </>}
+                </div> : viewMode === "grid" ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {filteredProjects.map(project => <Card key={project.id} className="bg-muted/30 border-border hover:shadow-lg transition-all">
                       <CardContent className="p-0">
                         <div className="relative">
                           <div className="w-full h-32 bg-muted rounded-t-lg flex items-center justify-center">
@@ -276,9 +238,7 @@ export default function Library() {
                           </div>
                           
                           <div className="text-xs text-muted-foreground">
-                            {Object.entries(project.stats).map(([key, value], i) => (
-                              <div key={i}>{key}: {value}</div>
-                            ))}
+                            {Object.entries(project.stats).map(([key, value], i) => <div key={i}>{key}: {value}</div>)}
                           </div>
                           
                           <div className="flex items-center justify-between">
@@ -309,13 +269,9 @@ export default function Library() {
                           </div>
                         </div>
                       </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {filteredProjects.map(project => (
-                    <div key={project.id} className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-muted/30 transition-colors">
+                    </Card>)}
+                </div> : <div className="space-y-2">
+                  {filteredProjects.map(project => <div key={project.id} className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-muted/30 transition-colors">
                       <div className="flex items-center space-x-4">
                         {getProjectIcon(project.type)}
                         <div>
@@ -351,14 +307,11 @@ export default function Library() {
                           </DropdownMenuContent>
                         </DropdownMenu>
                       </div>
-                    </div>
-                  ))}
-                </div>
-              )}
+                    </div>)}
+                </div>}
             </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
-    </div>
-  );
+    </div>;
 }
