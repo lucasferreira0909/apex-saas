@@ -112,13 +112,7 @@ export default function Library() {
         
         <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
           <PopoverTrigger asChild>
-            <Button variant="outline" className={hasActiveFilters ? "border-primary" : ""}>
-              <Filter className="mr-2 h-4 w-4" />
-              Filtros
-              {hasActiveFilters && <Badge variant="secondary" className="ml-2 h-5 w-5 p-0 flex items-center justify-center text-xs">
-                  !
-                </Badge>}
-            </Button>
+            
           </PopoverTrigger>
           <PopoverContent className="w-80" align="end">
             <div className="space-y-4">
