@@ -53,37 +53,16 @@ const Settings = () => {
   };
 
   const handleSaveChanges = async () => {
-    const currentEmail = profile?.email;
-    const newEmail = email;
-    
-    // Se o email foi alterado, atualizar no Supabase Auth primeiro
-    if (currentEmail !== newEmail && newEmail) {
-      const { error: authError } = await supabase.auth.updateUser({
-        email: newEmail
-      });
-      
-      if (authError) {
-        toast.error(`Erro ao atualizar email: ${authError.message}`);
-        return;
-      }
-      
-      // Avisar sobre verificação de email
-      toast.success('Email de confirmação enviado! Verifique sua caixa de entrada para confirmar o novo email.');
-    }
-
     const { error } = await updateProfile({
       first_name: firstName,
       last_name: lastName,
-      email: email,
       phone: phone
     });
 
     if (error) {
       toast.error('Erro ao salvar alterações');
     } else {
-      if (currentEmail === newEmail || !newEmail) {
-        toast.success('Alterações salvas com sucesso!');
-      }
+      toast.success('Alterações salvas com sucesso!');
     }
   };
 
@@ -181,9 +160,10 @@ const Settings = () => {
                     <label className="block text-sm font-medium mb-1">Email</label>
                     <input 
                       type="email" 
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="w-full px-3 py-2 border rounded-md bg-background" 
+                      value={profile?.email || ''}
+                      disabled
+                      className="w-full px-3 py-2 border rounded-md bg-muted text-muted-foreground cursor-not-allowed" 
+                      title="Email não pode ser alterado"
                     />
                   </div>
                   <div>

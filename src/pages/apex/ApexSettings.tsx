@@ -81,35 +81,8 @@ export default function ApexSettings() {
     const updates = {
       first_name: formData.get('firstName') as string,
       last_name: formData.get('lastName') as string,
-      email: formData.get('email') as string,
       phone: formData.get('phone') as string,
     };
-
-    // Atualizar email no Supabase Auth se foi alterado
-    const currentEmail = profile?.email;
-    const newEmail = updates.email;
-    
-    if (currentEmail !== newEmail && newEmail) {
-      const { error: authError } = await supabase.auth.updateUser({
-        email: newEmail
-      });
-      
-      if (authError) {
-        toast({
-          title: "Erro",
-          description: "Erro ao atualizar email: " + authError.message,
-          variant: "destructive"
-        });
-        setLoading(false);
-        return;
-      }
-      
-      // Notificar sobre verificação de email
-      toast({
-        title: "Email de confirmação enviado",
-        description: "Verifique sua caixa de entrada para confirmar o novo email. O email antigo continuará funcionando até a confirmação.",
-      });
-    }
 
     const { error } = await updateProfile(updates);
     
@@ -120,13 +93,10 @@ export default function ApexSettings() {
         variant: "destructive"
       });
     } else {
-      // Só mostrar sucesso se não houve mudança de email ou se o email não foi alterado
-      if (currentEmail === newEmail || !newEmail) {
-        toast({
-          title: "Sucesso",
-          description: "Perfil atualizado com sucesso!"
-        });
-      }
+      toast({
+        title: "Sucesso",
+        description: "Perfil atualizado com sucesso!"
+      });
     }
     
     setLoading(false);
@@ -294,7 +264,16 @@ export default function ApexSettings() {
                     </div>
                     <div className="space-y-2 mb-4">
                       <Label htmlFor="email">Email</Label>
-                      <Input id="email" name="email" type="email" placeholder="seu@email.com" defaultValue={profile?.email || ''} />
+                      <Input 
+                        id="email" 
+                        name="email" 
+                        type="email" 
+                        placeholder="seu@email.com" 
+                        value={profile?.email || ''} 
+                        disabled 
+                        className="bg-muted text-muted-foreground cursor-not-allowed"
+                        title="Email não pode ser alterado"
+                      />
                     </div>
                     <div className="space-y-2 mb-4">
                       <Label htmlFor="phone">Telefone</Label>
