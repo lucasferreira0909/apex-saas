@@ -15,6 +15,7 @@ import { FunnelElement, FunnelConnection as FunnelConnectionType } from "@/types
 export default function FunnelEditor() {
   const { id } = useParams();
   const { updateProject, projects } = useProjects();
+  // Use the project ID directly as the funnel ID since they should be the same
   const { elements, loading, saveAllElements } = useFunnelElements(id);
   const [isSaved, setIsSaved] = useState(false);
   const [showExitButton, setShowExitButton] = useState(false);

@@ -6,8 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { User, Lock, Trash2, Camera, Save, AlertTriangle, Upload } from "lucide-react";
+import { User, Lock, Camera, Save } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { toast } from "@/hooks/use-toast";
@@ -32,10 +31,6 @@ export default function ApexSettings() {
     id: "security",
     label: "Segurança",
     icon: Lock
-  }, {
-    id: "account",
-    label: "Conta",
-    icon: Trash2
   }];
 
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -146,35 +141,6 @@ export default function ApexSettings() {
     setLoading(false);
   };
 
-  const handleDeleteAccount = async () => {
-    try {
-      setLoading(true);
-      
-      // Chama a edge function para excluir a conta
-      const { data, error } = await supabase.functions.invoke('delete-account');
-      
-      if (error) {
-        throw error;
-      }
-
-      // Exibe mensagem de sucesso
-      toast({
-        title: "Conta excluída",
-        description: "Sua conta foi excluída com sucesso.",
-      });
-
-      // Redireciona para a página de login
-      navigate('/auth');
-    } catch (error: any) {
-      toast({
-        title: "Erro",
-        description: "Erro ao excluir conta: " + (error.message || "Erro desconhecido"),
-        variant: "destructive"
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const getInitials = () => {
     if (profile?.first_name && profile?.last_name) {
@@ -339,50 +305,6 @@ export default function ApexSettings() {
               
             </>}
 
-          {activeTab === "account" && <Card className="bg-card border-border">
-              <CardHeader>
-                <CardTitle className="text-destructive">Zona de Perigo</CardTitle>
-                <CardDescription>Ações irreversíveis da conta</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="p-4 border border-destructive/20 rounded-lg bg-destructive/5">
-                  <div className="flex items-start space-x-3">
-                    <AlertTriangle className="h-5 w-5 text-destructive mt-1" />
-                    <div className="flex-1">
-                      <h3 className="font-medium text-destructive">Excluir Conta</h3>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Esta ação não pode ser desfeita. Todos os seus dados, projetos e configurações serão permanentemente removidos.
-                      </p>
-                      <AlertDialog>
-                        <AlertDialogTrigger asChild>
-                          <Button variant="destructive" size="sm" className="mt-3" disabled={loading}>
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Excluir Minha Conta
-                          </Button>
-                        </AlertDialogTrigger>
-                        <AlertDialogContent>
-                          <AlertDialogHeader>
-                            <AlertDialogTitle>Confirmar Exclusão de Conta</AlertDialogTitle>
-                            <AlertDialogDescription>
-                              Tem certeza de que deseja excluir sua conta? Esta ação não pode ser desfeita e todos os seus dados serão permanentemente removidos.
-                            </AlertDialogDescription>
-                          </AlertDialogHeader>
-                          <AlertDialogFooter>
-                            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-                            <AlertDialogAction 
-                              onClick={handleDeleteAccount}
-                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                            >
-                              Excluir Conta
-                            </AlertDialogAction>
-                          </AlertDialogFooter>
-                        </AlertDialogContent>
-                      </AlertDialog>
-                    </div>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>}
         </div>
       </div>
     </div>;
