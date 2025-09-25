@@ -10,11 +10,14 @@ export function useFunnelElements(funnelId?: string) {
 
   const fetchElements = async () => {
     if (!user || !funnelId) {
+      console.log('No user or funnelId, skipping fetch');
       setElements([]);
       setLoading(false);
       return;
     }
 
+    console.log('Fetching elements for funnel ID:', funnelId);
+    
     try {
       const { data, error } = await supabase
         .from('funnel_elements')
@@ -24,15 +27,18 @@ export function useFunnelElements(funnelId?: string) {
 
       if (error) throw error;
 
+      console.log('Raw data from database:', data);
+
       const mappedElements: FunnelElement[] = (data || []).map(e => ({
         id: e.id,
         type: e.element_type,
         icon: null, // Will be set by the component
-        position: { x: e.position_x, y: e.position_y },
+        position: { x: Number(e.position_x), y: Number(e.position_y) },
         configured: e.configured || false,
         stats: (e.element_config as Record<string, string | number>) || {}
       }));
 
+      console.log('Mapped elements:', mappedElements);
       setElements(mappedElements);
     } catch (error) {
       console.error('Error fetching funnel elements:', error);
@@ -91,36 +97,49 @@ export function useFunnelElements(funnelId?: string) {
   };
 
   const saveAllElements = async (elementsToSave: FunnelElement[]) => {
-    if (!user || !funnelId || elementsToSave.length === 0) return;
+    if (!user || !funnelId) {
+      console.log('Cannot save: missing user or funnelId');
+      return;
+    }
+
+    console.log('Saving elements to database:', elementsToSave);
 
     try {
       // Delete existing elements first
-      await supabase
+      const { error: deleteError } = await supabase
         .from('funnel_elements')
         .delete()
         .eq('funnel_id', funnelId);
 
-      // Insert all elements
-      const elementsData = elementsToSave.map((element, index) => ({
-        id: element.id,
-        funnel_id: funnelId,
-        element_type: element.type,
-        position_x: element.position.x,
-        position_y: element.position.y,
-        configured: element.configured,
-        element_config: element.stats,
-        order_index: index
-      }));
+      if (deleteError) throw deleteError;
 
-      const { error } = await supabase
-        .from('funnel_elements')
-        .insert(elementsData);
+      // Only insert if there are elements to save
+      if (elementsToSave.length > 0) {
+        const elementsData = elementsToSave.map((element, index) => ({
+          id: element.id,
+          funnel_id: funnelId,
+          element_type: element.type,
+          position_x: element.position.x,
+          position_y: element.position.y,
+          configured: element.configured,
+          element_config: element.stats,
+          order_index: index
+        }));
 
-      if (error) throw error;
+        console.log('Data being inserted:', elementsData);
+
+        const { error: insertError } = await supabase
+          .from('funnel_elements')
+          .insert(elementsData);
+
+        if (insertError) throw insertError;
+      }
 
       setElements(elementsToSave);
+      console.log('Elements saved successfully');
     } catch (error) {
       console.error('Error saving all funnel elements:', error);
+      throw error; // Re-throw to handle in the component
     }
   };
 

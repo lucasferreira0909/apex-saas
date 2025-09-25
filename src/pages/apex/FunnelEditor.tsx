@@ -28,11 +28,12 @@ export default function FunnelEditor() {
 
   // Load elements from database when they're fetched
   useEffect(() => {
-    if (!loading && elements.length > 0) {
+    if (!loading) {
+      console.log('Loading elements from DB:', elements);
       setFunnelElements(elements);
     }
   }, [elements, loading]);
-  const generateUniqueId = () => `element_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+  const generateUniqueId = () => crypto.randomUUID();
   const findOptimalPosition = () => {
     if (funnelElements.length === 0) {
       return {
@@ -81,30 +82,36 @@ export default function FunnelEditor() {
     // Connections will automatically update due to the re-render with new positions
   };
   const handleSave = async () => {
-    if (id && funnelElements.length > 0) {
-      setIsLoading(true);
-      try {
-        // Save elements to database
-        await saveAllElements(funnelElements);
-        
-        // Update project status when saving
-        await updateProject(id, { 
-          status: 'active',
-          stats: {
-            conversion: "0%",
-            visitors: "0", 
-            revenue: "R$ 0",
-            elements: funnelElements.length.toString()
-          }
-        });
-        
-        setIsSaved(true);
-        setShowExitButton(true);
-      } catch (error) {
-        console.error('Error saving funnel:', error);
-      } finally {
-        setIsLoading(false);
-      }
+    if (!id) {
+      console.error('No funnel ID provided');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      console.log('Saving elements:', funnelElements);
+      
+      // Save elements to database
+      await saveAllElements(funnelElements);
+      
+      // Update project status when saving
+      await updateProject(id, { 
+        status: 'active',
+        stats: {
+          conversion: "0%",
+          visitors: "0", 
+          revenue: "R$ 0",
+          elements: funnelElements.length.toString()
+        }
+      });
+      
+      setIsSaved(true);
+      setShowExitButton(true);
+      console.log('Funnel saved successfully');
+    } catch (error) {
+      console.error('Error saving funnel:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
   return <div className="space-y-6">
