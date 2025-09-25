@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useProjects } from "@/hooks/useProjects";
+import { useFunnelElements } from "@/hooks/useFunnelElements";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,14 +15,23 @@ import { FunnelElement, FunnelConnection as FunnelConnectionType } from "@/types
 export default function FunnelEditor() {
   const { id } = useParams();
   const { updateProject, projects } = useProjects();
+  const { elements, loading, saveAllElements } = useFunnelElements(id);
   const [isSaved, setIsSaved] = useState(false);
   const [showExitButton, setShowExitButton] = useState(false);
   const [funnelElements, setFunnelElements] = useState<FunnelElement[]>([]);
   const [connections, setConnections] = useState<FunnelConnectionType[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Get current project
   const currentProject = projects.find(p => p.id === id);
+
+  // Load elements from database when they're fetched
+  useEffect(() => {
+    if (!loading && elements.length > 0) {
+      setFunnelElements(elements);
+    }
+  }, [elements, loading]);
   const generateUniqueId = () => `element_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
   const findOptimalPosition = () => {
     if (funnelElements.length === 0) {
@@ -70,21 +80,32 @@ export default function FunnelEditor() {
     } : element));
     // Connections will automatically update due to the re-render with new positions
   };
-  const handleSave = () => {
-    if (id) {
-      // Update project status when saving
-      updateProject(id, { 
-        status: 'active',
-        stats: {
-          conversion: "0%",
-          visitors: "0", 
-          revenue: "R$ 0",
-          elements: funnelElements.length.toString()
-        }
-      });
+  const handleSave = async () => {
+    if (id && funnelElements.length > 0) {
+      setIsLoading(true);
+      try {
+        // Save elements to database
+        await saveAllElements(funnelElements);
+        
+        // Update project status when saving
+        await updateProject(id, { 
+          status: 'active',
+          stats: {
+            conversion: "0%",
+            visitors: "0", 
+            revenue: "R$ 0",
+            elements: funnelElements.length.toString()
+          }
+        });
+        
+        setIsSaved(true);
+        setShowExitButton(true);
+      } catch (error) {
+        console.error('Error saving funnel:', error);
+      } finally {
+        setIsLoading(false);
+      }
     }
-    setIsSaved(true);
-    setShowExitButton(true);
   };
   return <div className="space-y-6">
       {/* Header */}
@@ -104,9 +125,13 @@ export default function FunnelEditor() {
         
         <div className="flex items-center space-x-2">
           
-          <Button onClick={handleSave} className={isSaved ? "bg-success" : ""}>
+          <Button 
+            onClick={handleSave} 
+            className={isSaved ? "bg-success" : ""} 
+            disabled={isLoading}
+          >
             <Save className="mr-2 h-4 w-4" />
-            {isSaved ? "Salvo" : "Salvar"}
+            {isLoading ? "Salvando..." : isSaved ? "Salvo" : "Salvar"}
           </Button>
           {showExitButton && <Link to="/funnels">
               <Button variant="secondary">

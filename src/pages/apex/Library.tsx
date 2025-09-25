@@ -4,19 +4,22 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search, Filter, Folder, Zap, Video, MessageSquare, MoreHorizontal, Eye, Edit, Trash2, FolderPlus, Grid, List, X } from "lucide-react";
+import { Plus, Search, Filter, Folder, Zap, MoreHorizontal, Edit, Trash2, Grid, List, X } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useProjects } from "@/hooks/useProjects";
 import { useFolders } from "@/hooks/useFolders";
+import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
+import { useNavigate } from "react-router-dom";
 export default function Library() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-  const [activeTab, setActiveTab] = useState("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFolder, setSelectedFolder] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
+  const navigate = useNavigate();
   const {
     projects,
     deleteProject
@@ -25,24 +28,11 @@ export default function Library() {
     folders
   } = useFolders();
 
-  // Group projects by folder and count them
-  const folderCounts = projects.reduce((acc, project) => {
-    const folderName = project.folder || 'Sem pasta';
-    acc[folderName] = (acc[folderName] || 0) + 1;
-    return acc;
-  }, {} as Record<string, number>);
-  const allProjects = projects;
-  const getProjectIcon = (type: string) => {
-    switch (type) {
-      case 'funnel':
-        return;
-      case 'video':
-        return;
-      case 'message':
-        return <MessageSquare className="h-4 w-4 text-blue-600" />;
-      default:
-        return <Folder className="h-4 w-4 text-muted-foreground" />;
-    }
+  // Filter only funnel projects
+  const funnelProjects = projects.filter(project => project.type === 'funnel');
+  
+  const getProjectIcon = () => {
+    return <Zap className="h-4 w-4 text-primary" />;
   };
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -59,20 +49,22 @@ export default function Library() {
     }
   };
 
-  // Filter projects based on search, folder, status, and tab
-  const filteredProjects = allProjects.filter(project => {
-    // Filter by tab
-    const tabMatch = activeTab === "all" || project.type === activeTab;
-
+  // Filter projects based on search, folder and status
+  const filteredProjects = funnelProjects.filter(project => {
     // Filter by search term
-    const searchMatch = searchTerm === "" || project.name.toLowerCase().includes(searchTerm.toLowerCase()) || project.folder && project.folder.toLowerCase().includes(searchTerm.toLowerCase());
+    const searchMatch = searchTerm === "" || 
+      project.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      (project.folder && project.folder.toLowerCase().includes(searchTerm.toLowerCase()));
 
     // Filter by folder
-    const folderMatch = selectedFolder === "all" || selectedFolder === "no-folder" && !project.folder || project.folder === selectedFolder;
+    const folderMatch = selectedFolder === "all" || 
+      (selectedFolder === "no-folder" && !project.folder) || 
+      project.folder === selectedFolder;
 
     // Filter by status
     const statusMatch = selectedStatus === "all" || project.status === selectedStatus;
-    return tabMatch && searchMatch && folderMatch && statusMatch;
+    
+    return searchMatch && folderMatch && statusMatch;
   });
   const clearAllFilters = () => {
     setSearchTerm("");
@@ -80,9 +72,22 @@ export default function Library() {
     setSelectedStatus("all");
   };
   const hasActiveFilters = searchTerm !== "" || selectedFolder !== "all" || selectedStatus !== "all";
-  const getTabCount = (type: string) => {
-    if (type === "all") return allProjects.length;
-    return allProjects.filter(p => p.type === type).length;
+  
+  const handleDeleteClick = (projectId: string) => {
+    setProjectToDelete(projectId);
+    setDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (projectToDelete) {
+      await deleteProject(projectToDelete);
+      setProjectToDelete(null);
+    }
+    setDeleteDialogOpen(false);
+  };
+
+  const handleEditClick = (projectId: string) => {
+    navigate(`/funnel-editor/${projectId}`);
   };
   return <div className="space-y-6">
       {/* Header */}
@@ -180,46 +185,25 @@ export default function Library() {
       {/* Projects Section */}
       <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-card-foreground">Projetos</CardTitle>
+          <CardTitle className="text-card-foreground">Funis ({funnelProjects.length})</CardTitle>
+          <CardDescription>Todos os seus funis organizados</CardDescription>
         </CardHeader>
-        <CardContent>
-          <Tabs value={activeTab} onValueChange={setActiveTab}>
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="all">
-                Todos ({getTabCount("all")})
-              </TabsTrigger>
-              <TabsTrigger value="funnel">
-                Funis ({getTabCount("funnel")})
-              </TabsTrigger>
-              <TabsTrigger value="video">
-                Vídeos ({getTabCount("video")})
-              </TabsTrigger>
-              
-            </TabsList>
-
-            <TabsContent value={activeTab} className="mt-6">
-              {filteredProjects.length === 0 ? <div className="text-center py-12">
-                  {activeTab === "all" ? <>
-                      <Folder className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                      <h3 className="text-lg font-medium text-card-foreground mb-2">Nenhum projeto encontrado</h3>
-                      <p className="text-muted-foreground">
-                        {hasActiveFilters ? "Tente ajustar os filtros ou criar um novo projeto" : "Crie seu primeiro projeto para começar"}
-                      </p>
-                    </> : <>
-                      {getProjectIcon(activeTab as any)}
-                      <h3 className="text-lg font-medium text-card-foreground mb-2">
-                        Nenhum projeto de {activeTab === "funnel" ? "funil" : activeTab === "video" ? "vídeo" : "mensagem"} encontrado
-                      </h3>
-                      <p className="text-muted-foreground">
-                        Crie um novo projeto na aba específica
-                      </p>
-                    </>}
-                </div> : viewMode === "grid" ? <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <CardContent className="mt-6">
+          {filteredProjects.length === 0 ? (
+            <div className="text-center py-12">
+              <Folder className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+              <h3 className="text-lg font-medium text-card-foreground mb-2">Nenhum funil encontrado</h3>
+              <p className="text-muted-foreground">
+                {hasActiveFilters ? "Tente ajustar os filtros ou criar um novo funil" : "Crie seu primeiro funil para começar"}
+              </p>
+            </div>
+          ) : viewMode === "grid" ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                   {filteredProjects.map(project => <Card key={project.id} className="bg-muted/30 border-border hover:shadow-lg transition-all">
                       <CardContent className="p-0">
                         <div className="relative">
                           <div className="w-full h-32 bg-muted rounded-t-lg flex items-center justify-center">
-                            {getProjectIcon(project.type)}
+                            {getProjectIcon()}
                           </div>
                           <div className="absolute top-2 right-2">
                             {getStatusBadge(project.status)}
@@ -246,15 +230,11 @@ export default function Library() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end">
-                                <DropdownMenuItem>
-                                  <Eye className="mr-2 h-4 w-4" />
-                                  Visualizar
-                                </DropdownMenuItem>
-                                <DropdownMenuItem>
+                                <DropdownMenuItem onClick={() => handleEditClick(project.id)}>
                                   <Edit className="mr-2 h-4 w-4" />
                                   Editar
                                 </DropdownMenuItem>
-                                <DropdownMenuItem className="text-destructive" onClick={() => deleteProject(project.id)}>
+                                <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteClick(project.id)}>
                                   <Trash2 className="mr-2 h-4 w-4" />
                                   Excluir
                                 </DropdownMenuItem>
@@ -264,10 +244,12 @@ export default function Library() {
                         </div>
                       </CardContent>
                     </Card>)}
-                </div> : <div className="space-y-2">
+                </div>
+              ) : (
+                <div className="space-y-2">
                   {filteredProjects.map(project => <div key={project.id} className="flex items-center justify-between p-3 border border-border rounded-lg hover:bg-muted/30 transition-colors">
                       <div className="flex items-center space-x-4">
-                        {getProjectIcon(project.type)}
+                        {getProjectIcon()}
                         <div>
                           <h4 className="font-medium text-card-foreground">{project.name}</h4>
                           <p className="text-sm text-muted-foreground">{project.folder || "Sem pasta"}</p>
@@ -286,15 +268,11 @@ export default function Library() {
                             </Button>
                           </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
-                            <DropdownMenuItem>
-                              <Eye className="mr-2 h-4 w-4" />
-                              Visualizar
-                            </DropdownMenuItem>
-                            <DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => handleEditClick(project.id)}>
                               <Edit className="mr-2 h-4 w-4" />
                               Editar
                             </DropdownMenuItem>
-                            <DropdownMenuItem className="text-destructive" onClick={() => deleteProject(project.id)}>
+                            <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteClick(project.id)}>
                               <Trash2 className="mr-2 h-4 w-4" />
                               Excluir
                             </DropdownMenuItem>
@@ -302,10 +280,18 @@ export default function Library() {
                         </DropdownMenu>
                       </div>
                     </div>)}
-                </div>}
-            </TabsContent>
-          </Tabs>
+                </div>
+              )}
         </CardContent>
       </Card>
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        onConfirm={handleConfirmDelete}
+        title="Excluir Funil"
+        description="Tem certeza que deseja excluir este funil? Esta ação não pode ser desfeita e todos os elementos do funil serão perdidos."
+      />
     </div>;
 }

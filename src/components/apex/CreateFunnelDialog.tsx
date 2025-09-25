@@ -66,11 +66,24 @@ export function CreateFunnelDialog({ open, onOpenChange, templateType }: CreateF
           </DialogDescription>
         </DialogHeader>
         <div className="space-y-4">
-          <div>
-            <Label htmlFor="name">Nome do Projeto</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
+          <div className="space-y-2">
+            <Label htmlFor="name">Nome do Funil</Label>
+            <Input
+              id="name"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ex: Funil de Vendas Principal"
+              className="bg-input border-border"
+            />
           </div>
-          <Button onClick={handleCreate} className="w-full">Criar Funil</Button>
+        </div>
+        <div className="flex justify-end space-x-2 mt-6">
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
+          <Button onClick={handleCreate} disabled={!name.trim()}>
+            Criar Funil
+          </Button>
         </div>
       </DialogContent>
     </Dialog>

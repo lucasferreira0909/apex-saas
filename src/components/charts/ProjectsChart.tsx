@@ -3,10 +3,12 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { format, subDays, eachDayOfInterval } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { useProjects } from "@/hooks/useProjects";
+import { useProjectHistory } from "@/hooks/useProjectHistory";
 import { useMemo } from "react";
 
 export default function ProjectsChart() {
   const { projects } = useProjects();
+  const { history } = useProjectHistory();
 
   const chartData = useMemo(() => {
     const days = eachDayOfInterval({
@@ -14,9 +16,21 @@ export default function ProjectsChart() {
       end: new Date()
     });
 
+    // Combine current projects and historical data
+    const allProjects = [
+      ...projects.map(p => ({ created: p.created, type: p.type })),
+      ...history.filter(h => h.project_type === 'funnel').map(h => ({ created: h.created_date, type: h.project_type }))
+    ];
+
+    // Remove duplicates based on creation date and ensure we only count funnels
+    const uniqueProjects = allProjects.filter((project, index, self) => 
+      project.type === 'funnel' && 
+      index === self.findIndex(p => p.created === project.created)
+    );
+
     return days.map(day => {
       const dayStr = format(day, 'yyyy-MM-dd');
-      const projectsCount = projects.filter(project => 
+      const projectsCount = uniqueProjects.filter(project => 
         format(new Date(project.created), 'yyyy-MM-dd') === dayStr
       ).length;
 
@@ -26,7 +40,7 @@ export default function ProjectsChart() {
         fullDate: dayStr
       };
     });
-  }, [projects]);
+  }, [projects, history]);
 
   const totalProjects = chartData.reduce((sum, day) => sum + day.projects, 0);
 
