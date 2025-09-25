@@ -6,11 +6,32 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { User, Lock, Camera, Save } from "lucide-react";
+import { User, Lock, Camera, Save, Shield, AlertTriangle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
+import { z } from "zod";
+
+// Enhanced security validation schemas
+const profileSchema = z.object({
+  firstName: z.string().trim().min(1, "Nome é obrigatório").max(50, "Nome muito longo"),
+  lastName: z.string().trim().min(1, "Sobrenome é obrigatório").max(50, "Sobrenome muito longo"),
+  phone: z.string().trim().min(10, "Telefone deve ter pelo menos 10 dígitos").max(20, "Telefone muito longo")
+});
+
+const passwordSchema = z.object({
+  newPassword: z.string()
+    .min(8, "Senha deve ter pelo menos 8 caracteres")
+    .regex(/[A-Z]/, "Senha deve conter pelo menos uma letra maiúscula")
+    .regex(/[a-z]/, "Senha deve conter pelo menos uma letra minúscula")
+    .regex(/[0-9]/, "Senha deve conter pelo menos um número")
+    .regex(/[^A-Za-z0-9]/, "Senha deve conter pelo menos um caractere especial"),
+  confirmPassword: z.string()
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "As senhas não coincidem",
+  path: ["confirmPassword"]
+});
 export default function ApexSettings() {
   const navigate = useNavigate();
   const { profile, updateProfile } = useAuth();
@@ -22,7 +43,26 @@ export default function ApexSettings() {
     newPassword: '',
     confirmPassword: ''
   });
+  const [passwordStrength, setPasswordStrength] = useState<string>("");
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Password strength indicator
+  const checkPasswordStrength = (pwd: string) => {
+    if (pwd.length === 0) {
+      setPasswordStrength("");
+      return;
+    }
+    
+    let strength = 0;
+    if (pwd.length >= 8) strength++;
+    if (/[A-Z]/.test(pwd)) strength++;
+    if (/[a-z]/.test(pwd)) strength++;
+    if (/[0-9]/.test(pwd)) strength++;
+    if (/[^A-Za-z0-9]/.test(pwd)) strength++;
+    
+    const levels = ["Muito fraca", "Fraca", "Razoável", "Boa", "Forte"];
+    setPasswordStrength(levels[strength - 1] || "Muito fraca");
+  };
   const tabs = [{
     id: "profile",
     label: "Perfil",
@@ -73,10 +113,28 @@ export default function ApexSettings() {
     setLoading(true);
     
     const formData = new FormData(e.target as HTMLFormElement);
-    const updates = {
-      first_name: formData.get('firstName') as string,
-      last_name: formData.get('lastName') as string,
+    const formFields = {
+      firstName: formData.get('firstName') as string,
+      lastName: formData.get('lastName') as string,
       phone: formData.get('phone') as string,
+    };
+
+    // Validate input data
+    const validation = profileSchema.safeParse(formFields);
+    if (!validation.success) {
+      toast({
+        title: "Erro de Validação",
+        description: validation.error.errors[0].message,
+        variant: "destructive"
+      });
+      setLoading(false);
+      return;
+    }
+
+    const updates = {
+      first_name: formFields.firstName.trim(),
+      last_name: formFields.lastName.trim(),
+      phone: formFields.phone.trim(),
     };
 
     const { error } = await updateProfile(updates);
@@ -100,19 +158,16 @@ export default function ApexSettings() {
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (passwordData.newPassword.length < 6) {
+    // Validate password data
+    const validation = passwordSchema.safeParse({
+      newPassword: passwordData.newPassword,
+      confirmPassword: passwordData.confirmPassword
+    });
+    
+    if (!validation.success) {
       toast({
-        title: "Erro",
-        description: "A senha deve ter pelo menos 6 caracteres",
-        variant: "destructive"
-      });
-      return;
-    }
-
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast({
-        title: "Erro",
-        description: "As senhas não coincidem",
+        title: "Erro de Validação",
+        description: validation.error.errors[0].message,
         variant: "destructive"
       });
       return;
@@ -133,9 +188,15 @@ export default function ApexSettings() {
     } else {
       toast({
         title: "Sucesso",
-        description: "Senha alterada com sucesso!"
+        description: "Senha alterada com sucesso! Por segurança, você será redirecionado para fazer login novamente."
       });
       setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      
+      // Log out user after password change for security
+      setTimeout(() => {
+        supabase.auth.signOut();
+        navigate("/auth");
+      }, 2000);
     }
     
     setLoading(false);
@@ -278,10 +339,26 @@ export default function ApexSettings() {
                       <Input 
                         id="newPassword" 
                         type="password" 
-                        placeholder="Mínimo 6 caracteres"
+                        placeholder="Mínimo 8 caracteres com maiúscula, minúscula, número e símbolo"
                         value={passwordData.newPassword}
-                        onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
+                        onChange={(e) => {
+                          setPasswordData(prev => ({ ...prev, newPassword: e.target.value }));
+                          checkPasswordStrength(e.target.value);
+                        }}
                       />
+                      {passwordData.newPassword && (
+                        <div className="text-sm">
+                          <span className="text-muted-foreground">Força da senha: </span>
+                          <span className={
+                            passwordStrength === "Forte" ? "text-green-600" :
+                            passwordStrength === "Boa" ? "text-blue-600" :
+                            passwordStrength === "Razoável" ? "text-yellow-600" :
+                            "text-red-600"
+                          }>
+                            {passwordStrength}
+                          </span>
+                        </div>
+                      )}
                     </div>
                     <div className="space-y-2 mb-4">
                       <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
@@ -302,6 +379,55 @@ export default function ApexSettings() {
               </Card>
 
               {/* Security Status */}
+              <Card className="bg-card border-border">
+                <CardHeader>
+                  <CardTitle className="text-card-foreground flex items-center gap-2">
+                    <Shield className="h-5 w-5" />
+                    Status de Segurança
+                  </CardTitle>
+                  <CardDescription>Configurações de segurança da sua conta</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between p-3 bg-yellow-50 dark:bg-yellow-900/20 rounded-lg border border-yellow-200 dark:border-yellow-800">
+                    <div className="flex items-center gap-3">
+                      <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                      <div>
+                        <p className="font-medium text-yellow-800 dark:text-yellow-200">Proteção contra senhas vazadas</p>
+                        <p className="text-sm text-yellow-700 dark:text-yellow-300">Recomendado ativar no painel do Supabase</p>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="text-yellow-700 border-yellow-300 dark:text-yellow-300">
+                      Pendente
+                    </Badge>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                    <div className="flex items-center gap-3">
+                      <Shield className="h-5 w-5 text-green-600" />
+                      <div>
+                        <p className="font-medium text-green-800 dark:text-green-200">Validação de senha forte</p>
+                        <p className="text-sm text-green-700 dark:text-green-300">Senhas são validadas com critérios rigorosos</p>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="text-green-700 border-green-300 dark:text-green-300">
+                      Ativo
+                    </Badge>
+                  </div>
+                  
+                  <div className="flex items-center justify-between p-3 bg-green-50 dark:bg-green-900/20 rounded-lg border border-green-200 dark:border-green-800">
+                    <div className="flex items-center gap-3">
+                      <Shield className="h-5 w-5 text-green-600" />
+                      <div>
+                        <p className="font-medium text-green-800 dark:text-green-200">Proteção RLS ativa</p>
+                        <p className="text-sm text-green-700 dark:text-green-300">Dados protegidos por políticas de segurança</p>
+                      </div>
+                    </div>
+                    <Badge variant="outline" className="text-green-700 border-green-300 dark:text-green-300">
+                      Ativo
+                    </Badge>
+                  </div>
+                </CardContent>
+              </Card>
               
             </>}
 
