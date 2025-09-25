@@ -51,6 +51,7 @@ export function CreateFunnelDialog({ open, onOpenChange, templateType }: CreateF
         .from('funnels')
         .insert({
           user_id: user!.id,
+          project_id: newProject.id,
           name: name.trim(),
           description: `Funil ${templateType ? `do tipo ${templateType}` : 'personalizado'}`
         })
@@ -67,8 +68,8 @@ export function CreateFunnelDialog({ open, onOpenChange, templateType }: CreateF
       setName("");
       onOpenChange(false);
       
-      // Redirecionar para o editor de funil usando o ID do funnel criado
-      navigate(`/funnel-editor/${funnelData.id}`);
+      // Redirecionar para o editor de funil usando o ID do projeto
+      navigate(`/funnel-editor/${newProject.id}`);
     } catch (error) {
       console.error('Error in handleCreate:', error);
       toast.error("Erro ao criar funil");

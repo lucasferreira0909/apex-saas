@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { useProjects } from "@/hooks/useProjects";
 import { useFunnelElements } from "@/hooks/useFunnelElements";
+import { useFunnelProject } from "@/hooks/useFunnelProject";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -15,8 +16,9 @@ import { FunnelElement, FunnelConnection as FunnelConnectionType } from "@/types
 export default function FunnelEditor() {
   const { id } = useParams();
   const { updateProject, projects } = useProjects();
-  // Use the project ID directly as the funnel ID since they should be the same
-  const { elements, loading, saveAllElements } = useFunnelElements(id);
+  // Get the funnel ID based on the project ID
+  const { funnelId, loading: funnelLoading } = useFunnelProject(id);
+  const { elements, loading: elementsLoading, saveAllElements } = useFunnelElements(funnelId || undefined);
   const [isSaved, setIsSaved] = useState(false);
   const [showExitButton, setShowExitButton] = useState(false);
   const [funnelElements, setFunnelElements] = useState<FunnelElement[]>([]);
@@ -29,11 +31,12 @@ export default function FunnelEditor() {
 
   // Load elements from database when they're fetched
   useEffect(() => {
-    if (!loading) {
+    if (!elementsLoading && !funnelLoading) {
       console.log('Loading elements from DB:', elements);
+      console.log('Funnel ID:', funnelId);
       setFunnelElements(elements);
     }
-  }, [elements, loading]);
+  }, [elements, elementsLoading, funnelLoading, funnelId]);
   const generateUniqueId = () => crypto.randomUUID();
   const findOptimalPosition = () => {
     if (funnelElements.length === 0) {
@@ -83,8 +86,8 @@ export default function FunnelEditor() {
     // Connections will automatically update due to the re-render with new positions
   };
   const handleSave = async () => {
-    if (!id) {
-      console.error('No funnel ID provided');
+    if (!id || !funnelId) {
+      console.error('No project ID or funnel ID provided');
       return;
     }
 

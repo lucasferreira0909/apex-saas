@@ -64,6 +64,7 @@ export type Database = {
           description: string | null
           id: string
           name: string
+          project_id: string | null
           updated_at: string
           user_id: string
         }
@@ -72,6 +73,7 @@ export type Database = {
           description?: string | null
           id?: string
           name: string
+          project_id?: string | null
           updated_at?: string
           user_id: string
         }
@@ -80,10 +82,19 @@ export type Database = {
           description?: string | null
           id?: string
           name?: string
+          project_id?: string | null
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "funnels_project_id_fkey"
+            columns: ["project_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
