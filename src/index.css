@@ -1,0 +1,171 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    /* Apex Color Palette */
+    --background: 0 0% 91%; /* #E8E8E8 - Branco */
+    --foreground: 0 0% 3%; /* #070707 - Cinza escuro */
+
+    --card: 0 0% 91%;
+    --card-foreground: 0 0% 3%;
+
+    --popover: 0 0% 91%;
+    --popover-foreground: 0 0% 3%;
+
+    --primary: 44 35% 87%; /* #EDE8D0 - Bege */
+    --primary-foreground: 0 0% 3%;
+
+    --secondary: 0 0% 15%; /* Cinza mais claro */
+    --secondary-foreground: 0 0% 91%;
+
+    --muted: 0 0% 20%;
+    --muted-foreground: 0 0% 60%;
+
+    --accent: 44 35% 87%;
+    --accent-foreground: 0 0% 3%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 72% 52%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --danger: 0 84% 60%;
+    --danger-foreground: 0 0% 100%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 15%;
+    --ring: 44 35% 87%;
+
+    --radius: 0.75rem;
+
+    /* Sidebar Apex Theme */
+    --sidebar-background: 0 0% 3%; /* #070707 */
+    --sidebar-foreground: 0 0% 91%;
+    --sidebar-primary: 44 35% 87%;
+    --sidebar-primary-foreground: 0 0% 3%;
+    --sidebar-accent: 0 0% 10%;
+    --sidebar-accent-foreground: 0 0% 91%;
+    --sidebar-border: 0 0% 10%;
+    --sidebar-ring: 44 35% 87%;
+  }
+
+  .dark {
+    /* Apex Dark Theme */
+    --background: 0 0% 3%; /* #070707 */
+    --foreground: 0 0% 91%;
+
+    --card: 0 0% 6%;
+    --card-foreground: 0 0% 91%;
+
+    --popover: 0 0% 6%;
+    --popover-foreground: 0 0% 91%;
+
+    --primary: 44 35% 87%; /* #EDE8D0 - Bege */
+    --primary-foreground: 0 0% 3%;
+
+    --secondary: 0 0% 10%;
+    --secondary-foreground: 0 0% 91%;
+
+    --muted: 0 0% 10%;
+    --muted-foreground: 0 0% 60%;
+
+    --accent: 44 35% 87%;
+    --accent-foreground: 0 0% 3%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --success: 142 72% 52%;
+    --success-foreground: 0 0% 100%;
+
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 100%;
+
+    --danger: 0 84% 60%;
+    --danger-foreground: 0 0% 100%;
+
+    --border: 0 0% 10%;
+    --input: 0 0% 8%;
+    --ring: 44 35% 87%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  html,
+  body {
+    @apply h-full overflow-x-hidden antialiased;
+  }
+
+  body {
+    @apply bg-background text-foreground font-sans;
+    font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+  }
+
+  /* Glass morphism */
+  .glass {
+    @apply bg-white/10 backdrop-blur-lg border border-white/20 shadow-glass;
+  }
+
+  .glass-dark {
+    @apply bg-black/20 backdrop-blur-lg border border-white/10 shadow-glass;
+  }
+
+  /* Card transitions */
+  .card-hover-effect {
+    @apply transition-all duration-300 ease-in-out;
+  }
+  
+  /* Custom scrollbar for webkit browsers */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  ::-webkit-scrollbar-thumb {
+    @apply bg-muted rounded-full;
+  }
+  
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted-foreground/50;
+  }
+
+  /* Chart & data visualization styles */
+  .chart-container {
+    @apply w-full h-full min-h-[200px] rounded-lg overflow-hidden;
+  }
+
+  .animate-enter {
+    @apply animate-slide-up;
+  }
+
+  /* Stock price trends */
+  .trend-up {
+    @apply text-success;
+  }
+  
+  .trend-down {
+    @apply text-danger;
+  }
+
+  /* Loading states */
+  .loading-pulse {
+    @apply animate-pulse-gentle;
+  }
+}
