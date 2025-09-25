@@ -103,6 +103,12 @@ export default function ApexSettings() {
         setLoading(false);
         return;
       }
+      
+      // Notificar sobre verificação de email
+      toast({
+        title: "Email de confirmação enviado",
+        description: "Verifique sua caixa de entrada para confirmar o novo email. O email antigo continuará funcionando até a confirmação.",
+      });
     }
 
     const { error } = await updateProfile(updates);
@@ -114,10 +120,13 @@ export default function ApexSettings() {
         variant: "destructive"
       });
     } else {
-      toast({
-        title: "Sucesso",
-        description: "Perfil atualizado com sucesso!"
-      });
+      // Só mostrar sucesso se não houve mudança de email ou se o email não foi alterado
+      if (currentEmail === newEmail || !newEmail) {
+        toast({
+          title: "Sucesso",
+          description: "Perfil atualizado com sucesso!"
+        });
+      }
     }
     
     setLoading(false);

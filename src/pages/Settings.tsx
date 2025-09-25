@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { useAuth } from '@/hooks/useAuth';
 import { useImageUpload } from '@/hooks/useImageUpload';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
 
 const Settings = () => {
   const { user, profile, updateProfile } = useAuth();
@@ -52,6 +53,24 @@ const Settings = () => {
   };
 
   const handleSaveChanges = async () => {
+    const currentEmail = profile?.email;
+    const newEmail = email;
+    
+    // Se o email foi alterado, atualizar no Supabase Auth primeiro
+    if (currentEmail !== newEmail && newEmail) {
+      const { error: authError } = await supabase.auth.updateUser({
+        email: newEmail
+      });
+      
+      if (authError) {
+        toast.error(`Erro ao atualizar email: ${authError.message}`);
+        return;
+      }
+      
+      // Avisar sobre verificação de email
+      toast.success('Email de confirmação enviado! Verifique sua caixa de entrada para confirmar o novo email.');
+    }
+
     const { error } = await updateProfile({
       first_name: firstName,
       last_name: lastName,
@@ -62,7 +81,9 @@ const Settings = () => {
     if (error) {
       toast.error('Erro ao salvar alterações');
     } else {
-      toast.success('Alterações salvas com sucesso!');
+      if (currentEmail === newEmail || !newEmail) {
+        toast.success('Alterações salvas com sucesso!');
+      }
     }
   };
 
