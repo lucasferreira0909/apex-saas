@@ -15,19 +15,13 @@ import Support from "./pages/apex/Support";
 import ApexSettings from "./pages/apex/ApexSettings";
 import Funnels from "./pages/apex/Funnels";
 import FunnelEditor from "./pages/apex/FunnelEditor";
-import Videos from "./pages/apex/Videos";
-import VideoClip from "./pages/apex/VideoClip";
-import VideoScriptGenerator from "./pages/apex/VideoScriptGenerator";
-
 import Library from "./pages/apex/Library";
 import Tools from "./pages/apex/Tools";
+import ROICalculator from "./pages/apex/ROICalculator";
+import WhatsAppGenerator from "./pages/apex/WhatsAppGenerator";
+import HashtagGenerator from "./pages/apex/HashtagGenerator";
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
-
-// Lazy loaded components
-const ROICalculator = lazy(() => import("@/pages/apex/ROICalculator"));
-const WhatsAppGenerator = lazy(() => import("@/pages/apex/WhatsAppGenerator"));
-const HashtagGenerator = lazy(() => import("@/pages/apex/HashtagGenerator"));
 
 const queryClient = new QueryClient();
 
@@ -48,13 +42,9 @@ const App = () => (
                   <Route path="/settings" element={<ApexSettings />} />
                   <Route path="/funnels" element={<Funnels />} />
                   <Route path="/funnel-editor/:id" element={<FunnelEditor />} />
-                  <Route path="/videos" element={<Videos />} />
-                  <Route path="/video-clip" element={<VideoClip />} />
-          
                   <Route path="/roi-calculator" element={<ROICalculator />} />
                   <Route path="/whatsapp-generator" element={<WhatsAppGenerator />} />
                   <Route path="/hashtag-generator" element={<HashtagGenerator />} />
-                  <Route path="/video-script-generator" element={<VideoScriptGenerator />} />
                   <Route path="/library" element={<Library />} />
                   <Route path="/tools" element={<Tools />} />
                   <Route path="*" element={<NotFound />} />

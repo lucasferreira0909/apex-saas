@@ -15,7 +15,6 @@ interface CreateFunnelDialogProps {
 
 export function CreateFunnelDialog({ open, onOpenChange, templateType }: CreateFunnelDialogProps) {
   const [name, setName] = useState("");
-  const [folder, setFolder] = useState("");
   const { addProject } = useProjects();
   const navigate = useNavigate();
 
@@ -28,7 +27,6 @@ export function CreateFunnelDialog({ open, onOpenChange, templateType }: CreateF
     const newProject = await addProject({
       name: name.trim(),
       type: 'funnel',
-      folder: folder.trim() || undefined,
       status: 'draft',
       templateType: templateType || undefined,
       stats: {
@@ -41,7 +39,6 @@ export function CreateFunnelDialog({ open, onOpenChange, templateType }: CreateF
     if (newProject) {
       toast.success("Funil criado com sucesso!");
       setName("");
-      setFolder("");
       onOpenChange(false);
       
       // Redirecionar para o editor de funil
@@ -72,10 +69,6 @@ export function CreateFunnelDialog({ open, onOpenChange, templateType }: CreateF
           <div>
             <Label htmlFor="name">Nome do Projeto</Label>
             <Input id="name" value={name} onChange={(e) => setName(e.target.value)} />
-          </div>
-          <div>
-            <Label htmlFor="folder">Pasta (Opcional)</Label>
-            <Input id="folder" value={folder} onChange={(e) => setFolder(e.target.value)} />
           </div>
           <Button onClick={handleCreate} className="w-full">Criar Funil</Button>
         </div>

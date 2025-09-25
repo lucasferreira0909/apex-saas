@@ -6,8 +6,9 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Hash, Copy, Sparkles, TrendingUp, Users, Zap } from "lucide-react";
+import { Hash, Copy, Sparkles, TrendingUp, Users, Zap, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Link } from "react-router-dom";
 
 export default function HashtagGenerator() {
   const [topic, setTopic] = useState("");
@@ -130,12 +131,21 @@ export default function HashtagGenerator() {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold text-foreground flex items-center">
-          <Hash className="h-8 w-8 mr-3 text-primary" />
-          Gerador de Hashtags
-        </h1>
-        <p className="text-muted-foreground">Crie hashtags inteligentes para suas publicações</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center space-x-4">
+          <Link to="/tools">
+            <Button variant="ghost" size="icon">
+              <ArrowLeft className="h-4 w-4" />
+            </Button>
+          </Link>
+          <div>
+            <h1 className="text-3xl font-bold text-foreground flex items-center">
+              <Hash className="h-8 w-8 mr-3 text-primary" />
+              Gerador de Hashtags
+            </h1>
+            <p className="text-muted-foreground">Crie hashtags inteligentes para suas publicações</p>
+          </div>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

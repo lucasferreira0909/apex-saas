@@ -27,16 +27,10 @@ const projectItems = [{
   url: "/funnels",
   icon: Zap
 }, {
-  title: "Vídeos",
-  url: "/videos",
-  icon: Video
-}, {
   title: "Ferramentas",
   url: "/tools",
   icon: Wrench
-}];
-
-const libraryItems = [{
+}, {
   title: "Biblioteca",
   url: "/library",
   icon: Library
@@ -213,31 +207,6 @@ export function ApexSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup>
-          {!isCollapsed && <SidebarGroupLabel className="text-sidebar-foreground/60">Biblioteca</SidebarGroupLabel>}
-          <SidebarGroupContent>
-            <SidebarMenu>
-              {libraryItems.map(item => {
-                const menuItem = <NavLink to={item.url} className={`flex items-center ${isCollapsed ? "justify-center" : "gap-3"} rounded-lg px-3 py-2 transition-all duration-200 ${isActive(item.url) ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"}`}>
-                    <item.icon className="h-4 w-4 flex-shrink-0" />
-                    {!isCollapsed && <span>{item.title}</span>}
-                  </NavLink>;
-                return <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild>
-                      {isCollapsed ? <Tooltip>
-                          <TooltipTrigger asChild>
-                            {menuItem}
-                          </TooltipTrigger>
-                          <TooltipContent side="right">
-                            {item.title}
-                          </TooltipContent>
-                        </Tooltip> : menuItem}
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>;
-              })}
-            </SidebarMenu>
-          </SidebarGroupContent>
-        </SidebarGroup>
       </SidebarContent>
 
       </Sidebar>

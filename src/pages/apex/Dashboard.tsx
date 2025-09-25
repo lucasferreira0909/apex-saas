@@ -22,12 +22,6 @@ export default function Dashboard() {
     description: `${projectStats.byType.funnel} funis total`,
     icon: Zap,
     trend: projectStats.byStatus.active > 0 ? "+100%" : "0%"
-  }, {
-    title: "Projetos de Vídeo",
-    value: projectStats.byType.video.toString(),
-    description: `${projectStats.byStatus.completed} concluídos`,
-    icon: Video,
-    trend: projectStats.byType.video > 0 ? "+100%" : "0%"
   }];
   const recentProjects = projects.slice(-3).reverse();
   const quickActions = [
@@ -37,13 +31,6 @@ export default function Dashboard() {
       icon: Zap,
       href: "/funnels",
       color: "text-blue-600"
-    },
-    {
-      title: "Editar Vídeo",
-      description: "Clips, transcrições e roteiros",
-      icon: Video,
-      href: "/videos",
-      color: "text-green-600"
     },
     {
       title: "Ferramentas",
