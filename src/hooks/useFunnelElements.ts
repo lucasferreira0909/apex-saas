@@ -2,6 +2,34 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 import { FunnelElement } from '@/types/funnel';
+import { Megaphone, FileText, MousePointer, ShoppingCart, CreditCard, TrendingUp, TrendingDown, Video, Users, ThumbsUp, MessageSquare, Target, HelpCircle, Gift, Star, Play, Tag } from "lucide-react";
+
+// Map element types to their corresponding icons
+const getElementIcon = (elementType: string) => {
+  const iconMap: Record<string, any> = {
+    "Anúncio": Megaphone,
+    "Presell": FileText,
+    "Captura": MousePointer,
+    "Página de Vendas": ShoppingCart,
+    "Checkout": CreditCard,
+    "Upsell": TrendingUp,
+    "Downsell": TrendingDown,
+    "TikTok": Video,
+    "Instagram": ThumbsUp,
+    "YouTube": Video,
+    "Webinar": Users,
+    "Página de Obrigado": ThumbsUp,
+    "Mensagem": MessageSquare,
+    "Remarketing": Target,
+    "Página de Pergunta": HelpCircle,
+    "Benefícios": Gift,
+    "Depoimento": Star,
+    "Página de VSL": Play,
+    "Oferta": Tag
+  };
+  
+  return iconMap[elementType] || HelpCircle; // Default fallback icon
+};
 
 export function useFunnelElements(funnelId?: string) {
   const [elements, setElements] = useState<FunnelElement[]>([]);
@@ -32,7 +60,7 @@ export function useFunnelElements(funnelId?: string) {
       const mappedElements: FunnelElement[] = (data || []).map(e => ({
         id: e.id,
         type: e.element_type,
-        icon: null, // Will be set by the component
+        icon: getElementIcon(e.element_type),
         position: { x: Number(e.position_x), y: Number(e.position_y) },
         configured: e.configured || false,
         stats: (e.element_config as Record<string, string | number>) || {}
