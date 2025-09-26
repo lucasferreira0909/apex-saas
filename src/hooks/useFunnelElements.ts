@@ -57,14 +57,19 @@ export function useFunnelElements(funnelId?: string) {
 
       console.log('Raw data from database:', data);
 
-      const mappedElements: FunnelElement[] = (data || []).map(e => ({
-        id: e.id,
-        type: e.element_type,
-        icon: getElementIcon(e.element_type),
-        position: { x: Number(e.position_x), y: Number(e.position_y) },
-        configured: e.configured || false,
-        stats: (e.element_config as Record<string, string | number>) || {}
-      }));
+      const mappedElements: FunnelElement[] = (data || []).map(e => {
+        const position = { x: Number(e.position_x), y: Number(e.position_y) };
+        console.log(`Element ${e.element_type} loaded with position:`, position);
+        
+        return {
+          id: e.id,
+          type: e.element_type,
+          icon: getElementIcon(e.element_type),
+          position,
+          configured: e.configured || false,
+          stats: (e.element_config as Record<string, string | number>) || {}
+        };
+      });
 
       console.log('Mapped elements:', mappedElements);
       setElements(mappedElements);
@@ -84,6 +89,12 @@ export function useFunnelElements(funnelId?: string) {
     if (!user || !funnelId) return null;
 
     try {
+      console.log('Saving element to database:', {
+        id: element.id,
+        type: element.type,
+        position: element.position
+      });
+
       const { data, error } = await supabase
         .from('funnel_elements')
         .upsert({
@@ -100,6 +111,7 @@ export function useFunnelElements(funnelId?: string) {
         .single();
 
       if (error) throw error;
+      console.log('Element saved successfully');
       return data;
     } catch (error) {
       console.error('Error saving funnel element:', error);

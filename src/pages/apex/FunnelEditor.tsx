@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
 import { useProjects } from "@/hooks/useProjects";
 import { useFunnelElements } from "@/hooks/useFunnelElements";
 import { useFunnelProject } from "@/hooks/useFunnelProject";
+import { useDebounce } from "@/hooks/useDebounce";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -18,7 +19,7 @@ export default function FunnelEditor() {
   const { updateProject, projects } = useProjects();
   // Get the funnel ID based on the project ID
   const { funnelId, loading: funnelLoading } = useFunnelProject(id);
-  const { elements, loading: elementsLoading, saveAllElements } = useFunnelElements(funnelId || undefined);
+  const { elements, loading: elementsLoading, saveAllElements, saveElement } = useFunnelElements(funnelId || undefined);
   const [isSaved, setIsSaved] = useState(false);
   const [showExitButton, setShowExitButton] = useState(false);
   const [funnelElements, setFunnelElements] = useState<FunnelElement[]>([]);
@@ -33,17 +34,16 @@ export default function FunnelEditor() {
   useEffect(() => {
     if (!elementsLoading && !funnelLoading) {
       console.log('Loading elements from DB:', elements);
+      console.log('Elements positions:', elements.map(e => ({ id: e.id, type: e.type, position: e.position })));
       console.log('Funnel ID:', funnelId);
       setFunnelElements(elements);
     }
   }, [elements, elementsLoading, funnelLoading, funnelId]);
   const generateUniqueId = () => crypto.randomUUID();
   const findOptimalPosition = () => {
+    // Only calculate positions for NEW elements, not existing ones
     if (funnelElements.length === 0) {
-      return {
-        x: 50,
-        y: 50
-      };
+      return { x: 50, y: 50 };
     }
 
     // Simple positioning logic: place new elements to the right
@@ -75,15 +75,32 @@ export default function FunnelEditor() {
     });
     setShowAddDialog(false);
   };
-  const handleElementPositionChange = (elementId: string, newPosition: {
-    x: number;
-    y: number;
-  }) => {
-    setFunnelElements(prev => prev.map(element => element.id === elementId ? {
-      ...element,
-      position: newPosition
-    } : element));
-    // Connections will automatically update due to the re-render with new positions
+  // Debounced function to save position to database
+  const savePositionToDatabase = useCallback(async (elementId: string, newPosition: { x: number; y: number }) => {
+    try {
+      const elementToUpdate = funnelElements.find(el => el.id === elementId);
+      if (elementToUpdate && funnelId) {
+        const updatedElement = { ...elementToUpdate, position: newPosition };
+        await saveElement(updatedElement);
+        console.log('Position saved to database:', { elementId, newPosition });
+      }
+    } catch (error) {
+      console.error('Error saving position:', error);
+    }
+  }, [funnelElements, funnelId, saveElement]);
+
+  const debouncedSavePosition = useDebounce(savePositionToDatabase, 500);
+
+  const handleElementPositionChange = (elementId: string, newPosition: { x: number; y: number }) => {
+    console.log('Position change:', { elementId, newPosition });
+    
+    // Update local state immediately for smooth UX
+    setFunnelElements(prev => prev.map(element => 
+      element.id === elementId ? { ...element, position: newPosition } : element
+    ));
+
+    // Save position to database with debounce to avoid too many requests
+    debouncedSavePosition(elementId, newPosition);
   };
   const handleSave = async () => {
     if (!id || !funnelId) {
