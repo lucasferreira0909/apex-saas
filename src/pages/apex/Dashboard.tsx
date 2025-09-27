@@ -3,7 +3,7 @@ import { Zap, Video, MessageSquare, TrendingUp, Users, Clock, BarChart3, DollarS
 import { useProjects } from "@/hooks/useProjects";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import ProjectsChart from "@/components/charts/ProjectsChart";
+import InteractiveProjectsChart from "@/components/charts/InteractiveProjectsChart";
 export default function Dashboard() {
   const {
     projects,
@@ -69,7 +69,7 @@ export default function Dashboard() {
       </div>
 
       {/* Projects Chart */}
-      <ProjectsChart />
+      <InteractiveProjectsChart />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Quick Actions */}
