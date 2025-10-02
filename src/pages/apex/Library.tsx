@@ -166,10 +166,7 @@ export default function Library() {
         
         <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
           <PopoverTrigger asChild>
-            <Button variant="outline">
-              <Filter className="mr-2 h-4 w-4" />
-              Filtros
-            </Button>
+            
           </PopoverTrigger>
           <PopoverContent className="w-80" align="end">
             <div className="space-y-4">
