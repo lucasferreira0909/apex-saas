@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Save, ArrowLeft, Settings, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
-import { FunnelNode } from "@/components/apex/FunnelNode";
+import { FunnelSchemaNode } from "@/components/apex/FunnelSchemaNode";
 import { FunnelConnection } from "@/components/apex/FunnelConnection";
 import { AddElementDialog, ElementType } from "@/components/apex/AddElementDialog";
 import { EmptyCanvas } from "@/components/apex/EmptyCanvas";
@@ -194,7 +194,7 @@ export default function FunnelEditor() {
                 </div>
                 {/* Render Funnel Elements */}
                 {funnelElements.map(element => (
-                  <FunnelNode 
+                  <FunnelSchemaNode 
                     key={element.id} 
                     element={element} 
                     position={element.position} 
