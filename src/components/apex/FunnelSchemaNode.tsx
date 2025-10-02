@@ -13,11 +13,9 @@ interface FunnelSchemaNodeProps {
   element: FunnelElement;
   position: { x: number; y: number };
   onPositionChange?: (elementId: string, newPosition: { x: number; y: number }) => void;
-  onConnectionStart?: (elementId: string, handleId: string, position: { x: number; y: number }) => void;
-  onConnectionEnd?: (elementId: string, handleId: string) => void;
 }
 
-export const FunnelSchemaNode = memo(({ element, position, onPositionChange, onConnectionStart, onConnectionEnd }: FunnelSchemaNodeProps) => {
+export const FunnelSchemaNode = memo(({ element, position, onPositionChange }: FunnelSchemaNodeProps) => {
   const nodeRef = useRef<HTMLDivElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
@@ -29,12 +27,6 @@ export const FunnelSchemaNode = memo(({ element, position, onPositionChange, onC
   }, [position]);
 
   const handleMouseDown = (e: React.MouseEvent) => {
-    // Check if clicking on a handle
-    const target = e.target as HTMLElement;
-    if (target.hasAttribute('data-handleid')) {
-      return; // Let handle events handle this
-    }
-
     if (!nodeRef.current) return;
     
     const rect = nodeRef.current.getBoundingClientRect();
@@ -48,33 +40,6 @@ export const FunnelSchemaNode = memo(({ element, position, onPositionChange, onC
     });
     
     setIsDragging(true);
-  };
-
-  const handleHandleMouseDown = (handleId: string, type: 'source' | 'target') => (e: React.MouseEvent) => {
-    e.stopPropagation();
-    
-    if (type === 'source' && onConnectionStart && nodeRef.current) {
-      const rect = nodeRef.current.getBoundingClientRect();
-      const parentRect = nodeRef.current.parentElement?.getBoundingClientRect();
-      
-      if (!parentRect) return;
-
-      const handleElement = e.currentTarget as HTMLElement;
-      const handleRect = handleElement.getBoundingClientRect();
-      
-      onConnectionStart(element.id, handleId, {
-        x: handleRect.left + handleRect.width / 2 - parentRect.left,
-        y: handleRect.top + handleRect.height / 2 - parentRect.top
-      });
-    }
-  };
-
-  const handleHandleMouseUp = (handleId: string, type: 'source' | 'target') => (e: React.MouseEvent) => {
-    e.stopPropagation();
-    
-    if (type === 'target' && onConnectionEnd) {
-      onConnectionEnd(element.id, handleId);
-    }
   };
 
   useEffect(() => {
@@ -152,7 +117,6 @@ export const FunnelSchemaNode = memo(({ element, position, onPositionChange, onC
                   type="target"
                   position="left"
                   className="justify-start"
-                  onMouseUp={handleHandleMouseUp(`${element.id}-${entry.title}-target`, 'target')}
                 />
               </DatabaseSchemaTableCell>
               <DatabaseSchemaTableCell className="pr-4 text-muted-foreground">
@@ -163,7 +127,6 @@ export const FunnelSchemaNode = memo(({ element, position, onPositionChange, onC
                   position="right"
                   className="justify-end"
                   labelClassName="text-right"
-                  onMouseDown={handleHandleMouseDown(`${element.id}-${entry.title}-source`, 'source')}
                 />
               </DatabaseSchemaTableCell>
             </DatabaseSchemaTableRow>

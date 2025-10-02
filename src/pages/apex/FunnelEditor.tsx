@@ -26,9 +26,6 @@ export default function FunnelEditor() {
   const [connections, setConnections] = useState<FunnelConnectionType[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [isConnecting, setIsConnecting] = useState(false);
-  const [connectionStart, setConnectionStart] = useState<{ elementId: string; handleId: string; position: { x: number; y: number } } | null>(null);
-  const [tempConnectionEnd, setTempConnectionEnd] = useState<{ x: number; y: number } | null>(null);
 
   // Get current project
   const currentProject = projects.find(p => p.id === id);
@@ -105,55 +102,6 @@ export default function FunnelEditor() {
     // Save position to database with debounce to avoid too many requests
     debouncedSavePosition(elementId, newPosition);
   };
-  const handleConnectionStart = (elementId: string, handleId: string, position: { x: number; y: number }) => {
-    setIsConnecting(true);
-    setConnectionStart({ elementId, handleId, position });
-    setTempConnectionEnd(position);
-  };
-
-  const handleConnectionMove = (e: React.MouseEvent) => {
-    if (!isConnecting || !connectionStart) return;
-    
-    const canvas = e.currentTarget;
-    const rect = canvas.getBoundingClientRect();
-    setTempConnectionEnd({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
-    });
-  };
-
-  const handleConnectionEnd = (targetElementId: string, targetHandleId: string) => {
-    if (!connectionStart) return;
-
-    const newConnection: FunnelConnectionType = {
-      from: `${connectionStart.elementId}-${connectionStart.handleId}`,
-      to: `${targetElementId}-${targetHandleId}`
-    };
-
-    setConnections(prev => [...prev, newConnection]);
-    setIsConnecting(false);
-    setConnectionStart(null);
-    setTempConnectionEnd(null);
-  };
-
-  const handleConnectionCancel = () => {
-    setIsConnecting(false);
-    setConnectionStart(null);
-    setTempConnectionEnd(null);
-  };
-
-  const getHandlePosition = (elementId: string, handleId: string): { x: number; y: number } | null => {
-    const element = funnelElements.find(el => el.id === elementId);
-    if (!element) return null;
-
-    // Approximate handle position based on element position
-    const isSource = handleId.includes('-source');
-    return {
-      x: element.position.x + (isSource ? 250 : 0),
-      y: element.position.y + 60
-    };
-  };
-
   const handleSave = async () => {
     if (!id || !funnelId) {
       console.error('No project ID or funnel ID provided');
@@ -236,67 +184,21 @@ export default function FunnelEditor() {
           </div>
         </CardHeader>
         <CardContent>
-          <div 
-            className="relative bg-muted/20 rounded-lg p-8 min-h-[600px] w-full overflow-auto"
-            onMouseMove={handleConnectionMove}
-            onMouseUp={handleConnectionCancel}
-          >
+          <div className="relative bg-muted/20 rounded-lg p-8 min-h-[600px] w-full overflow-auto">
             {funnelElements.length === 0 ? (
               <EmptyCanvas onAddElement={() => setShowAddDialog(true)} />
             ) : (
               <div className="relative w-full h-full min-w-[1200px] min-h-[500px]">
-                <svg className="absolute inset-0 w-full h-full pointer-events-none" style={{ zIndex: 1 }}>
-                  <defs>
-                    <marker
-                      id="arrowhead"
-                      markerWidth="10"
-                      markerHeight="10"
-                      refX="9"
-                      refY="3"
-                      orient="auto"
-                    >
-                      <polygon points="0 0, 10 3, 0 6" fill="hsl(var(--primary))" />
-                    </marker>
-                  </defs>
-                  
-                  {/* Render existing connections */}
-                  {connections.map((conn, index) => {
-                    const fromPos = getHandlePosition(conn.from.split('-')[0], conn.from);
-                    const toPos = getHandlePosition(conn.to.split('-')[0], conn.to);
-                    
-                    if (!fromPos || !toPos) return null;
-                    
-                    return (
-                      <FunnelConnection
-                        key={index}
-                        from={fromPos}
-                        to={toPos}
-                      />
-                    );
-                  })}
-                  
-                  {/* Render temporary connection while dragging */}
-                  {isConnecting && connectionStart && tempConnectionEnd && (
-                    <FunnelConnection
-                      from={connectionStart.position}
-                      to={tempConnectionEnd}
-                    />
-                  )}
-                </svg>
-                
-                <div className="absolute top-2 left-2 text-xs text-muted-foreground bg-background/80 px-2 py-1 rounded" style={{ zIndex: 2 }}>
-                  Elementos: {funnelElements.length} | Conexões: {connections.length}
+                <div className="absolute top-2 left-2 text-xs text-muted-foreground bg-background/80 px-2 py-1 rounded">
+                  Elementos: {funnelElements.length}
                 </div>
-                
                 {/* Render Funnel Elements */}
                 {funnelElements.map(element => (
                   <FunnelSchemaNode 
                     key={element.id} 
                     element={element} 
                     position={element.position} 
-                    onPositionChange={handleElementPositionChange}
-                    onConnectionStart={handleConnectionStart}
-                    onConnectionEnd={handleConnectionEnd}
+                    onPositionChange={handleElementPositionChange} 
                   />
                 ))}
               </div>
