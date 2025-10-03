@@ -1,4 +1,4 @@
-export interface FunnelElement extends Record<string, unknown> {
+export interface FunnelElement {
   id: string;
   type: string;
   icon: any;

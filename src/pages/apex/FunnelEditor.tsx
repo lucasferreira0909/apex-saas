@@ -3,67 +3,42 @@ import { useParams } from "react-router-dom";
 import { useProjects } from "@/hooks/useProjects";
 import { useFunnelElements } from "@/hooks/useFunnelElements";
 import { useFunnelProject } from "@/hooks/useFunnelProject";
+import { useDebounce } from "@/hooks/useDebounce";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Save, ArrowLeft, Plus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Save, ArrowLeft, Settings, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
+import { FunnelSchemaNode } from "@/components/apex/FunnelSchemaNode";
+import { FunnelConnection } from "@/components/apex/FunnelConnection";
 import { AddElementDialog, ElementType } from "@/components/apex/AddElementDialog";
 import { EmptyCanvas } from "@/components/apex/EmptyCanvas";
-import { FunnelElement } from "@/types/funnel";
-import { 
-  ReactFlow,
-  Node, 
-  Edge, 
-  Connection, 
-  useNodesState, 
-  useEdgesState, 
-  addEdge,
-  Controls,
-  Background,
-  MiniMap,
-  ConnectionLineType,
-  MarkerType
-} from '@xyflow/react';
-import '@xyflow/react/dist/style.css';
-import { FunnelFlowNode } from '@/components/apex/FunnelFlowNode';
-import CustomConnectionLine from '@/components/apex/CustomConnectionLine';
-const nodeTypes = {
-  funnelNode: FunnelFlowNode,
-};
-
+import { FunnelElement, FunnelConnection as FunnelConnectionType } from "@/types/funnel";
 export default function FunnelEditor() {
   const { id } = useParams();
   const { updateProject, projects } = useProjects();
+  // Get the funnel ID based on the project ID
   const { funnelId, loading: funnelLoading } = useFunnelProject(id);
   const { elements, loading: elementsLoading, saveAllElements, saveElement } = useFunnelElements(funnelId || undefined);
   const [isSaved, setIsSaved] = useState(false);
   const [showExitButton, setShowExitButton] = useState(false);
   const [funnelElements, setFunnelElements] = useState<FunnelElement[]>([]);
+  const [connections, setConnections] = useState<FunnelConnectionType[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  
-  // React Flow states
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
   // Get current project
   const currentProject = projects.find(p => p.id === id);
 
-  // Convert funnel elements to React Flow nodes
+  // Load elements from database when they're fetched
   useEffect(() => {
     if (!elementsLoading && !funnelLoading) {
+      console.log('Loading elements from DB:', elements);
+      console.log('Elements positions:', elements.map(e => ({ id: e.id, type: e.type, position: e.position })));
+      console.log('Funnel ID:', funnelId);
       setFunnelElements(elements);
-      
-      const flowNodes: Node[] = elements.map(element => ({
-        id: element.id,
-        type: 'funnelNode',
-        position: element.position,
-        data: element,
-      }));
-      
-      setNodes(flowNodes);
     }
-  }, [elements, elementsLoading, funnelLoading, setNodes]);
+  }, [elements, elementsLoading, funnelLoading, funnelId]);
   const generateUniqueId = () => crypto.randomUUID();
   const findOptimalPosition = () => {
     // Only calculate positions for NEW elements, not existing ones
@@ -80,6 +55,8 @@ export default function FunnelEditor() {
   };
   const handleAddElement = (elementType: ElementType) => {
     const position = findOptimalPosition();
+    console.log('Adding element:', elementType);
+    console.log('New element position:', position);
     
     const newElement: FunnelElement = {
       id: generateUniqueId(),
@@ -90,41 +67,41 @@ export default function FunnelEditor() {
       stats: {}
     };
     
-    setFunnelElements(prev => [...prev, newElement]);
-    
-    // Add to React Flow nodes
-    const newNode: Node = {
-      id: newElement.id,
-      type: 'funnelNode',
-      position: newElement.position,
-      data: newElement,
-    };
-    
-    setNodes(prev => [...prev, newNode]);
+    console.log('New element created:', newElement);
+    setFunnelElements(prev => {
+      const updated = [...prev, newElement];
+      console.log('Updated elements array:', updated);
+      return updated;
+    });
     setShowAddDialog(false);
   };
-  
-  // Handle connections between nodes
-  const onConnect = useCallback((connection: Connection) => {
-    setEdges((eds) => addEdge({
-      ...connection,
-      type: 'smoothstep',
-      animated: true,
-      style: { stroke: '#D4A574', strokeWidth: 2 },
-      markerEnd: { type: MarkerType.ArrowClosed, color: '#D4A574' },
-    }, eds));
-  }, [setEdges]);
-  // Handle node position changes
-  const onNodeDragStop = useCallback((_event: any, node: Node) => {
-    const elementToUpdate = funnelElements.find(el => el.id === node.id);
-    if (elementToUpdate && funnelId) {
-      const updatedElement = { ...elementToUpdate, position: node.position };
-      saveElement(updatedElement);
-      setFunnelElements(prev => prev.map(el => 
-        el.id === node.id ? updatedElement : el
-      ));
+  // Debounced function to save position to database
+  const savePositionToDatabase = useCallback(async (elementId: string, newPosition: { x: number; y: number }) => {
+    try {
+      const elementToUpdate = funnelElements.find(el => el.id === elementId);
+      if (elementToUpdate && funnelId) {
+        const updatedElement = { ...elementToUpdate, position: newPosition };
+        await saveElement(updatedElement);
+        console.log('Position saved to database:', { elementId, newPosition });
+      }
+    } catch (error) {
+      console.error('Error saving position:', error);
     }
   }, [funnelElements, funnelId, saveElement]);
+
+  const debouncedSavePosition = useDebounce(savePositionToDatabase, 500);
+
+  const handleElementPositionChange = (elementId: string, newPosition: { x: number; y: number }) => {
+    console.log('Position change:', { elementId, newPosition });
+    
+    // Update local state immediately for smooth UX
+    setFunnelElements(prev => prev.map(element => 
+      element.id === elementId ? { ...element, position: newPosition } : element
+    ));
+
+    // Save position to database with debounce to avoid too many requests
+    debouncedSavePosition(elementId, newPosition);
+  };
   const handleSave = async () => {
     if (!id || !funnelId) {
       console.error('No project ID or funnel ID provided');
@@ -206,35 +183,27 @@ export default function FunnelEditor() {
             </Button>
           </div>
         </CardHeader>
-        <CardContent className="p-0">
-          {funnelElements.length === 0 ? (
-            <div className="p-8">
+        <CardContent>
+          <div className="relative bg-muted/20 rounded-lg p-8 min-h-[600px] w-full overflow-auto">
+            {funnelElements.length === 0 ? (
               <EmptyCanvas onAddElement={() => setShowAddDialog(true)} />
-            </div>
-          ) : (
-            <div className="h-[600px] w-full">
-              <ReactFlow
-                nodes={nodes}
-                edges={edges}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onConnect={onConnect}
-                onNodeDragStop={onNodeDragStop}
-                nodeTypes={nodeTypes}
-                connectionLineComponent={CustomConnectionLine}
-                connectionLineType={ConnectionLineType.SmoothStep}
-                fitView
-                className="bg-muted/20"
-              >
-                <Background />
-                <Controls />
-                <MiniMap 
-                  nodeColor="#D4A574"
-                  maskColor="rgb(0, 0, 0, 0.1)"
-                />
-              </ReactFlow>
-            </div>
-          )}
+            ) : (
+              <div className="relative w-full h-full min-w-[1200px] min-h-[500px]">
+                <div className="absolute top-2 left-2 text-xs text-muted-foreground bg-background/80 px-2 py-1 rounded">
+                  Elementos: {funnelElements.length}
+                </div>
+                {/* Render Funnel Elements */}
+                {funnelElements.map(element => (
+                  <FunnelSchemaNode 
+                    key={element.id} 
+                    element={element} 
+                    position={element.position} 
+                    onPositionChange={handleElementPositionChange} 
+                  />
+                ))}
+              </div>
+            )}
+          </div>
         </CardContent>
       </Card>
 
