@@ -9,14 +9,6 @@ import {
 } from "@/components/apex/DatabaseSchemaNode";
 import { FunnelElement } from "@/types/funnel";
 
-// Simulating Position enum since we're not using @xyflow/react
-const Position = {
-  Left: "left" as const,
-  Right: "right" as const,
-  Top: "top" as const,
-  Bottom: "bottom" as const,
-};
-
 interface FunnelSchemaNodeProps {
   element: FunnelElement;
   position: { x: number; y: number };
@@ -84,6 +76,7 @@ export const FunnelSchemaNode = memo(({ element, position, onPositionChange }: F
   const getElementSchema = () => {
     const baseSchema = [
       { title: "Status", type: element.configured ? "Configurado" : "Pendente" },
+      { title: "Tipo", type: element.type },
     ];
 
     // Add stats if available
@@ -117,23 +110,23 @@ export const FunnelSchemaNode = memo(({ element, position, onPositionChange }: F
         <DatabaseSchemaNodeBody>
           {schema.map((entry, index) => (
             <DatabaseSchemaTableRow key={index}>
-              <DatabaseSchemaTableCell className="pl-0 pr-6 font-light">
+              <DatabaseSchemaTableCell className="pl-4 pr-6 font-medium">
                 <LabeledHandle
                   id={`${element.id}-${entry.title}-target`}
                   title={entry.title}
                   type="target"
-                  position={Position.Left}
+                  position="left"
+                  className="justify-start"
                 />
               </DatabaseSchemaTableCell>
-              <DatabaseSchemaTableCell className="pr-0 font-thin">
+              <DatabaseSchemaTableCell className="pr-4 text-muted-foreground">
                 <LabeledHandle
                   id={`${element.id}-${entry.title}-source`}
                   title={entry.type}
                   type="source"
-                  position={Position.Right}
-                  className="p-0"
-                  handleClassName="p-0"
-                  labelClassName="p-0 w-full pr-3 text-right"
+                  position="right"
+                  className="justify-end"
+                  labelClassName="text-right"
                 />
               </DatabaseSchemaTableCell>
             </DatabaseSchemaTableRow>
