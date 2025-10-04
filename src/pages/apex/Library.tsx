@@ -267,7 +267,7 @@ export default function Library() {
                     <TableHead>Nome</TableHead>
                     <TableHead>Status</TableHead>
                     <TableHead>Tipo</TableHead>
-                    <TableHead>Pasta</TableHead>
+                    
                     <TableHead>Atualizado</TableHead>
                     <TableHead className="text-right">Ações</TableHead>
                   </TableRow>
@@ -278,7 +278,7 @@ export default function Library() {
                       <TableCell className="font-medium">{project.name}</TableCell>
                       <TableCell>{getStatusBadge(project.status)}</TableCell>
                       <TableCell className="capitalize">{project.type}</TableCell>
-                      <TableCell>{project.folder || "Sem pasta"}</TableCell>
+                      
                       <TableCell>{new Date(project.updated).toLocaleDateString('pt-BR')}</TableCell>
                       <TableCell className="text-right">
                         <DropdownMenu>
