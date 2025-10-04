@@ -188,17 +188,13 @@ export default function FunnelEditor() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="relative bg-muted/20 rounded-lg min-h-[600px] w-full">
-            {nodes.length === 0 ? (
-              <EmptyCanvas onAddElement={() => setShowAddDialog(true)} />
-            ) : (
-              <FlowCanvas
-                initialNodes={nodes}
-                initialEdges={edges}
-                onNodesChange={handleNodesChange}
-                onEdgesChange={handleEdgesChange}
-              />
-            )}
+          <div className="relative bg-muted/20 rounded-lg h-[600px] w-full">
+            <FlowCanvas
+              initialNodes={nodes}
+              initialEdges={edges}
+              onNodesChange={handleNodesChange}
+              onEdgesChange={handleEdgesChange}
+            />
           </div>
         </CardContent>
       </Card>

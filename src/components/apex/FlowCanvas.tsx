@@ -97,7 +97,7 @@ export function FlowCanvas({
   );
 
   return (
-    <div className="w-full h-full">
+    <div className="w-full h-full min-h-[600px]">
       <ReactFlow
         nodes={nodes}
         edges={edges}
