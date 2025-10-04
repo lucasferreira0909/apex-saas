@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Handle, Position } from "@xyflow/react";
 import { cn } from "@/lib/utils";
 
 interface LabeledHandleProps extends React.HTMLAttributes<HTMLDivElement> {
@@ -10,29 +11,31 @@ interface LabeledHandleProps extends React.HTMLAttributes<HTMLDivElement> {
   labelClassName?: string;
 }
 
+const positionMap = {
+  left: Position.Left,
+  right: Position.Right,
+  top: Position.Top,
+  bottom: Position.Bottom,
+};
+
 export const LabeledHandle = React.forwardRef<HTMLDivElement, LabeledHandleProps>(
   ({ id, title, type, position, className, handleClassName, labelClassName, ...props }, ref) => {
-    const positionClass = {
-      left: "left-0 -translate-x-1/2",
-      right: "right-0 translate-x-1/2",
-      top: "top-0 -translate-y-1/2",
-      bottom: "bottom-0 translate-y-1/2"
-    }[position];
-
     return (
       <div
         ref={ref}
-        className={cn("flex items-center gap-2", className)}
+        className={cn("flex items-center gap-2 relative", className)}
         {...props}
       >
-        <div
+        <Handle
+          type={type}
+          position={positionMap[position]}
+          id={id}
           className={cn(
-            "relative h-3 w-3 rounded-full border-2 border-primary bg-background",
-            positionClass,
+            "!h-3 !w-3 !rounded-full !border-2 !bg-background",
+            "!border-[hsl(var(--chart-1))]",
             handleClassName
           )}
-          data-handleid={id}
-          data-handletype={type}
+          style={{ position: 'relative', transform: 'none', left: 0, right: 0, top: 0, bottom: 0 }}
         />
         <span className={cn("text-xs", labelClassName)}>{title}</span>
       </div>
