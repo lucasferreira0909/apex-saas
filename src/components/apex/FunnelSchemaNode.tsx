@@ -1,4 +1,5 @@
 import { memo, useRef, useState, useEffect } from "react";
+import { Position } from "@xyflow/react";
 import { LabeledHandle } from "@/components/apex/LabeledHandle";
 import {
   DatabaseSchemaNode,
@@ -111,20 +112,20 @@ export const FunnelSchemaNode = memo(({ element, position, onPositionChange }: F
           {schema.map((entry, index) => (
             <DatabaseSchemaTableRow key={index}>
               <DatabaseSchemaTableCell className="pl-4 pr-6 font-medium">
-                <LabeledHandle
+              <LabeledHandle
                   id={`${element.id}-${entry.title}-target`}
                   title={entry.title}
                   type="target"
-                  position="left"
+                  position={Position.Left}
                   className="justify-start"
                 />
               </DatabaseSchemaTableCell>
               <DatabaseSchemaTableCell className="pr-4 text-muted-foreground">
-                <LabeledHandle
+              <LabeledHandle
                   id={`${element.id}-${entry.title}-source`}
                   title={entry.type}
                   type="source"
-                  position="right"
+                  position={Position.Right}
                   className="justify-end"
                   labelClassName="text-right"
                 />

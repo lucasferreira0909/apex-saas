@@ -8,7 +8,7 @@ const DatabaseSchemaNode = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-lg border bg-card text-card-foreground shadow-sm min-w-[200px]",
+      "rounded-lg border-2 border-primary bg-card text-card-foreground shadow-lg min-w-[240px]",
       className
     )}
     {...props}
@@ -23,7 +23,7 @@ const DatabaseSchemaNodeHeader = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "flex flex-col space-y-1.5 p-4 bg-primary text-primary-foreground rounded-t-lg font-semibold",
+      "flex items-center gap-2 p-3 bg-primary text-primary-foreground font-semibold border-b-2 border-primary rounded-t-md",
       className
     )}
     {...props}
@@ -37,7 +37,7 @@ const DatabaseSchemaNodeBody = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("p-0", className)}
+    className={cn("divide-y divide-border", className)}
     {...props}
   />
 ));
@@ -49,10 +49,7 @@ const DatabaseSchemaTableRow = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn(
-      "flex items-center border-b last:border-b-0 hover:bg-muted/50 transition-colors",
-      className
-    )}
+    className={cn("flex items-center gap-2 p-2 hover:bg-accent/50 transition-colors", className)}
     {...props}
   />
 ));
@@ -64,7 +61,7 @@ const DatabaseSchemaTableCell = React.forwardRef<
 >(({ className, ...props }, ref) => (
   <div
     ref={ref}
-    className={cn("p-3 text-sm", className)}
+    className={cn("flex items-center text-sm", className)}
     {...props}
   />
 ));

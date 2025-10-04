@@ -5,7 +5,7 @@ import { FunnelElement } from '@/types/funnel';
 import { Megaphone, FileText, MousePointer, ShoppingCart, CreditCard, TrendingUp, TrendingDown, Video, Users, ThumbsUp, MessageSquare, Target, HelpCircle, Gift, Star, Play, Tag } from "lucide-react";
 
 // Map element types to their corresponding icons
-const getElementIcon = (elementType: string) => {
+export const getElementIcon = (elementType: string) => {
   const iconMap: Record<string, any> = {
     "Anúncio": Megaphone,
     "Presell": FileText,

@@ -3,105 +3,108 @@ import { useParams } from "react-router-dom";
 import { useProjects } from "@/hooks/useProjects";
 import { useFunnelElements } from "@/hooks/useFunnelElements";
 import { useFunnelProject } from "@/hooks/useFunnelProject";
-import { useDebounce } from "@/hooks/useDebounce";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Save, ArrowLeft, Settings, Plus } from "lucide-react";
+import { Save, ArrowLeft, Plus } from "lucide-react";
 import { Link } from "react-router-dom";
-import { FunnelSchemaNode } from "@/components/apex/FunnelSchemaNode";
-import { FunnelConnection } from "@/components/apex/FunnelConnection";
 import { AddElementDialog, ElementType } from "@/components/apex/AddElementDialog";
 import { EmptyCanvas } from "@/components/apex/EmptyCanvas";
-import { FunnelElement, FunnelConnection as FunnelConnectionType } from "@/types/funnel";
+import { FlowCanvas } from "@/components/apex/FlowCanvas";
+import { FunnelElement } from "@/types/funnel";
+import { Node, Edge } from "@xyflow/react";
+import { getElementIcon } from "@/hooks/useFunnelElements";
+
 export default function FunnelEditor() {
   const { id } = useParams();
   const { updateProject, projects } = useProjects();
-  // Get the funnel ID based on the project ID
   const { funnelId, loading: funnelLoading } = useFunnelProject(id);
-  const { elements, loading: elementsLoading, saveAllElements, saveElement } = useFunnelElements(funnelId || undefined);
+  const { elements, loading: elementsLoading, saveAllElements } = useFunnelElements(funnelId || undefined);
   const [isSaved, setIsSaved] = useState(false);
   const [showExitButton, setShowExitButton] = useState(false);
-  const [funnelElements, setFunnelElements] = useState<FunnelElement[]>([]);
-  const [connections, setConnections] = useState<FunnelConnectionType[]>([]);
+  const [nodes, setNodes] = useState<Node[]>([]);
+  const [edges, setEdges] = useState<Edge[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
-  // Get current project
   const currentProject = projects.find(p => p.id === id);
 
-  // Load elements from database when they're fetched
+  // Convert FunnelElements to ReactFlow Nodes
+  const elementsToNodes = useCallback((elements: FunnelElement[]): Node[] => {
+    return elements.map(element => ({
+      id: element.id,
+      type: 'funnelNode',
+      position: element.position,
+      data: {
+        label: element.type,
+        icon: element.icon,
+        configured: element.configured,
+        stats: element.stats,
+      },
+    }));
+  }, []);
+
+  // Convert ReactFlow Nodes to FunnelElements
+  const nodesToElements = useCallback((nodes: Node[]): FunnelElement[] => {
+    return nodes.map(node => ({
+      id: node.id,
+      type: node.data.label as string,
+      icon: node.data.icon,
+      position: node.position,
+      configured: node.data.configured as boolean,
+      stats: node.data.stats as Record<string, string | number>,
+    }));
+  }, []);
+
+  // Load elements from database
   useEffect(() => {
-    if (!elementsLoading && !funnelLoading) {
+    if (!elementsLoading && !funnelLoading && elements.length > 0) {
       console.log('Loading elements from DB:', elements);
-      console.log('Elements positions:', elements.map(e => ({ id: e.id, type: e.type, position: e.position })));
-      console.log('Funnel ID:', funnelId);
-      setFunnelElements(elements);
+      const convertedNodes = elementsToNodes(elements);
+      setNodes(convertedNodes);
+      // TODO: Load edges from database if stored
+      setEdges([]);
     }
-  }, [elements, elementsLoading, funnelLoading, funnelId]);
+  }, [elements, elementsLoading, funnelLoading, elementsToNodes]);
+
   const generateUniqueId = () => crypto.randomUUID();
+
   const findOptimalPosition = () => {
-    // Only calculate positions for NEW elements, not existing ones
-    if (funnelElements.length === 0) {
+    if (nodes.length === 0) {
       return { x: 50, y: 50 };
     }
-
-    // Simple positioning logic: place new elements to the right
-    const lastElement = funnelElements[funnelElements.length - 1];
+    const lastNode = nodes[nodes.length - 1];
     return {
-      x: lastElement.position.x + 280,
-      y: lastElement.position.y
+      x: lastNode.position.x + 300,
+      y: lastNode.position.y
     };
   };
+
   const handleAddElement = (elementType: ElementType) => {
     const position = findOptimalPosition();
-    console.log('Adding element:', elementType);
-    console.log('New element position:', position);
-    
-    const newElement: FunnelElement = {
+    const newNode: Node = {
       id: generateUniqueId(),
-      type: elementType.name,
-      icon: elementType.icon,
+      type: 'funnelNode',
       position,
-      configured: false,
-      stats: {}
+      data: {
+        label: elementType.name,
+        icon: elementType.icon,
+        configured: false,
+        stats: {},
+      },
     };
     
-    console.log('New element created:', newElement);
-    setFunnelElements(prev => {
-      const updated = [...prev, newElement];
-      console.log('Updated elements array:', updated);
-      return updated;
-    });
+    setNodes(prev => [...prev, newNode]);
     setShowAddDialog(false);
   };
-  // Debounced function to save position to database
-  const savePositionToDatabase = useCallback(async (elementId: string, newPosition: { x: number; y: number }) => {
-    try {
-      const elementToUpdate = funnelElements.find(el => el.id === elementId);
-      if (elementToUpdate && funnelId) {
-        const updatedElement = { ...elementToUpdate, position: newPosition };
-        await saveElement(updatedElement);
-        console.log('Position saved to database:', { elementId, newPosition });
-      }
-    } catch (error) {
-      console.error('Error saving position:', error);
-    }
-  }, [funnelElements, funnelId, saveElement]);
 
-  const debouncedSavePosition = useDebounce(savePositionToDatabase, 500);
+  const handleNodesChange = useCallback((updatedNodes: Node[]) => {
+    setNodes(updatedNodes);
+  }, []);
 
-  const handleElementPositionChange = (elementId: string, newPosition: { x: number; y: number }) => {
-    console.log('Position change:', { elementId, newPosition });
-    
-    // Update local state immediately for smooth UX
-    setFunnelElements(prev => prev.map(element => 
-      element.id === elementId ? { ...element, position: newPosition } : element
-    ));
+  const handleEdgesChange = useCallback((updatedEdges: Edge[]) => {
+    setEdges(updatedEdges);
+  }, []);
 
-    // Save position to database with debounce to avoid too many requests
-    debouncedSavePosition(elementId, newPosition);
-  };
   const handleSave = async () => {
     if (!id || !funnelId) {
       console.error('No project ID or funnel ID provided');
@@ -110,19 +113,19 @@ export default function FunnelEditor() {
 
     setIsLoading(true);
     try {
+      // Convert nodes back to FunnelElements
+      const funnelElements = nodesToElements(nodes);
       console.log('Saving elements:', funnelElements);
       
-      // Save elements to database
       await saveAllElements(funnelElements);
       
-      // Update project status when saving
       await updateProject(id, { 
         status: 'active',
         stats: {
           conversion: "0%",
           visitors: "0", 
           revenue: "R$ 0",
-          elements: funnelElements.length.toString()
+          elements: nodes.length.toString()
         }
       });
       
@@ -135,7 +138,9 @@ export default function FunnelEditor() {
       setIsLoading(false);
     }
   };
-  return <div className="space-y-6">
+
+  return (
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -146,13 +151,10 @@ export default function FunnelEditor() {
           </Link>
           <div>
             <h1 className="text-2xl font-bold text-foreground">Editor de Funis</h1>
-            
           </div>
-          
         </div>
         
         <div className="flex items-center space-x-2">
-          
           <Button 
             onClick={handleSave} 
             className={isSaved ? "bg-success" : ""} 
@@ -161,11 +163,13 @@ export default function FunnelEditor() {
             <Save className="mr-2 h-4 w-4" />
             {isLoading ? "Salvando..." : isSaved ? "Salvo" : "Salvar"}
           </Button>
-          {showExitButton && <Link to="/funnels">
+          {showExitButton && (
+            <Link to="/funnels">
               <Button variant="secondary">
                 Sair do Projeto
               </Button>
-            </Link>}
+            </Link>
+          )}
         </div>
       </div>
 
@@ -184,24 +188,16 @@ export default function FunnelEditor() {
           </div>
         </CardHeader>
         <CardContent>
-          <div className="relative bg-muted/20 rounded-lg p-8 min-h-[600px] w-full overflow-auto">
-            {funnelElements.length === 0 ? (
+          <div className="relative bg-muted/20 rounded-lg min-h-[600px] w-full">
+            {nodes.length === 0 ? (
               <EmptyCanvas onAddElement={() => setShowAddDialog(true)} />
             ) : (
-              <div className="relative w-full h-full min-w-[1200px] min-h-[500px]">
-                <div className="absolute top-2 left-2 text-xs text-muted-foreground bg-background/80 px-2 py-1 rounded">
-                  Elementos: {funnelElements.length}
-                </div>
-                {/* Render Funnel Elements */}
-                {funnelElements.map(element => (
-                  <FunnelSchemaNode 
-                    key={element.id} 
-                    element={element} 
-                    position={element.position} 
-                    onPositionChange={handleElementPositionChange} 
-                  />
-                ))}
-              </div>
+              <FlowCanvas
+                initialNodes={nodes}
+                initialEdges={edges}
+                onNodesChange={handleNodesChange}
+                onEdgesChange={handleEdgesChange}
+              />
             )}
           </div>
         </CardContent>
@@ -214,5 +210,6 @@ export default function FunnelEditor() {
         onAddElement={handleAddElement}
         templateType={currentProject?.templateType || null}
       />
-    </div>;
+    </div>
+  );
 }

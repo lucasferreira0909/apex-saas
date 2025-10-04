@@ -1,43 +1,44 @@
-import * as React from "react";
+import { Handle, HandleProps, Position } from "@xyflow/react";
 import { cn } from "@/lib/utils";
 
-interface LabeledHandleProps extends React.HTMLAttributes<HTMLDivElement> {
-  id: string;
+interface LabeledHandleProps extends HandleProps {
   title: string;
-  type: "source" | "target";
-  position: "left" | "right" | "top" | "bottom";
+  className?: string;
   handleClassName?: string;
   labelClassName?: string;
 }
 
-export const LabeledHandle = React.forwardRef<HTMLDivElement, LabeledHandleProps>(
-  ({ id, title, type, position, className, handleClassName, labelClassName, ...props }, ref) => {
-    const positionClass = {
-      left: "left-0 -translate-x-1/2",
-      right: "right-0 translate-x-1/2",
-      top: "top-0 -translate-y-1/2",
-      bottom: "bottom-0 translate-y-1/2"
-    }[position];
-
-    return (
-      <div
-        ref={ref}
-        className={cn("flex items-center gap-2", className)}
-        {...props}
-      >
-        <div
+export function LabeledHandle({
+  title,
+  className,
+  handleClassName,
+  labelClassName,
+  position,
+  ...props
+}: LabeledHandleProps) {
+  return (
+    <div className={cn("flex items-center gap-2", className)}>
+      {position === Position.Left && (
+        <Handle
+          position={position}
+          {...props}
           className={cn(
-            "relative h-3 w-3 rounded-full border-2 border-primary bg-background",
-            positionClass,
+            "!w-3 !h-3 !border-2 !border-primary !bg-background hover:!scale-125 transition-transform",
             handleClassName
           )}
-          data-handleid={id}
-          data-handletype={type}
         />
-        <span className={cn("text-xs", labelClassName)}>{title}</span>
-      </div>
-    );
-  }
-);
-
-LabeledHandle.displayName = "LabeledHandle";
+      )}
+      <span className={cn("text-sm", labelClassName)}>{title}</span>
+      {position === Position.Right && (
+        <Handle
+          position={position}
+          {...props}
+          className={cn(
+            "!w-3 !h-3 !border-2 !border-primary !bg-background hover:!scale-125 transition-transform",
+            handleClassName
+          )}
+        />
+      )}
+    </div>
+  );
+}
