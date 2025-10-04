@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
+import { Edge } from '@xyflow/react';
 
 export function useFunnelProject(projectId?: string) {
   const [funnelId, setFunnelId] = useState<string | null>(null);
@@ -39,9 +40,53 @@ export function useFunnelProject(projectId?: string) {
     fetchFunnelId();
   }, [user, projectId]);
 
+  const saveFlowData = async (edges: Edge[]) => {
+    if (!funnelId) return;
+
+    try {
+      const { error } = await supabase
+        .from('funnels')
+        .update({ flow_data: { edges: JSON.parse(JSON.stringify(edges)) } })
+        .eq('id', funnelId);
+
+      if (error) {
+        console.error('Error saving flow data:', error);
+        throw error;
+      }
+    } catch (error) {
+      console.error('Error in saveFlowData:', error);
+      throw error;
+    }
+  };
+
+  const loadFlowData = async (): Promise<Edge[]> => {
+    if (!funnelId) return [];
+
+    try {
+      const { data, error } = await supabase
+        .from('funnels')
+        .select('flow_data')
+        .eq('id', funnelId)
+        .single();
+
+      if (error) {
+        console.error('Error loading flow data:', error);
+        return [];
+      }
+
+      const flowData = data?.flow_data as { edges?: Edge[] } | null;
+      return flowData?.edges || [];
+    } catch (error) {
+      console.error('Error in loadFlowData:', error);
+      return [];
+    }
+  };
+
   return {
     funnelId,
     loading,
-    refetch: fetchFunnelId
+    refetch: fetchFunnelId,
+    saveFlowData,
+    loadFlowData
   };
 }

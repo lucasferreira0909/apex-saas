@@ -62,6 +62,7 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          flow_data: Json | null
           id: string
           name: string
           project_id: string | null
@@ -71,6 +72,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          flow_data?: Json | null
           id?: string
           name: string
           project_id?: string | null
@@ -80,6 +82,7 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          flow_data?: Json | null
           id?: string
           name?: string
           project_id?: string | null
