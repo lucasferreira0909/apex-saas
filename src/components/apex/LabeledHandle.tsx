@@ -33,9 +33,9 @@ export const LabeledHandle = React.forwardRef<HTMLDivElement, LabeledHandleProps
           className={cn(
             "!h-3 !w-3 !rounded-full !border-2 !bg-background",
             "!border-[hsl(var(--chart-1))]",
+            "hover:!scale-125 transition-transform",
             handleClassName
           )}
-          style={{ position: 'relative', transform: 'none', left: 0, right: 0, top: 0, bottom: 0 }}
         />
         <span className={cn("text-xs", labelClassName)}>{title}</span>
       </div>

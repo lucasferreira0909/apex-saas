@@ -99,9 +99,16 @@ export default function FunnelEditor() {
       const newEdge: Edge = {
         ...connection,
         id: `e${connection.source}-${connection.target}`,
-        type: 'smoothstep',
+        type: 'default',
         animated: true,
-        style: { stroke: 'hsl(var(--chart-1))', strokeWidth: 2 },
+        style: { 
+          stroke: 'hsl(var(--chart-1))', 
+          strokeWidth: 2,
+        },
+        markerEnd: {
+          type: 'arrowclosed',
+          color: 'hsl(var(--chart-1))',
+        },
       };
       setEdges((eds) => addEdge(newEdge, eds));
       setIsSaved(false);
@@ -252,6 +259,12 @@ export default function FunnelEditor() {
                   nodeTypes={nodeTypes}
                   fitView
                   className="bg-background"
+                  connectionLineStyle={{ stroke: 'hsl(var(--chart-1))', strokeWidth: 2 }}
+                  defaultEdgeOptions={{
+                    type: 'default',
+                    animated: true,
+                    style: { stroke: 'hsl(var(--chart-1))', strokeWidth: 2 },
+                  }}
                 >
                   <Background 
                     variant={BackgroundVariant.Dots}
