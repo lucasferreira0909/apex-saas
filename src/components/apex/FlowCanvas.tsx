@@ -47,6 +47,14 @@ export function FlowCanvas({
 
   const onConnect = useCallback(
     (connection: Connection) => {
+      // Validar se a conexão é válida
+      if (!connection.source || !connection.target) {
+        console.error('Conexão inválida: faltam source ou target', connection);
+        return;
+      }
+
+      console.log('Conectando:', connection);
+      
       const newEdges = addEdge(
         {
           ...connection,
