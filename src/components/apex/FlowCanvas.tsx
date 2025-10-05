@@ -36,15 +36,6 @@ export function FlowCanvas({
   const [nodes, setNodes, onNodesChangeInternal] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChangeInternal] = useEdgesState(initialEdges);
 
-  // Sync with external state changes
-  useEffect(() => {
-    setNodes(initialNodes);
-  }, [initialNodes, setNodes]);
-
-  useEffect(() => {
-    setEdges(initialEdges);
-  }, [initialEdges, setEdges]);
-
   const onConnect = useCallback(
     (connection: Connection) => {
       // Validar se a conexão é válida
@@ -83,13 +74,12 @@ export function FlowCanvas({
   const handleNodesChange = useCallback(
     (changes: any) => {
       onNodesChangeInternal(changes);
-      // Delay to get updated nodes after internal state change
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         setNodes((currentNodes) => {
           onNodesChange?.(currentNodes);
           return currentNodes;
         });
-      }, 0);
+      });
     },
     [onNodesChangeInternal, onNodesChange, setNodes]
   );
@@ -97,12 +87,12 @@ export function FlowCanvas({
   const handleEdgesChange = useCallback(
     (changes: any) => {
       onEdgesChangeInternal(changes);
-      setTimeout(() => {
+      requestAnimationFrame(() => {
         setEdges((currentEdges) => {
           onEdgesChange?.(currentEdges);
           return currentEdges;
         });
-      }, 0);
+      });
     },
     [onEdgesChangeInternal, onEdgesChange, setEdges]
   );
