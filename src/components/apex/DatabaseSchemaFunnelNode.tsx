@@ -17,21 +17,29 @@ export type DatabaseSchemaFunnelNodeData = {
   stats: Record<string, string | number>;
 };
 
-const DatabaseSchemaFunnelNode = memo((props: NodeProps) => {
-  const data = props.data as DatabaseSchemaFunnelNodeData;
-  const Icon = data?.icon;
-  const statsEntries = Object.entries(data?.stats || {});
+const DatabaseSchemaFunnelNode = memo(({ data, dragging, selected }: NodeProps) => {
+  const nodeData = data as DatabaseSchemaFunnelNodeData;
+  const Icon = nodeData?.icon;
+  const statsEntries = Object.entries(nodeData?.stats || {});
 
   return (
-    <DatabaseSchemaNode className="p-0">
+    <DatabaseSchemaNode 
+      className={`p-0 transition-all duration-200 ${
+        dragging
+          ? "shadow-xl scale-105"
+          : selected
+          ? "shadow-lg"
+          : ""
+      }`}
+    >
       <DatabaseSchemaNodeHeader>
         {Icon && <Icon className="h-5 w-5" />}
-        <span>{data?.label}</span>
+        <span>{nodeData?.label}</span>
         <Badge
-          variant={data?.configured ? "default" : "secondary"}
+          variant={nodeData?.configured ? "default" : "secondary"}
           className="ml-auto text-xs"
         >
-          {data?.configured ? "Configurado" : "Pendente"}
+          {nodeData?.configured ? "Configurado" : "Pendente"}
         </Badge>
       </DatabaseSchemaNodeHeader>
       <DatabaseSchemaNodeBody>
@@ -73,6 +81,12 @@ const DatabaseSchemaFunnelNode = memo((props: NodeProps) => {
           </DatabaseSchemaTableCell>
         </DatabaseSchemaTableRow>
       </DatabaseSchemaNodeBody>
+      
+      {dragging && (
+        <div className="absolute -top-2 -right-2 bg-primary text-primary-foreground text-xs px-2 py-1 rounded-full">
+          Movendo...
+        </div>
+      )}
     </DatabaseSchemaNode>
   );
 });

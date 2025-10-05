@@ -36,7 +36,6 @@ export function FlowCanvas({
   const [nodes, setNodes, onNodesChangeInternal] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChangeInternal] = useEdgesState(initialEdges);
 
-  // Sync with external state changes
   useEffect(() => {
     setNodes(initialNodes);
   }, [initialNodes, setNodes]);
@@ -47,53 +46,52 @@ export function FlowCanvas({
 
   const onConnect = useCallback(
     (connection: Connection) => {
-      const newEdges = addEdge(
-        {
-          ...connection,
-          type: "default",
-          animated: true,
-          style: {
-            stroke: "hsl(var(--primary))",
-            strokeWidth: 2,
+      if (!connection.source || !connection.target) {
+        console.error('Conexão inválida: faltam source ou target', connection);
+        return;
+      }
+
+      console.log('Tentando conectar:', connection);
+      
+      setEdges((currentEdges) => {
+        const newEdges = addEdge(
+          {
+            ...connection,
+            type: "smoothstep",
+            animated: true,
+            style: {
+              stroke: "hsl(var(--primary))",
+              strokeWidth: 2,
+            },
+            markerEnd: {
+              type: "arrowclosed",
+              color: "hsl(var(--primary))",
+            },
           },
-          markerEnd: {
-            type: "arrowclosed",
-            color: "hsl(var(--primary))",
-          },
-        },
-        edges
-      );
-      setEdges(newEdges);
-      onEdgesChange?.(newEdges);
+          currentEdges
+        );
+        console.log('Novas edges após conexão:', newEdges);
+        onEdgesChange?.(newEdges);
+        return newEdges;
+      });
     },
-    [edges, setEdges, onEdgesChange]
+    [setEdges, onEdgesChange]
   );
 
   const handleNodesChange = useCallback(
     (changes: any) => {
       onNodesChangeInternal(changes);
-      // Delay to get updated nodes after internal state change
-      setTimeout(() => {
-        setNodes((currentNodes) => {
-          onNodesChange?.(currentNodes);
-          return currentNodes;
-        });
-      }, 0);
+      onNodesChange?.(nodes);
     },
-    [onNodesChangeInternal, onNodesChange, setNodes]
+    [onNodesChangeInternal, onNodesChange, nodes]
   );
 
   const handleEdgesChange = useCallback(
     (changes: any) => {
       onEdgesChangeInternal(changes);
-      setTimeout(() => {
-        setEdges((currentEdges) => {
-          onEdgesChange?.(currentEdges);
-          return currentEdges;
-        });
-      }, 0);
+      onEdgesChange?.(edges);
     },
-    [onEdgesChangeInternal, onEdgesChange, setEdges]
+    [onEdgesChangeInternal, onEdgesChange, edges]
   );
 
   return (
