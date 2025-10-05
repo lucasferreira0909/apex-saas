@@ -38,7 +38,7 @@ const DatabaseSchemaFunnelNode = memo((props: NodeProps) => {
         <DatabaseSchemaTableRow>
           <DatabaseSchemaTableCell className="pl-0 pr-6 font-light w-full">
             <LabeledHandle
-              id={`${props.id}-input`}
+              id="input"
               title="Entrada"
               type="target"
               position={Position.Left}
@@ -64,7 +64,7 @@ const DatabaseSchemaFunnelNode = memo((props: NodeProps) => {
         <DatabaseSchemaTableRow>
           <DatabaseSchemaTableCell className="pr-0 font-thin w-full justify-end">
             <LabeledHandle
-              id={`${props.id}-output`}
+              id="output"
               title="Saída"
               type="source"
               position={Position.Right}
