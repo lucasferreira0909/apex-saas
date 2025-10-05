@@ -14,37 +14,27 @@ export function LabeledHandle({
   handleClassName,
   labelClassName,
   position,
-  type,
   ...props
 }: LabeledHandleProps) {
-  if (!type) {
-    console.warn('LabeledHandle requer type="source" ou "target"');
-  }
-
-  const isHorizontal = position === Position.Left || position === Position.Right;
-  const flexDir = isHorizontal ? 'flex-row' : 'flex-col';
-
   return (
-    <div className={cn(`flex items-center gap-2 ${flexDir}`, className)}>
-      {(position === Position.Left || position === Position.Top) && (
+    <div className={cn("flex items-center gap-2", className)}>
+      {position === Position.Left && (
         <Handle
-          type={type}
           position={position}
           {...props}
           className={cn(
-            "!w-3 !h-3 !border-2 !border-primary !bg-background",
+            "!w-3 !h-3 !border-2 !border-primary !bg-background hover:!scale-125 transition-transform",
             handleClassName
           )}
         />
       )}
       <span className={cn("text-sm", labelClassName)}>{title}</span>
-      {(position === Position.Right || position === Position.Bottom) && (
+      {position === Position.Right && (
         <Handle
-          type={type}
           position={position}
           {...props}
           className={cn(
-            "!w-3 !h-3 !border-2 !border-primary !bg-background",
+            "!w-3 !h-3 !border-2 !border-primary !bg-background hover:!scale-125 transition-transform",
             handleClassName
           )}
         />

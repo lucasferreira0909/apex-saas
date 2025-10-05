@@ -17,7 +17,7 @@ import { getElementIcon } from "@/hooks/useFunnelElements";
 export default function FunnelEditor() {
   const { id } = useParams();
   const { updateProject, projects } = useProjects();
-  const { funnelId, loading: funnelLoading, saveFlowData, loadFlowData } = useFunnelProject(id);
+  const { funnelId, loading: funnelLoading } = useFunnelProject(id);
   const { elements, loading: elementsLoading, saveAllElements } = useFunnelElements(funnelId || undefined);
   const [isSaved, setIsSaved] = useState(false);
   const [showExitButton, setShowExitButton] = useState(false);
@@ -61,19 +61,10 @@ export default function FunnelEditor() {
       console.log('Loading elements from DB:', elements);
       const convertedNodes = elementsToNodes(elements);
       setNodes(convertedNodes);
+      // TODO: Load edges from database if stored
+      setEdges([]);
     }
   }, [elements, elementsLoading, funnelLoading, elementsToNodes]);
-
-  // Load edges from database
-  useEffect(() => {
-    const loadEdges = async () => {
-      if (funnelId && loadFlowData) {
-        const savedEdges = await loadFlowData();
-        setEdges(savedEdges);
-      }
-    };
-    loadEdges();
-  }, [funnelId, loadFlowData]);
 
   const generateUniqueId = () => crypto.randomUUID();
 
@@ -127,11 +118,6 @@ export default function FunnelEditor() {
       console.log('Saving elements:', funnelElements);
       
       await saveAllElements(funnelElements);
-      
-      // Save edges/connections
-      if (saveFlowData) {
-        await saveFlowData(edges);
-      }
       
       await updateProject(id, { 
         status: 'active',
