@@ -55,26 +55,29 @@ export function FlowCanvas({
 
       console.log('Conectando:', connection);
       
-      const newEdges = addEdge(
-        {
-          ...connection,
-          type: "default",
-          animated: true,
-          style: {
-            stroke: "hsl(var(--primary))",
-            strokeWidth: 2,
+      setEdges((currentEdges) => {
+        const newEdges = addEdge(
+          {
+            ...connection,
+            type: "smoothstep",
+            animated: true,
+            style: {
+              stroke: "hsl(var(--primary))",
+              strokeWidth: 2,
+            },
+            markerEnd: {
+              type: "arrowclosed",
+              color: "hsl(var(--primary))",
+            },
           },
-          markerEnd: {
-            type: "arrowclosed",
-            color: "hsl(var(--primary))",
-          },
-        },
-        edges
-      );
-      setEdges(newEdges);
-      onEdgesChange?.(newEdges);
+          currentEdges
+        );
+        console.log('Novas edges após conexão:', newEdges);
+        onEdgesChange?.(newEdges);
+        return newEdges;
+      });
     },
-    [edges, setEdges, onEdgesChange]
+    [setEdges, onEdgesChange]
   );
 
   const handleNodesChange = useCallback(
