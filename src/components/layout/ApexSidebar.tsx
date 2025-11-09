@@ -8,7 +8,8 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSepara
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import apexLogo from "@/assets/apex-logo.png";
+import apexLogoFull from "@/assets/apex-logo-full.png";
+import apexLogoIcon from "@/assets/apex-logo-icon.png";
 const generalItems = [{
   title: "Suporte",
   url: "/support",
@@ -92,10 +93,10 @@ export function ApexSidebar() {
         <SidebarHeader className={`border-b border-sidebar-border transition-all duration-200 ${isCollapsed ? "p-2" : "p-4"}`}>
           <div className={`flex items-center ${isCollapsed ? "justify-center" : "justify-between"}`}>
             {!isCollapsed && <div className="flex items-center">
-                <img src={apexLogo} alt="Apex Logo" className="h-16 w-auto" />
+                <img src={apexLogoFull} alt="Apex Logo" className="h-16 w-auto" />
               </div>}
             
-            {isCollapsed && <img src={apexLogo} alt="Apex Logo" className="h-10 w-auto" />}
+            {isCollapsed && <img src={apexLogoIcon} alt="Apex Logo" className="h-10 w-auto" />}
             
             {!isCollapsed && <div className="flex items-center gap-2">
                 <SidebarTrigger className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
