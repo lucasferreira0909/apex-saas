@@ -23,7 +23,6 @@ const projectItems = [{
   url: "/tools",
   icon: Wrench
 }];
-
 const footerItems = [{
   title: "Suporte",
   url: "/support",
@@ -154,7 +153,7 @@ export function ApexSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          {!isCollapsed && <SidebarGroupLabel className="text-sidebar-foreground/60">Projetos</SidebarGroupLabel>}
+          {!isCollapsed && <SidebarGroupLabel className="text-sidebar-foreground/60">Ferramentas</SidebarGroupLabel>}
           <SidebarGroupContent>
             <SidebarMenu>
               {projectItems.map(item => {
