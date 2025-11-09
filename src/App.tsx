@@ -15,6 +15,7 @@ import Support from "./pages/apex/Support";
 import ApexSettings from "./pages/apex/ApexSettings";
 import Funnels from "./pages/apex/Funnels";
 import FunnelEditor from "./pages/apex/FunnelEditor";
+import Tasks from "./pages/apex/Tasks";
 import Tools from "./pages/apex/Tools";
 import ROICalculator from "./pages/apex/ROICalculator";
 import WhatsAppGenerator from "./pages/apex/WhatsAppGenerator";
@@ -41,6 +42,7 @@ const App = () => (
                   <Route path="/settings" element={<ApexSettings />} />
                   <Route path="/funnels" element={<Funnels />} />
                   <Route path="/funnel-editor/:id" element={<FunnelEditor />} />
+                  <Route path="/tasks" element={<Tasks />} />
                   <Route path="/roi-calculator" element={<ROICalculator />} />
                   <Route path="/whatsapp-generator" element={<WhatsAppGenerator />} />
                   <Route path="/hashtag-generator" element={<HashtagGenerator />} />
