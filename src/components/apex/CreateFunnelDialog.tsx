@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetBody, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -77,43 +77,45 @@ export function CreateFunnelDialog({ open, onOpenChange, templateType }: CreateF
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent>
+        <SheetHeader>
+          <SheetTitle>
             {templateType ? `Criar Funil - ${
               templateType === 'sales' ? 'Vendas' : 
               templateType === 'ltv' ? 'LTV' : 'Quiz'
             }` : 'Criar Novo Funil'}
-          </DialogTitle>
-          <DialogDescription>
+          </SheetTitle>
+          <SheetDescription>
             {templateType 
               ? `Configurando um funil do tipo ${templateType === 'sales' ? 'Vendas' : templateType === 'ltv' ? 'LTV' : 'Quiz'} com elementos pré-selecionados`
               : 'Configure as informações básicas do seu funil de vendas'
             }
-          </DialogDescription>
-        </DialogHeader>
-        <div className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Nome do Funil</Label>
-            <Input
-              id="name"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Ex: Funil de Vendas Principal"
-              className="bg-input border-border"
-            />
+          </SheetDescription>
+        </SheetHeader>
+        <SheetBody>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nome do Funil</Label>
+              <Input
+                id="name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Ex: Funil de Vendas Principal"
+                className="bg-input border-border"
+              />
+            </div>
           </div>
-        </div>
-        <div className="flex justify-end space-x-2 mt-6">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
-          </Button>
+        </SheetBody>
+        <SheetFooter>
+          <SheetClose asChild>
+            <Button variant="outline">Cancelar</Button>
+          </SheetClose>
           <Button onClick={handleCreate} disabled={!name.trim()}>
             Criar Funil
           </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   );
 }

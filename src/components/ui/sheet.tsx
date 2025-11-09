@@ -86,6 +86,17 @@ const SheetHeader = ({
 )
 SheetHeader.displayName = "SheetHeader"
 
+const SheetBody = ({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>) => (
+  <div
+    className={cn("flex-1 overflow-y-auto py-4", className)}
+    {...props}
+  />
+)
+SheetBody.displayName = "SheetBody"
+
 const SheetFooter = ({
   className,
   ...props
@@ -125,7 +136,7 @@ const SheetDescription = React.forwardRef<
 SheetDescription.displayName = SheetPrimitive.Description.displayName
 
 export {
-  Sheet, SheetClose,
+  Sheet, SheetBody, SheetClose,
   SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetOverlay, SheetPortal, SheetTitle, SheetTrigger
 }
 

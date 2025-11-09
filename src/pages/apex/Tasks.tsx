@@ -2,8 +2,10 @@ import { useState } from "react";
 import { CheckSquare, Plus, Trash2, Edit2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Sheet, SheetBody, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { toast } from "@/hooks/use-toast";
 interface Task {
   id: string;
@@ -14,6 +16,7 @@ interface Task {
 const Tasks = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
   const [newTaskTitle, setNewTaskTitle] = useState("");
+  const [isSheetOpen, setIsSheetOpen] = useState(false);
   const addTask = () => {
     if (!newTaskTitle.trim()) {
       toast({
@@ -31,6 +34,7 @@ const Tasks = () => {
     };
     setTasks([...tasks, newTask]);
     setNewTaskTitle("");
+    setIsSheetOpen(false);
     toast({
       title: "Tarefa criada",
       description: "Sua tarefa foi adicionada com sucesso"
@@ -66,17 +70,46 @@ const Tasks = () => {
               {completedCount} de {totalCount} concluídas
             </span>
           </div>
-          <div className="flex items-center gap-2">
-            
-            <Button onClick={addTask}>
-              <Plus className="h-4 w-4 mr-2" />
-              Criar Tarefa
-            </Button>
-          </div>
+          <Sheet open={isSheetOpen} onOpenChange={setIsSheetOpen}>
+            <SheetTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Criar Tarefa
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Nova Tarefa</SheetTitle>
+                <SheetDescription>
+                  Crie uma nova tarefa para acompanhar suas atividades
+                </SheetDescription>
+              </SheetHeader>
+              <SheetBody>
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="task-title">Título da Tarefa</Label>
+                    <Input
+                      id="task-title"
+                      value={newTaskTitle}
+                      onChange={(e) => setNewTaskTitle(e.target.value)}
+                      placeholder="Ex: Revisar proposta comercial"
+                      className="bg-input border-border"
+                    />
+                  </div>
+                </div>
+              </SheetBody>
+              <SheetFooter>
+                <SheetClose asChild>
+                  <Button variant="outline">Cancelar</Button>
+                </SheetClose>
+                <Button onClick={addTask} disabled={!newTaskTitle.trim()}>
+                  Criar Tarefa
+                </Button>
+              </SheetFooter>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
-
-      
 
       <Card>
         <CardHeader>
