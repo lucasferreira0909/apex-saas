@@ -162,7 +162,7 @@ export default function Funnels() {
           <h1 className="text-3xl font-bold text-foreground">Funis de Vendas</h1>
           <p className="text-muted-foreground">Crie e gerencie seus funis de conversão</p>
         </div>
-        <Button onClick={() => setShowCreateDialog(true)}>
+        <Button onClick={() => setShowCreateDialog(true)} className="bg-[neutr] bg-[#1e1e1e]">
           <Plus className="h-4 w-4 mr-2" />
           Criar Funil
         </Button>
