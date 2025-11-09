@@ -14,6 +14,119 @@ export type Database = {
   }
   public: {
     Tables: {
+      board_cards: {
+        Row: {
+          board_id: string
+          column_id: string
+          created_at: string
+          description: string | null
+          id: string
+          order_index: number
+          priority: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          board_id: string
+          column_id: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_index?: number
+          priority?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          board_id?: string
+          column_id?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_index?: number
+          priority?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_cards_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "board_cards_column_id_fkey"
+            columns: ["column_id"]
+            isOneToOne: false
+            referencedRelation: "board_columns"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      board_columns: {
+        Row: {
+          board_id: string
+          created_at: string
+          id: string
+          order_index: number
+          title: string
+        }
+        Insert: {
+          board_id: string
+          created_at?: string
+          id?: string
+          order_index?: number
+          title: string
+        }
+        Update: {
+          board_id?: string
+          created_at?: string
+          id?: string
+          order_index?: number
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "board_columns_board_id_fkey"
+            columns: ["board_id"]
+            isOneToOne: false
+            referencedRelation: "boards"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      boards: {
+        Row: {
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          template_type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          template_type: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          template_type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       funnel_elements: {
         Row: {
           configured: boolean | null
@@ -62,6 +175,7 @@ export type Database = {
         Row: {
           created_at: string
           description: string | null
+          flow_data: Json | null
           id: string
           name: string
           project_id: string | null
@@ -71,6 +185,7 @@ export type Database = {
         Insert: {
           created_at?: string
           description?: string | null
+          flow_data?: Json | null
           id?: string
           name: string
           project_id?: string | null
@@ -80,6 +195,7 @@ export type Database = {
         Update: {
           created_at?: string
           description?: string | null
+          flow_data?: Json | null
           id?: string
           name?: string
           project_id?: string | null
@@ -176,10 +292,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      delete_current_user_account: {
-        Args: Record<PropertyKey, never>
-        Returns: undefined
-      }
+      delete_current_user_account: { Args: never; Returns: undefined }
     }
     Enums: {
       [_ in never]: never

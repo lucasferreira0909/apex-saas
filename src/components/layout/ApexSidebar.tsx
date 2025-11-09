@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { BarChart3, HeadphonesIcon, Settings, Zap, Video, MessageSquare, Library, ChevronDown, User, Sun, Moon, LogOut, PanelLeft, Wrench, CheckSquare } from "lucide-react";
+import { BarChart3, HeadphonesIcon, Settings, Zap, Video, MessageSquare, Library, ChevronDown, User, Sun, Moon, LogOut, PanelLeft, Wrench, LayoutGrid } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
@@ -15,9 +15,9 @@ const projectItems = [{
   url: "/funnels",
   icon: Zap
 }, {
-  title: "Tarefas",
+  title: "Quadros",
   url: "/tasks",
-  icon: CheckSquare
+  icon: LayoutGrid
 }, {
   title: "Geradores",
   url: "/tools",
