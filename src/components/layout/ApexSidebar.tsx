@@ -96,7 +96,7 @@ export function ApexSidebar() {
                 <img src={apexLogoFull} alt="Apex Logo" className="h-12 w-auto" />
               </div>}
             
-            {isCollapsed && <img src={apexLogoIcon} alt="Apex Logo" className="h-10 w-auto" />}
+            {isCollapsed && <img src={apexLogoIcon} alt="Apex Logo" className="h-8 w-auto" />}
             
             {!isCollapsed && <div className="flex items-center gap-2">
                 <SidebarTrigger className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
