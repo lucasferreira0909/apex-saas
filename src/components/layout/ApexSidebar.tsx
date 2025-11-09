@@ -93,7 +93,7 @@ export function ApexSidebar() {
         <SidebarHeader className={`border-b border-sidebar-border transition-all duration-200 ${isCollapsed ? "p-2" : "p-4"}`}>
           <div className={`flex items-center ${isCollapsed ? "justify-center" : "justify-between"}`}>
             {!isCollapsed && <div className="flex items-center">
-                <img src={apexLogoFull} alt="Apex Logo" className="h-16 w-auto" />
+                <img src={apexLogoFull} alt="Apex Logo" className="h-12 w-auto" />
               </div>}
             
             {isCollapsed && <img src={apexLogoIcon} alt="Apex Logo" className="h-10 w-auto" />}
