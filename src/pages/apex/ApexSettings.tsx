@@ -13,8 +13,14 @@ import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 export default function ApexSettings() {
   const navigate = useNavigate();
-  const { profile, updateProfile } = useAuth();
-  const { uploadImage, uploading } = useImageUpload();
+  const {
+    profile,
+    updateProfile
+  } = useAuth();
+  const {
+    uploadImage,
+    uploading
+  } = useImageUpload();
   const [activeTab, setActiveTab] = useState("profile");
   const [loading, setLoading] = useState(false);
   const [passwordData, setPasswordData] = useState({
@@ -32,16 +38,16 @@ export default function ApexSettings() {
     label: "Segurança",
     icon: Lock
   }];
-
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
-
-    const { url, error } = await uploadImage(file, {
+    const {
+      url,
+      error
+    } = await uploadImage(file, {
       bucket: 'avatars',
       maxSizeMB: 2
     });
-
     if (error) {
       toast({
         title: "Erro",
@@ -50,9 +56,12 @@ export default function ApexSettings() {
       });
       return;
     }
-
     if (url) {
-      const { error: updateError } = await updateProfile({ avatar_url: url });
+      const {
+        error: updateError
+      } = await updateProfile({
+        avatar_url: url
+      });
       if (updateError) {
         toast({
           title: "Erro",
@@ -67,20 +76,18 @@ export default function ApexSettings() {
       }
     }
   };
-
   const handleProfileUpdate = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
     const formData = new FormData(e.target as HTMLFormElement);
     const updates = {
       first_name: formData.get('firstName') as string,
       last_name: formData.get('lastName') as string,
-      phone: formData.get('phone') as string,
+      phone: formData.get('phone') as string
     };
-
-    const { error } = await updateProfile(updates);
-    
+    const {
+      error
+    } = await updateProfile(updates);
     if (error) {
       toast({
         title: "Erro",
@@ -93,13 +100,10 @@ export default function ApexSettings() {
         description: "Perfil atualizado com sucesso!"
       });
     }
-    
     setLoading(false);
   };
-
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (passwordData.newPassword.length < 6) {
       toast({
         title: "Erro",
@@ -108,7 +112,6 @@ export default function ApexSettings() {
       });
       return;
     }
-
     if (passwordData.newPassword !== passwordData.confirmPassword) {
       toast({
         title: "Erro",
@@ -117,13 +120,12 @@ export default function ApexSettings() {
       });
       return;
     }
-
     setLoading(true);
-    
-    const { error } = await supabase.auth.updateUser({
+    const {
+      error
+    } = await supabase.auth.updateUser({
       password: passwordData.newPassword
     });
-
     if (error) {
       toast({
         title: "Erro",
@@ -135,13 +137,14 @@ export default function ApexSettings() {
         title: "Sucesso",
         description: "Senha alterada com sucesso!"
       });
-      setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+      setPasswordData({
+        currentPassword: '',
+        newPassword: '',
+        confirmPassword: ''
+      });
     }
-    
     setLoading(false);
   };
-
-
   const getInitials = () => {
     if (profile?.first_name && profile?.last_name) {
       return `${profile.first_name[0]}${profile.last_name[0]}`.toUpperCase();
@@ -186,25 +189,14 @@ export default function ApexSettings() {
                       <AvatarFallback className="text-lg">{getInitials()}</AvatarFallback>
                     </Avatar>
                     <div className="space-y-2">
-                      <Button 
-                        variant="outline" 
-                        size="sm"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={uploading}
-                      >
+                      <Button variant="outline" size="sm" onClick={() => fileInputRef.current?.click()} disabled={uploading}>
                         <Camera className="mr-2 h-4 w-4" />
                         {uploading ? 'Enviando...' : 'Alterar Foto'}
                       </Button>
                       <p className="text-xs text-muted-foreground">
                         JPG, PNG ou GIF. Máximo 2MB.
                       </p>
-                      <input
-                        ref={fileInputRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleAvatarUpload}
-                      />
+                      <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
                     </div>
                   </div>
                 </CardContent>
@@ -230,21 +222,9 @@ export default function ApexSettings() {
                     </div>
                     <div className="space-y-2 mb-4">
                       <Label htmlFor="email">Email</Label>
-                      <Input 
-                        id="email" 
-                        name="email" 
-                        type="email" 
-                        placeholder="seu@email.com" 
-                        value={profile?.email || ''} 
-                        disabled 
-                        className="bg-muted text-muted-foreground cursor-not-allowed"
-                        title="Email não pode ser alterado"
-                      />
+                      <Input id="email" name="email" type="email" placeholder="seu@email.com" value={profile?.email || ''} disabled className="bg-muted text-muted-foreground cursor-not-allowed" title="Email não pode ser alterado" />
                     </div>
-                    <div className="space-y-2 mb-4">
-                      <Label htmlFor="phone">Telefone</Label>
-                      <Input id="phone" name="phone" placeholder="(11) 99999-9999" defaultValue={profile?.phone || ''} />
-                    </div>
+                    
                     <Button type="submit" disabled={loading}>
                       <Save className="mr-2 h-4 w-4" />
                       {loading ? "Salvando..." : "Salvar Alterações"}
@@ -265,33 +245,24 @@ export default function ApexSettings() {
                   <form onSubmit={handlePasswordChange}>
                     <div className="space-y-2 mb-4">
                       <Label htmlFor="currentPassword">Senha Atual</Label>
-                      <Input 
-                        id="currentPassword" 
-                        type="password" 
-                        placeholder="Digite sua senha atual"
-                        value={passwordData.currentPassword}
-                        onChange={(e) => setPasswordData(prev => ({ ...prev, currentPassword: e.target.value }))}
-                      />
+                      <Input id="currentPassword" type="password" placeholder="Digite sua senha atual" value={passwordData.currentPassword} onChange={e => setPasswordData(prev => ({
+                    ...prev,
+                    currentPassword: e.target.value
+                  }))} />
                     </div>
                     <div className="space-y-2 mb-4">
                       <Label htmlFor="newPassword">Nova Senha</Label>
-                      <Input 
-                        id="newPassword" 
-                        type="password" 
-                        placeholder="Mínimo 6 caracteres"
-                        value={passwordData.newPassword}
-                        onChange={(e) => setPasswordData(prev => ({ ...prev, newPassword: e.target.value }))}
-                      />
+                      <Input id="newPassword" type="password" placeholder="Mínimo 6 caracteres" value={passwordData.newPassword} onChange={e => setPasswordData(prev => ({
+                    ...prev,
+                    newPassword: e.target.value
+                  }))} />
                     </div>
                     <div className="space-y-2 mb-4">
                       <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
-                      <Input 
-                        id="confirmPassword" 
-                        type="password" 
-                        placeholder="Confirme a nova senha"
-                        value={passwordData.confirmPassword}
-                        onChange={(e) => setPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                      />
+                      <Input id="confirmPassword" type="password" placeholder="Confirme a nova senha" value={passwordData.confirmPassword} onChange={e => setPasswordData(prev => ({
+                    ...prev,
+                    confirmPassword: e.target.value
+                  }))} />
                     </div>
                     <Button type="submit" disabled={loading || !passwordData.newPassword || !passwordData.confirmPassword}>
                       <Lock className="mr-2 h-4 w-4" />
