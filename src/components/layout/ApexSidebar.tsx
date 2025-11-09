@@ -10,10 +10,6 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import apexLogo from "@/assets/apex-logo.png";
 const generalItems = [{
-  title: "Geral",
-  url: "/",
-  icon: BarChart3
-}, {
   title: "Suporte",
   url: "/support",
   icon: HeadphonesIcon
@@ -30,10 +26,6 @@ const projectItems = [{
   title: "Ferramentas",
   url: "/tools",
   icon: Wrench
-}, {
-  title: "Biblioteca",
-  url: "/library",
-  icon: Library
 }];
 export function ApexSidebar() {
   const location = useLocation();

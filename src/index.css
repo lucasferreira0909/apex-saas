@@ -17,8 +17,8 @@
     --popover: 0 0% 91%;
     --popover-foreground: 0 0% 3%;
 
-    --primary: 44 35% 87%; /* #EDE8D0 - Bege */
-    --primary-foreground: 0 0% 3%;
+    --primary: 0 0% 62%; /* #9D9D9D - Cinza */
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 0 0% 15%; /* Cinza mais claro */
     --secondary-foreground: 0 0% 91%;
@@ -26,8 +26,8 @@
     --muted: 0 0% 20%;
     --muted-foreground: 0 0% 60%;
 
-    --accent: 44 35% 87%;
-    --accent-foreground: 0 0% 3%;
+    --accent: 0 0% 62%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -43,19 +43,19 @@
 
     --border: 0 0% 20%;
     --input: 0 0% 15%;
-    --ring: 44 35% 87%;
+    --ring: 0 0% 62%;
 
     --radius: 0.75rem;
 
     /* Sidebar Apex Theme */
     --sidebar-background: 0 0% 3%; /* #070707 */
     --sidebar-foreground: 0 0% 91%;
-    --sidebar-primary: 44 35% 87%;
-    --sidebar-primary-foreground: 0 0% 3%;
+    --sidebar-primary: 0 0% 62%;
+    --sidebar-primary-foreground: 0 0% 100%;
     --sidebar-accent: 0 0% 10%;
     --sidebar-accent-foreground: 0 0% 91%;
     --sidebar-border: 0 0% 10%;
-    --sidebar-ring: 44 35% 87%;
+    --sidebar-ring: 0 0% 62%;
   }
 
   .dark {
@@ -69,8 +69,8 @@
     --popover: 0 0% 6%;
     --popover-foreground: 0 0% 91%;
 
-    --primary: 44 35% 87%; /* #EDE8D0 - Bege */
-    --primary-foreground: 0 0% 3%;
+    --primary: 0 0% 62%; /* #9D9D9D - Cinza */
+    --primary-foreground: 0 0% 100%;
 
     --secondary: 0 0% 10%;
     --secondary-foreground: 0 0% 91%;
@@ -78,8 +78,8 @@
     --muted: 0 0% 10%;
     --muted-foreground: 0 0% 60%;
 
-    --accent: 44 35% 87%;
-    --accent-foreground: 0 0% 3%;
+    --accent: 0 0% 62%;
+    --accent-foreground: 0 0% 100%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
@@ -95,7 +95,7 @@
 
     --border: 0 0% 10%;
     --input: 0 0% 8%;
-    --ring: 44 35% 87%;
+    --ring: 0 0% 62%;
   }
 }
 
