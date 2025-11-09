@@ -186,13 +186,7 @@ export default function Funnels() {
         
         <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
           <PopoverTrigger asChild>
-            <Button variant="outline" className="gap-2">
-              <Filter className="h-4 w-4" />
-              Filtros
-              {hasActiveFilters && <Badge variant="secondary" className="ml-1 px-1 min-w-5 h-5">
-                  {[searchTerm !== "", selectedFolder !== "all", selectedStatus !== "all"].filter(Boolean).length}
-                </Badge>}
-            </Button>
+            
           </PopoverTrigger>
           <PopoverContent className="w-80" align="end">
             <div className="space-y-4">
