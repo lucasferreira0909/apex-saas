@@ -91,46 +91,12 @@ export function ApexSidebar() {
   return <TooltipProvider>
       <Sidebar className="border-r border-sidebar-border" collapsible="icon">
         <SidebarHeader className={`border-b border-sidebar-border transition-all duration-200 ${isCollapsed ? "p-2" : "p-4"}`}>
-          <div className={`flex items-center ${isCollapsed ? "justify-center" : "justify-between"}`}>
-            {!isCollapsed && <div className="flex items-center">
+          <div className={`flex items-center ${isCollapsed ? "justify-center" : "justify-start"}`}>
+            {!isCollapsed && <div className="flex items-center pl-2">
                 <img src={apexLogoFull} alt="Apex Logo" className="h-10 w-auto" />
               </div>}
             
             {isCollapsed && <img src={apexLogoIcon} alt="Apex Logo" className="h-8 w-auto" />}
-            
-            {!isCollapsed && <div className="flex items-center gap-2">
-                <SidebarTrigger className="text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground">
-                  <PanelLeft className="h-4 w-4" />
-                </SidebarTrigger>
-                
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="text-sidebar-foreground">
-                      <Avatar className="h-8 w-8">
-                        <AvatarImage src="" />
-                        <AvatarFallback>{getInitials()}</AvatarFallback>
-                      </Avatar>
-                    </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-48">
-                    <div className="px-2 py-1.5 text-sm">
-                      <div className="font-medium">{getDisplayName()}</div>
-                      <div className="text-xs text-muted-foreground">{profile?.email}</div>
-                    </div>
-                    <DropdownMenuSeparator />
-                    
-                    <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/settings')}>
-                      <Settings className="mr-2 h-4 w-4" />
-                      Configurações
-                    </DropdownMenuItem>
-                    
-                    <DropdownMenuItem className="cursor-pointer text-destructive" onClick={handleSignOut}>
-                      <LogOut className="mr-2 h-4 w-4" />
-                      Sair
-                    </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
-              </div>}
           </div>
           
           {isCollapsed && <div className="mt-2 flex justify-center">
