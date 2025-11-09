@@ -59,11 +59,27 @@ const Tasks = () => {
             Gerencie suas tarefas e acompanhe seu progresso
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <CheckSquare className="h-5 w-5 text-primary" />
-          <span className="text-sm text-muted-foreground">
-            {completedCount} de {totalCount} concluídas
-          </span>
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <CheckSquare className="h-5 w-5 text-primary" />
+            <span className="text-sm text-muted-foreground">
+              {completedCount} de {totalCount} concluídas
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <Input
+              type="text"
+              placeholder="Nova tarefa..."
+              value={newTaskTitle}
+              onChange={(e) => setNewTaskTitle(e.target.value)}
+              onKeyPress={(e) => e.key === 'Enter' && addTask()}
+              className="w-64"
+            />
+            <Button onClick={addTask}>
+              <Plus className="h-4 w-4 mr-2" />
+              Criar Tarefa
+            </Button>
+          </div>
         </div>
       </div>
 
