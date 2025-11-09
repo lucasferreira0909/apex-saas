@@ -67,14 +67,7 @@ const Tasks = () => {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            <Input
-              type="text"
-              placeholder="Nova tarefa..."
-              value={newTaskTitle}
-              onChange={(e) => setNewTaskTitle(e.target.value)}
-              onKeyPress={(e) => e.key === 'Enter' && addTask()}
-              className="w-64"
-            />
+            
             <Button onClick={addTask}>
               <Plus className="h-4 w-4 mr-2" />
               Criar Tarefa
@@ -96,7 +89,7 @@ const Tasks = () => {
           {tasks.length === 0 ? <div className="text-center py-12 text-muted-foreground">
               <CheckSquare className="h-12 w-12 mx-auto mb-3 opacity-50" />
               <p>Nenhuma tarefa adicionada ainda.</p>
-              <p className="text-sm">Comece criando sua primeira tarefa acima.</p>
+              <p className="text-sm">Comece criando sua primeira tarefa.</p>
             </div> : <div className="space-y-3">
               {tasks.map(task => <div key={task.id} className="flex items-center gap-3 p-3 rounded-lg border border-border hover:bg-accent/50 transition-colors">
                   <Checkbox checked={task.completed} onCheckedChange={() => toggleTask(task.id)} />
