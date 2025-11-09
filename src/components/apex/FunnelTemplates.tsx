@@ -52,7 +52,7 @@ export function FunnelTemplates({
                     {feature}
                   </li>)}
               </ul>
-              <Button size="sm" className="w-full" onClick={() => onSelectTemplate(template.id as 'sales' | 'ltv' | 'quiz')}>
+              <Button size="sm" onClick={() => onSelectTemplate(template.id as 'sales' | 'ltv' | 'quiz')} className="w-full bg-[#1e1e1e]">
                 Usar Modelo
               </Button>
             </CardContent>
