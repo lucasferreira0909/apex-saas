@@ -205,10 +205,7 @@ export default function Boards() {
           <h1 className="text-3xl font-bold text-foreground">Quadros Kanban</h1>
           <p className="text-muted-foreground">Organize suas tarefas e projetos</p>
         </div>
-        <Button onClick={() => setIsCreateSheetOpen(true)} className="bg-[#1e1e1e]">
-          <Plus className="h-4 w-4 mr-2" />
-          Criar Quadro
-        </Button>
+        
       </div>
 
       {/* Search */}
