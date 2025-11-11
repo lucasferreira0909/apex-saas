@@ -199,7 +199,7 @@ export default function Boards() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Quadros Kanban</h1>
+          <h1 className="text-3xl font-bold text-foreground">Quadros</h1>
           <p className="text-muted-foreground">Organize suas tarefas e projetos</p>
         </div>
         
