@@ -144,10 +144,7 @@ export default function Boards() {
               {boardData.board.description && <p className="text-muted-foreground">{boardData.board.description}</p>}
             </div>
           </div>
-          <Button variant="destructive" size="sm" onClick={() => handleOpenDeleteDialog(boardData.board.id)}>
-            <Trash2 className="h-4 w-4 mr-2" />
-            Excluir Quadro
-          </Button>
+          
         </div>
 
         {loadingBoard ? <div className="flex justify-center items-center h-64">
