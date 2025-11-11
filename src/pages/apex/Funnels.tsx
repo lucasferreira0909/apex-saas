@@ -5,7 +5,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CreateFunnelDialog } from "@/components/apex/CreateFunnelDialog";
-import { FunnelTemplates } from "@/components/apex/FunnelTemplates";
 import { useProjects } from "@/hooks/useProjects";
 import { useFolders } from "@/hooks/useFolders";
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
@@ -18,7 +17,6 @@ import { useNavigate } from "react-router-dom";
 const ITEMS_PER_PAGE = 10;
 export default function Funnels() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<'sales' | 'ltv' | 'quiz' | null>(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFolder, setSelectedFolder] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
@@ -97,10 +95,7 @@ export default function Funnels() {
   const handleEditClick = (projectId: string) => {
     navigate(`/funnel-editor/${projectId}`);
   };
-  const handleSelectTemplate = (templateType: 'sales' | 'ltv' | 'quiz') => {
-    setSelectedTemplate(templateType);
-    setShowCreateDialog(true);
-  };
+  
   const renderPaginationItems = () => {
     const items = [];
     const maxVisiblePages = 3;
@@ -167,12 +162,6 @@ export default function Funnels() {
           Criar Funil
         </Button>
       </div>
-
-      {/* Stats Overview */}
-      
-
-      {/* Funnel Templates */}
-      <FunnelTemplates onSelectTemplate={handleSelectTemplate} />
 
       {/* Search and Filter */}
       <div className="flex items-center space-x-4">
@@ -342,10 +331,7 @@ export default function Funnels() {
       </Card>
 
       {/* Create Dialog */}
-      <CreateFunnelDialog open={showCreateDialog} onOpenChange={open => {
-      setShowCreateDialog(open);
-      if (!open) setSelectedTemplate(null);
-    }} templateType={selectedTemplate} />
+      <CreateFunnelDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} />
 
       {/* Delete Confirmation Dialog */}
       <DeleteConfirmationDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen} onConfirm={handleConfirmDelete} title="Excluir Funil" description="Tem certeza que deseja excluir este funil? Esta ação não pode ser desfeita e todos os elementos do funil serão perdidos." />

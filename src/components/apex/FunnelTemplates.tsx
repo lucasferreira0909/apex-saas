@@ -1,8 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, DollarSign, ClipboardList } from "lucide-react";
+import { TrendingUp, DollarSign, ClipboardList, Pencil } from "lucide-react";
 interface FunnelTemplatesProps {
-  onSelectTemplate: (templateType: 'sales' | 'ltv' | 'quiz') => void;
+  onSelectTemplate: (templateType: 'sales' | 'ltv' | 'quiz' | 'blank') => void;
 }
 export function FunnelTemplates({
   onSelectTemplate
@@ -28,11 +28,18 @@ export function FunnelTemplates({
     icon: ClipboardList,
     color: 'text-purple-600',
     features: ['Quiz Interativo', 'Qualificação', 'Segmentação', 'Resultados Personalizados']
+  }, {
+    id: 'blank',
+    title: 'Criar do Zero',
+    description: 'Comece com um funil em branco e personalize completamente',
+    icon: Pencil,
+    color: 'text-gray-600',
+    features: ['Total flexibilidade', 'Personalizável', 'Adicione seus próprios elementos']
   }];
   return <div className="space-y-4">
       
       
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {templates.map(template => <Card key={template.id} className="bg-card border-border hover:shadow-lg transition-all">
             <CardHeader>
               <div className="flex items-center space-x-3">
@@ -52,7 +59,7 @@ export function FunnelTemplates({
                     {feature}
                   </li>)}
               </ul>
-              <Button size="sm" onClick={() => onSelectTemplate(template.id as 'sales' | 'ltv' | 'quiz')} className="w-full bg-[#1e1e1e]">
+              <Button size="sm" onClick={() => onSelectTemplate(template.id as 'sales' | 'ltv' | 'quiz' | 'blank')} className="w-full bg-[#1e1e1e]">
                 Usar Modelo
               </Button>
             </CardContent>

@@ -3,6 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Badge } from '@/components/ui/badge';
 import {
   Sheet,
   SheetBody,
@@ -12,7 +13,6 @@ import {
   SheetFooter,
   SheetHeader,
   SheetTitle,
-  SheetTrigger,
 } from '@/components/ui/sheet';
 import {
   Select,
@@ -22,12 +22,14 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { BoardTemplates } from '@/components/apex/BoardTemplates';
 import { KanbanBoard } from '@/components/apex/KanbanBoard';
 import { useBoards, useBoard, useCreateBoard, useDeleteBoard } from '@/hooks/useBoards';
-import { useCreateCard, useUpdateCard, useDeleteCard, useUpdateMultipleCards } from '@/hooks/useBoardCards';
+import { useCreateCard, useUpdateCard, useDeleteCard } from '@/hooks/useBoardCards';
 import { BoardTemplate } from '@/types/board';
-import { Plus, ArrowLeft, Trash2 } from 'lucide-react';
+import { Plus, ArrowLeft, Trash2, Search, MoreHorizontal, Edit } from 'lucide-react';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 import { toast } from 'sonner';
 
@@ -45,6 +47,7 @@ export default function Boards() {
   const [cardPriority, setCardPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [boardToDelete, setBoardToDelete] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
 
   const { data: boards, isLoading: loadingBoards } = useBoards();
   const { data: boardData, isLoading: loadingBoard } = useBoard(selectedBoardId);
@@ -53,7 +56,6 @@ export default function Boards() {
   const createCard = useCreateCard();
   const updateCard = useUpdateCard();
   const deleteCard = useDeleteCard();
-  const updateMultipleCards = useUpdateMultipleCards();
 
   const handleTemplateSelect = (template: BoardTemplate) => {
     setSelectedTemplate(template);
@@ -153,19 +155,25 @@ export default function Boards() {
     setDeleteDialogOpen(true);
   };
 
+  // Filter boards based on search
+  const filteredBoards = boards?.filter(board => 
+    searchTerm === "" || 
+    board.name.toLowerCase().includes(searchTerm.toLowerCase())
+  ) || [];
+
   if (selectedBoardId && boardData) {
     return (
-      <div className="container mx-auto p-6">
-        <div className="flex items-center justify-between mb-6">
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button variant="ghost" size="sm" onClick={() => setSelectedBoardId(null)}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Voltar
             </Button>
             <div>
-              <h1 className="text-2xl font-bold">{boardData.board.name}</h1>
+              <h1 className="text-3xl font-bold text-foreground">{boardData.board.name}</h1>
               {boardData.board.description && (
-                <p className="text-sm text-muted-foreground">{boardData.board.description}</p>
+                <p className="text-muted-foreground">{boardData.board.description}</p>
               )}
             </div>
           </div>
@@ -251,156 +259,214 @@ export default function Boards() {
   }
 
   return (
-    <div className="container mx-auto p-6">
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Quadros</h1>
-        <Sheet open={isCreateSheetOpen} onOpenChange={setIsCreateSheetOpen}>
-          <SheetTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Criar Quadro
-            </Button>
-          </SheetTrigger>
-          <SheetContent>
-            <SheetHeader>
-              <SheetTitle>
-                {!selectedTemplate ? 'Escolha um Modelo' : 'Configurar Quadro'}
-              </SheetTitle>
-              <SheetDescription>
-                {!selectedTemplate 
-                  ? 'Selecione o tipo de quadro que deseja criar'
-                  : 'Preencha as informações do seu quadro'}
-              </SheetDescription>
-            </SheetHeader>
-            <SheetBody>
-              {!selectedTemplate ? (
-                <BoardTemplates onSelectTemplate={handleTemplateSelect} />
-              ) : (
-                <div className="grid gap-5">
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="board-name">Nome do Quadro *</Label>
-                    <Input
-                      id="board-name"
-                      placeholder="Digite o nome do quadro"
-                      value={boardName}
-                      onChange={(e) => setBoardName(e.target.value)}
-                    />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <Label htmlFor="board-description">Descrição</Label>
-                    <Textarea
-                      id="board-description"
-                      placeholder="Adicione uma descrição (opcional)"
-                      rows={3}
-                      value={boardDescription}
-                      onChange={(e) => setBoardDescription(e.target.value)}
-                    />
-                  </div>
-                  {selectedTemplate.id === 'free' && (
-                    <div className="flex flex-col gap-2">
-                      <Label>Colunas</Label>
-                      {customColumns.map((col, index) => (
-                        <div key={index} className="flex gap-2">
-                          <Input
-                            placeholder={`Coluna ${index + 1}`}
-                            value={col}
-                            onChange={(e) => {
-                              const newCols = [...customColumns];
-                              newCols[index] = e.target.value;
-                              setCustomColumns(newCols);
-                            }}
-                          />
-                          {customColumns.length > 1 && (
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                setCustomColumns(customColumns.filter((_, i) => i !== index));
-                              }}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          )}
-                        </div>
-                      ))}
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setCustomColumns([...customColumns, ''])}
-                      >
-                        <Plus className="h-4 w-4 mr-2" />
-                        Adicionar Coluna
-                      </Button>
-                    </div>
-                  )}
-                  {selectedTemplate.id === 'leads' && (
-                    <div className="flex flex-col gap-2">
-                      <Label>Colunas (Pré-definidas)</Label>
-                      <ul className="space-y-1 text-sm text-muted-foreground">
-                        {selectedTemplate.defaultColumns?.map((col, index) => (
-                          <li key={index} className="flex items-center">
-                            <div className="w-1 h-1 bg-primary rounded-full mr-2"></div>
-                            {col}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-                </div>
-              )}
-            </SheetBody>
-            <SheetFooter>
-              {selectedTemplate && (
-                <>
-                  <Button variant="outline" onClick={() => setSelectedTemplate(null)}>
-                    Voltar
-                  </Button>
-                  <Button onClick={handleCreateBoard}>Criar Quadro</Button>
-                </>
-              )}
-            </SheetFooter>
-          </SheetContent>
-        </Sheet>
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-3xl font-bold text-foreground">Quadros Kanban</h1>
+          <p className="text-muted-foreground">Organize suas tarefas e projetos</p>
+        </div>
+        <Button onClick={() => setIsCreateSheetOpen(true)} className="bg-[#1e1e1e]">
+          <Plus className="h-4 w-4 mr-2" />
+          Criar Quadro
+        </Button>
       </div>
 
-      {loadingBoards ? (
-        <div className="flex justify-center items-center h-64">
-          <p className="text-muted-foreground">Carregando...</p>
+      {/* Search */}
+      <div className="flex items-center space-x-4">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input 
+            placeholder="Buscar quadros..." 
+            className="pl-10 bg-input border-border" 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
         </div>
-      ) : boards && boards.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {boards.map((board) => (
-            <Card
-              key={board.id}
-              className="cursor-pointer hover:shadow-lg transition-all"
-              onClick={() => setSelectedBoardId(board.id)}
-            >
-              <CardHeader>
-                <CardTitle className="text-lg">{board.name}</CardTitle>
-                {board.description && (
-                  <CardDescription className="text-xs">{board.description}</CardDescription>
-                )}
-              </CardHeader>
-              <CardContent>
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span className="capitalize">
-                    {board.template_type === 'leads' ? 'Quadro de Leads' : 'Quadro Livre'}
-                  </span>
-                  <span>{new Date(board.created_at).toLocaleDateString('pt-BR')}</span>
+      </div>
+
+      {/* Boards List */}
+      <Card className="bg-card border-border">
+        <CardHeader>
+          <CardTitle className="text-card-foreground">Meus Quadros ({filteredBoards.length})</CardTitle>
+          <CardDescription>Todos os seus quadros organizados</CardDescription>
+        </CardHeader>
+        <CardContent>
+          {filteredBoards.length === 0 ? (
+            <div className="text-center py-12">
+              <h3 className="text-lg font-medium text-card-foreground mb-2">Nenhum quadro encontrado</h3>
+              <p className="text-muted-foreground">
+                {searchTerm ? "Tente ajustar a busca" : "Crie seu primeiro quadro para começar"}
+              </p>
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Tipo</TableHead>
+                  <TableHead>Criado em</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredBoards.map(board => (
+                  <TableRow key={board.id} className="cursor-pointer" onClick={() => setSelectedBoardId(board.id)}>
+                    <TableCell className="font-medium">{board.name}</TableCell>
+                    <TableCell>
+                      <Badge variant="secondary" className="capitalize">
+                        {board.template_type === 'leads' ? 'Leads' : 'Livre'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {new Date(board.created_at).toLocaleDateString('pt-BR')}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={(e) => {
+                            e.stopPropagation();
+                            setSelectedBoardId(board.id);
+                          }}>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Abrir
+                          </DropdownMenuItem>
+                          <DropdownMenuItem 
+                            className="text-destructive" 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleOpenDeleteDialog(board.id);
+                            }}
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Create Board Sheet */}
+      <Sheet open={isCreateSheetOpen} onOpenChange={(open) => {
+        setIsCreateSheetOpen(open);
+        if (!open) {
+          setSelectedTemplate(null);
+          setBoardName('');
+          setBoardDescription('');
+          setCustomColumns(['']);
+        }
+      }}>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>
+              {!selectedTemplate ? 'Escolha um Modelo' : 'Configurar Quadro'}
+            </SheetTitle>
+            <SheetDescription>
+              {!selectedTemplate 
+                ? 'Selecione o tipo de quadro que deseja criar'
+                : 'Preencha as informações do seu quadro'}
+            </SheetDescription>
+          </SheetHeader>
+          <SheetBody>
+            {!selectedTemplate ? (
+              <BoardTemplates onSelectTemplate={handleTemplateSelect} />
+            ) : (
+              <div className="grid gap-5">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="board-name">Nome do Quadro *</Label>
+                  <Input
+                    id="board-name"
+                    placeholder="Digite o nome do quadro"
+                    value={boardName}
+                    onChange={(e) => setBoardName(e.target.value)}
+                  />
                 </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      ) : (
-        <div className="flex flex-col items-center justify-center h-64 text-center">
-          <p className="text-muted-foreground mb-4">Nenhum quadro criado ainda</p>
-          <Button onClick={() => setIsCreateSheetOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Criar Primeiro Quadro
-          </Button>
-        </div>
-      )}
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="board-description">Descrição</Label>
+                  <Textarea
+                    id="board-description"
+                    placeholder="Adicione uma descrição (opcional)"
+                    rows={3}
+                    value={boardDescription}
+                    onChange={(e) => setBoardDescription(e.target.value)}
+                  />
+                </div>
+                {selectedTemplate.id === 'free' && (
+                  <div className="flex flex-col gap-2">
+                    <Label>Colunas</Label>
+                    {customColumns.map((col, index) => (
+                      <div key={index} className="flex gap-2">
+                        <Input
+                          placeholder={`Coluna ${index + 1}`}
+                          value={col}
+                          onChange={(e) => {
+                            const newCols = [...customColumns];
+                            newCols[index] = e.target.value;
+                            setCustomColumns(newCols);
+                          }}
+                        />
+                        {customColumns.length > 1 && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              setCustomColumns(customColumns.filter((_, i) => i !== index));
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        )}
+                      </div>
+                    ))}
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setCustomColumns([...customColumns, ''])}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      Adicionar Coluna
+                    </Button>
+                  </div>
+                )}
+                {selectedTemplate.id === 'leads' && (
+                  <div className="flex flex-col gap-2">
+                    <Label>Colunas (Pré-definidas)</Label>
+                    <ul className="space-y-1 text-sm text-muted-foreground">
+                      {selectedTemplate.defaultColumns?.map((col, index) => (
+                        <li key={index} className="flex items-center">
+                          <div className="w-1 h-1 bg-primary rounded-full mr-2"></div>
+                          {col}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </div>
+            )}
+          </SheetBody>
+          <SheetFooter>
+            {selectedTemplate && (
+              <>
+                <Button variant="outline" onClick={() => setSelectedTemplate(null)}>
+                  Voltar
+                </Button>
+                <Button onClick={handleCreateBoard}>Criar Quadro</Button>
+              </>
+            )}
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
 
       <DeleteConfirmationDialog
         open={deleteDialogOpen}

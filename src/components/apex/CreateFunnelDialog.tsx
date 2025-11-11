@@ -8,15 +8,17 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { FunnelTemplates } from "./FunnelTemplates";
 
 interface CreateFunnelDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  templateType?: 'sales' | 'ltv' | 'quiz' | null;
+  templateType?: 'sales' | 'ltv' | 'quiz' | 'blank' | null;
 }
 
-export function CreateFunnelDialog({ open, onOpenChange, templateType }: CreateFunnelDialogProps) {
+export function CreateFunnelDialog({ open, onOpenChange, templateType: initialTemplate }: CreateFunnelDialogProps) {
   const [name, setName] = useState("");
+  const [templateType, setTemplateType] = useState<'sales' | 'ltv' | 'quiz' | 'blank' | null>(initialTemplate || null);
   const { addProject } = useProjects();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -33,7 +35,7 @@ export function CreateFunnelDialog({ open, onOpenChange, templateType }: CreateF
         name: name.trim(),
         type: 'funnel',
         status: 'draft',
-        templateType: templateType || undefined,
+        templateType: templateType && templateType !== 'blank' ? templateType : undefined,
         stats: {
           conversion: "0%",
           visitors: "0",
@@ -66,6 +68,7 @@ export function CreateFunnelDialog({ open, onOpenChange, templateType }: CreateF
 
       toast.success("Funil criado com sucesso!");
       setName("");
+      setTemplateType(null);
       onOpenChange(false);
       
       // Redirecionar para o editor de funil usando o ID do projeto
@@ -76,44 +79,64 @@ export function CreateFunnelDialog({ open, onOpenChange, templateType }: CreateF
     }
   };
 
+  const handleSelectTemplate = (template: 'sales' | 'ltv' | 'quiz' | 'blank') => {
+    setTemplateType(template);
+  };
+
   return (
-    <Sheet open={open} onOpenChange={onOpenChange}>
+    <Sheet open={open} onOpenChange={(open) => {
+      onOpenChange(open);
+      if (!open) {
+        setTemplateType(null);
+        setName("");
+      }
+    }}>
       <SheetContent>
         <SheetHeader>
           <SheetTitle>
-            {templateType ? `Criar Funil - ${
+            {!templateType ? 'Escolha um Modelo' : templateType === 'blank' ? 'Criar Funil do Zero' : `Criar Funil - ${
               templateType === 'sales' ? 'Vendas' : 
               templateType === 'ltv' ? 'LTV' : 'Quiz'
-            }` : 'Criar Novo Funil'}
+            }`}
           </SheetTitle>
           <SheetDescription>
-            {templateType 
-              ? `Configurando um funil do tipo ${templateType === 'sales' ? 'Vendas' : templateType === 'ltv' ? 'LTV' : 'Quiz'} com elementos pré-selecionados`
-              : 'Configure as informações básicas do seu funil de vendas'
+            {!templateType 
+              ? 'Selecione o tipo de funil que deseja criar'
+              : templateType === 'blank'
+                ? 'Configure as informações básicas do seu funil personalizado'
+                : `Configurando um funil do tipo ${templateType === 'sales' ? 'Vendas' : templateType === 'ltv' ? 'LTV' : 'Quiz'} com elementos pré-selecionados`
             }
           </SheetDescription>
         </SheetHeader>
         <SheetBody>
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">Nome do Funil</Label>
-              <Input
-                id="name"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Ex: Funil de Vendas Principal"
-                className="bg-input border-border"
-              />
+          {!templateType ? (
+            <FunnelTemplates onSelectTemplate={handleSelectTemplate} />
+          ) : (
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Nome do Funil</Label>
+                <Input
+                  id="name"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Ex: Funil de Vendas Principal"
+                  className="bg-input border-border"
+                />
+              </div>
             </div>
-          </div>
+          )}
         </SheetBody>
         <SheetFooter>
-          <SheetClose asChild>
-            <Button variant="outline">Cancelar</Button>
-          </SheetClose>
-          <Button onClick={handleCreate} disabled={!name.trim()}>
-            Criar Funil
-          </Button>
+          {templateType && (
+            <>
+              <Button variant="outline" onClick={() => setTemplateType(null)}>
+                Voltar
+              </Button>
+              <Button onClick={handleCreate} disabled={!name.trim()}>
+                Criar Funil
+              </Button>
+            </>
+          )}
         </SheetFooter>
       </SheetContent>
     </Sheet>
