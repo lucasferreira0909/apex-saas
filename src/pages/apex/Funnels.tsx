@@ -257,7 +257,7 @@ export default function Funnels() {
       {/* Funnels List */}
       <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-card-foreground">Meus Funis (11){filteredProjects.length})</CardTitle>
+          <CardTitle className="text-card-foreground">Meus Funis (11)11{filteredProjects.length})</CardTitle>
           <CardDescription>Todos os seus funis organizados</CardDescription>
         </CardHeader>
         <CardContent>
