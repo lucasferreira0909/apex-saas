@@ -1,16 +1,13 @@
-
-import { lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { ApexLayout } from "@/components/layout/ApexLayout";
 import { AuthProvider } from "@/hooks/useAuth";
 
 // Apex Pages
-import Dashboard from "./pages/apex/Dashboard";
 import Support from "./pages/apex/Support";
 import ApexSettings from "./pages/apex/ApexSettings";
 import Funnels from "./pages/apex/Funnels";
@@ -37,7 +34,7 @@ const App = () => (
             <Route path="/*" element={
               <ApexLayout>
                 <Routes>
-                  <Route path="/" element={<Dashboard />} />
+                  <Route path="/" element={<Navigate to="/funnels" replace />} />
                   <Route path="/support" element={<Support />} />
                   <Route path="/settings" element={<ApexSettings />} />
                   <Route path="/funnels" element={<Funnels />} />
