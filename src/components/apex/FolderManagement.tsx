@@ -12,15 +12,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
-
 interface FolderManagementProps {
   isCollapsed: boolean;
 }
-
-export function FolderManagement({ isCollapsed }: FolderManagementProps) {
-  const { folders, addFolder, deleteFolder } = useFolders();
-  const { projects, updateProject } = useProjects();
-  
+export function FolderManagement({
+  isCollapsed
+}: FolderManagementProps) {
+  const {
+    folders,
+    addFolder,
+    deleteFolder
+  } = useFolders();
+  const {
+    projects,
+    updateProject
+  } = useProjects();
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
   const [isAddProjectsOpen, setIsAddProjectsOpen] = useState(false);
@@ -28,7 +34,6 @@ export function FolderManagement({ isCollapsed }: FolderManagementProps) {
   const [folderName, setFolderName] = useState("");
   const [folderType, setFolderType] = useState<'funnel' | 'video' | 'message' | 'mixed'>('mixed');
   const [selectedProjects, setSelectedProjects] = useState<Set<string>>(new Set());
-
   const toggleFolder = (folderId: string) => {
     const newExpanded = new Set(expandedFolders);
     if (newExpanded.has(folderId)) {
@@ -38,7 +43,6 @@ export function FolderManagement({ isCollapsed }: FolderManagementProps) {
     }
     setExpandedFolders(newExpanded);
   };
-
   const handleCreateFolder = () => {
     if (!folderName.trim()) {
       toast({
@@ -48,7 +52,6 @@ export function FolderManagement({ isCollapsed }: FolderManagementProps) {
       });
       return;
     }
-
     addFolder(folderName, folderType);
     toast({
       title: "Sucesso",
@@ -58,21 +61,21 @@ export function FolderManagement({ isCollapsed }: FolderManagementProps) {
     setFolderName("");
     setFolderType('mixed');
   };
-
   const handleDeleteFolder = (folderId: string) => {
     // Remove folder from all projects in this folder
     const folderProjects = projects.filter(p => p.folder === folderId);
     folderProjects.forEach(project => {
-      updateProject(project.id, { ...project, folder: undefined });
+      updateProject(project.id, {
+        ...project,
+        folder: undefined
+      });
     });
-    
     deleteFolder(folderId);
     toast({
       title: "Sucesso",
       description: "Pasta excluída com sucesso"
     });
   };
-
   const handleAddProjects = async () => {
     if (!selectedFolderId) {
       toast({
@@ -82,7 +85,6 @@ export function FolderManagement({ isCollapsed }: FolderManagementProps) {
       });
       return;
     }
-
     if (selectedProjects.size === 0) {
       toast({
         title: "Erro",
@@ -91,24 +93,23 @@ export function FolderManagement({ isCollapsed }: FolderManagementProps) {
       });
       return;
     }
-
     for (const projectId of selectedProjects) {
       const project = projects.find(p => p.id === projectId);
       if (project) {
-        await updateProject(projectId, { ...project, folder: selectedFolderId });
+        await updateProject(projectId, {
+          ...project,
+          folder: selectedFolderId
+        });
       }
     }
-
     toast({
       title: "Sucesso",
       description: `${selectedProjects.size} projeto(s) adicionado(s) à pasta`
     });
-    
     setIsAddProjectsOpen(false);
     setSelectedProjects(new Set());
     setSelectedFolderId("");
   };
-
   const getProjectUrl = (type: string) => {
     switch (type) {
       case 'funnel':
@@ -121,24 +122,15 @@ export function FolderManagement({ isCollapsed }: FolderManagementProps) {
         return '/funnels';
     }
   };
-
   const unassignedProjects = projects.filter(p => !p.folder);
-
-  return (
-    <>
+  return <>
       <div className="flex flex-col gap-2">
-        {!isCollapsed && (
-          <div className="flex items-center justify-between px-2">
+        {!isCollapsed && <div className="flex items-center justify-between px-2">
             <span className="text-sm text-sidebar-foreground/60">Projetos</span>
             <div className="flex gap-1">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5"
-                    onClick={() => setIsAddProjectsOpen(true)}
-                  >
+                  <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setIsAddProjectsOpen(true)}>
                     <Plus className="h-3 w-3" />
                   </Button>
                 </TooltipTrigger>
@@ -146,31 +138,19 @@ export function FolderManagement({ isCollapsed }: FolderManagementProps) {
               </Tooltip>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-5 w-5"
-                    onClick={() => setIsCreateFolderOpen(true)}
-                  >
+                  <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setIsCreateFolderOpen(true)}>
                     <Folder className="h-3 w-3" />
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent>Nova Pasta</TooltipContent>
               </Tooltip>
             </div>
-          </div>
-        )}
+          </div>}
 
-        {isCollapsed && (
-          <div className="flex flex-col gap-1">
+        {isCollapsed && <div className="flex flex-col gap-1">
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="w-full"
-                  onClick={() => setIsAddProjectsOpen(true)}
-                >
+                <Button variant="ghost" size="icon" className="w-full" onClick={() => setIsAddProjectsOpen(true)}>
                   <Plus className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
@@ -178,36 +158,27 @@ export function FolderManagement({ isCollapsed }: FolderManagementProps) {
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="w-full"
-                  onClick={() => setIsCreateFolderOpen(true)}
-                >
+                <Button variant="ghost" size="icon" className="w-full" onClick={() => setIsCreateFolderOpen(true)}>
                   <Folder className="h-4 w-4" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent side="right">Nova Pasta</TooltipContent>
             </Tooltip>
-          </div>
-        )}
+          </div>}
 
         {/* Folders */}
         <div className="flex flex-col gap-1">
           {folders.map(folder => {
-            const folderProjects = projects.filter(p => p.folder === folder.id);
-            const isExpanded = expandedFolders.has(folder.id);
-
-            return (
-              <div key={folder.id}>
+          const folderProjects = projects.filter(p => p.folder === folder.id);
+          const isExpanded = expandedFolders.has(folder.id);
+          return <div key={folder.id}>
                 <div className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sidebar-foreground hover:bg-sidebar-accent/50 ${isCollapsed ? 'justify-center' : ''}`}>
-                  {!isCollapsed && (
-                    <>
+                  {!isCollapsed && <>
                       <button onClick={() => toggleFolder(folder.id)} className="flex items-center gap-2 flex-1">
                         {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
                         <Folder className="h-4 w-4" />
                         <span className="text-sm truncate">{folder.name}</span>
-                        <span className="text-xs text-sidebar-foreground/50">({folderProjects.length})</span>
+                        
                       </button>
                       <DropdownMenu>
                         <DropdownMenuTrigger asChild>
@@ -222,36 +193,24 @@ export function FolderManagement({ isCollapsed }: FolderManagementProps) {
                           </DropdownMenuItem>
                         </DropdownMenuContent>
                       </DropdownMenu>
-                    </>
-                  )}
-                  {isCollapsed && (
-                    <Tooltip>
+                    </>}
+                  {isCollapsed && <Tooltip>
                       <TooltipTrigger asChild>
                         <button onClick={() => toggleFolder(folder.id)}>
                           <Folder className="h-4 w-4" />
                         </button>
                       </TooltipTrigger>
                       <TooltipContent side="right">{folder.name} ({folderProjects.length})</TooltipContent>
-                    </Tooltip>
-                  )}
+                    </Tooltip>}
                 </div>
 
-                {isExpanded && !isCollapsed && (
-                  <div className="ml-6 flex flex-col gap-1">
-                    {folderProjects.map(project => (
-                      <NavLink
-                        key={project.id}
-                        to={getProjectUrl(project.type)}
-                        className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-sidebar-foreground hover:bg-sidebar-accent/50"
-                      >
+                {isExpanded && !isCollapsed && <div className="ml-6 flex flex-col gap-1">
+                    {folderProjects.map(project => <NavLink key={project.id} to={getProjectUrl(project.type)} className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-sidebar-foreground hover:bg-sidebar-accent/50">
                         <span className="truncate">{project.name}</span>
-                      </NavLink>
-                    ))}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                      </NavLink>)}
+                  </div>}
+              </div>;
+        })}
         </div>
       </div>
 
@@ -266,12 +225,7 @@ export function FolderManagement({ isCollapsed }: FolderManagementProps) {
             <div className="grid gap-5">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="folder-name">Nome da Pasta *</Label>
-                <Input
-                  id="folder-name"
-                  placeholder="Digite o nome da pasta"
-                  value={folderName}
-                  onChange={(e) => setFolderName(e.target.value)}
-                />
+                <Input id="folder-name" placeholder="Digite o nome da pasta" value={folderName} onChange={e => setFolderName(e.target.value)} />
               </div>
               <div className="flex flex-col gap-2">
                 <Label htmlFor="folder-type">Tipo</Label>
@@ -314,11 +268,9 @@ export function FolderManagement({ isCollapsed }: FolderManagementProps) {
                     <SelectValue placeholder="Escolha uma pasta" />
                   </SelectTrigger>
                   <SelectContent>
-                    {folders.map(folder => (
-                      <SelectItem key={folder.id} value={folder.id}>
+                    {folders.map(folder => <SelectItem key={folder.id} value={folder.id}>
                         {folder.name}
-                      </SelectItem>
-                    ))}
+                      </SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -326,32 +278,22 @@ export function FolderManagement({ isCollapsed }: FolderManagementProps) {
               <div className="flex flex-col gap-2">
                 <Label>Selecione os Projetos *</Label>
                 <div className="border rounded-lg p-3 max-h-[300px] overflow-y-auto">
-                  {unassignedProjects.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Nenhum projeto disponível</p>
-                  ) : (
-                    <div className="flex flex-col gap-2">
-                      {unassignedProjects.map(project => (
-                        <div key={project.id} className="flex items-center gap-2">
-                          <Checkbox
-                            id={project.id}
-                            checked={selectedProjects.has(project.id)}
-                            onCheckedChange={(checked) => {
-                              const newSelected = new Set(selectedProjects);
-                              if (checked) {
-                                newSelected.add(project.id);
-                              } else {
-                                newSelected.delete(project.id);
-                              }
-                              setSelectedProjects(newSelected);
-                            }}
-                          />
+                  {unassignedProjects.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum projeto disponível</p> : <div className="flex flex-col gap-2">
+                      {unassignedProjects.map(project => <div key={project.id} className="flex items-center gap-2">
+                          <Checkbox id={project.id} checked={selectedProjects.has(project.id)} onCheckedChange={checked => {
+                      const newSelected = new Set(selectedProjects);
+                      if (checked) {
+                        newSelected.add(project.id);
+                      } else {
+                        newSelected.delete(project.id);
+                      }
+                      setSelectedProjects(newSelected);
+                    }} />
                           <Label htmlFor={project.id} className="text-sm cursor-pointer flex-1">
                             {project.name}
                           </Label>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        </div>)}
+                    </div>}
                 </div>
               </div>
             </div>
@@ -364,6 +306,5 @@ export function FolderManagement({ isCollapsed }: FolderManagementProps) {
           </SheetFooter>
         </SheetContent>
       </Sheet>
-    </>
-  );
+    </>;
 }
