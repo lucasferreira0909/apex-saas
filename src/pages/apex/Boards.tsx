@@ -202,10 +202,7 @@ export default function Boards() {
           <h1 className="text-3xl font-bold text-foreground">Quadros</h1>
           <p className="text-muted-foreground">Organize suas tarefas e projetos</p>
         </div>
-        <Button onClick={() => setIsCreateSheetOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Novo Quadro
-        </Button>
+        
       </div>
 
       {/* Search */}
