@@ -5,8 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
-import { useAuth } from "@/hooks/useAuth";
+import { useProjects } from "@/hooks/useProjects";
 import { FunnelTemplates } from "./FunnelTemplates";
 
 interface CreateFunnelDialogProps {
@@ -18,7 +17,7 @@ interface CreateFunnelDialogProps {
 export function CreateFunnelDialog({ open, onOpenChange, templateType: initialTemplate }: CreateFunnelDialogProps) {
   const [name, setName] = useState("");
   const [templateType, setTemplateType] = useState<'sales' | 'ltv' | 'quiz' | 'blank' | null>(initialTemplate || null);
-  const { user } = useAuth();
+  const { addProject } = useProjects();
   const navigate = useNavigate();
 
   const handleCreate = async () => {
@@ -27,27 +26,16 @@ export function CreateFunnelDialog({ open, onOpenChange, templateType: initialTe
       return;
     }
 
-    if (!user) {
-      toast.error("Usuário não autenticado");
-      return;
-    }
-
     try {
-      // Criar o funil diretamente
-      const { data: funnelData, error: funnelError } = await supabase
-        .from('funnels')
-        .insert({
-          user_id: user.id,
-          name: name.trim(),
-          description: `Funil ${templateType ? `do tipo ${templateType}` : 'personalizado'}`,
-          template_type: templateType && templateType !== 'blank' ? templateType : null,
-          status: 'draft'
-        })
-        .select()
-        .single();
+      const newProject = await addProject({
+        name: name.trim(),
+        type: 'funnel',
+        status: 'draft',
+        templateType: templateType && templateType !== 'blank' ? templateType as 'sales' | 'ltv' | 'quiz' : undefined,
+        stats: {}
+      });
 
-      if (funnelError) {
-        console.error('Error creating funnel:', funnelError);
+      if (!newProject) {
         toast.error("Erro ao criar funil");
         return;
       }
@@ -57,8 +45,8 @@ export function CreateFunnelDialog({ open, onOpenChange, templateType: initialTe
       setTemplateType(null);
       onOpenChange(false);
       
-      // Redirecionar para o editor de funil usando o ID do funil
-      navigate(`/funnel-editor/${funnelData.id}`);
+      // Redirecionar para o editor de funil usando o ID do projeto
+      navigate(`/funnel-editor/${newProject.id}`);
     } catch (error) {
       console.error('Error in handleCreate:', error);
       toast.error("Erro ao criar funil");
