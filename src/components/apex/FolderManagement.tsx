@@ -122,7 +122,8 @@ export function FolderManagement({
         return '/funnels';
     }
   };
-  const unassignedProjects = projects.filter(p => !p.folder);
+  // Mostrar todos os projetos disponíveis (exceto os que já estão na pasta selecionada)
+  const availableProjects = projects.filter(p => p.folder !== selectedFolderId);
   return <>
       <div className="flex flex-col gap-2">
         {!isCollapsed && <div className="flex items-center justify-between px-2">
@@ -252,8 +253,8 @@ export function FolderManagement({
               <div className="flex flex-col gap-2">
                 <Label>Selecione os Projetos *</Label>
                 <div className="border rounded-lg p-3 max-h-[300px] overflow-y-auto">
-                  {unassignedProjects.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum projeto disponível</p> : <div className="flex flex-col gap-2">
-                      {unassignedProjects.map(project => <div key={project.id} className="flex items-center gap-2">
+                  {availableProjects.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum projeto disponível</p> : <div className="flex flex-col gap-2">
+                      {availableProjects.map(project => <div key={project.id} className="flex items-center gap-2">
                           <Checkbox id={project.id} checked={selectedProjects.has(project.id)} onCheckedChange={checked => {
                       const newSelected = new Set(selectedProjects);
                       if (checked) {
@@ -264,7 +265,7 @@ export function FolderManagement({
                       setSelectedProjects(newSelected);
                     }} />
                           <Label htmlFor={project.id} className="text-sm cursor-pointer flex-1">
-                            {project.name}
+                            {project.name} <span className="text-muted-foreground text-xs">({project.type === 'funnel' ? 'Funil' : project.type === 'message' ? 'Mensagem' : 'Quadro'})</span>
                           </Label>
                         </div>)}
                     </div>}
