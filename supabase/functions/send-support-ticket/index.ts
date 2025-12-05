@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.57.4';
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
@@ -69,7 +69,7 @@ const handler = async (req: Request): Promise<Response> => {
     const emailResponse = await resend.emails.send({
       from: "Apex Support <suporte@apex-platform.com>",
       to: ["apex.suporte.br@gmail.com"],
-      replyTo: [user.email!],
+      reply_to: [user.email!],
       subject: `[${ticketId}] ${subject}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">

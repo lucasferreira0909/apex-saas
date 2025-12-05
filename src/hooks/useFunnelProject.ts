@@ -2,14 +2,20 @@ import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from './useAuth';
 
-export function useFunnelProject(projectId?: string) {
-  const [funnelId, setFunnelId] = useState<string | null>(null);
+export function useFunnelProject(funnelId?: string) {
+  const [funnel, setFunnel] = useState<{
+    id: string;
+    name: string;
+    description: string | null;
+    status: string;
+    template_type: string | null;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
 
-  const fetchFunnelId = async () => {
-    if (!user || !projectId) {
-      setFunnelId(null);
+  const fetchFunnel = async () => {
+    if (!user || !funnelId) {
+      setFunnel(null);
       setLoading(false);
       return;
     }
@@ -17,31 +23,33 @@ export function useFunnelProject(projectId?: string) {
     try {
       const { data, error } = await supabase
         .from('funnels')
-        .select('id')
-        .eq('project_id', projectId)
-        .single();
+        .select('id, name, description, status, template_type')
+        .eq('id', funnelId)
+        .eq('user_id', user.id)
+        .maybeSingle();
 
       if (error) {
-        console.error('Error fetching funnel by project_id:', error);
-        setFunnelId(null);
+        console.error('Error fetching funnel:', error);
+        setFunnel(null);
       } else {
-        setFunnelId(data.id);
+        setFunnel(data);
       }
     } catch (error) {
-      console.error('Error in fetchFunnelId:', error);
-      setFunnelId(null);
+      console.error('Error in fetchFunnel:', error);
+      setFunnel(null);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchFunnelId();
-  }, [user, projectId]);
+    fetchFunnel();
+  }, [user, funnelId]);
 
   return {
-    funnelId,
+    funnel,
+    funnelId: funnel?.id ?? null,
     loading,
-    refetch: fetchFunnelId
+    refetch: fetchFunnel
   };
 }
