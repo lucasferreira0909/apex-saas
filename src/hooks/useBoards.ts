@@ -115,3 +115,24 @@ export function useDeleteBoard() {
     }
   });
 }
+
+export function useUpdateBoardFolder() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async ({ boardId, folder }: { boardId: string; folder: string | null }) => {
+      const { error } = await supabase
+        .from('boards')
+        .update({ folder })
+        .eq('id', boardId);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['boards'] });
+    },
+    onError: () => {
+      toast.error('Não foi possível atualizar a pasta do quadro');
+    }
+  });
+}
