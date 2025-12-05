@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -8,33 +8,13 @@ import { CreateFunnelDialog } from "@/components/apex/CreateFunnelDialog";
 import { useProjects } from "@/hooks/useProjects";
 import { useFolders } from "@/hooks/useFolders";
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
-import { Plus, Search, Folder, MoreHorizontal, Edit, Trash2, X } from "lucide-react";
+import { Plus, Search, Filter, Folder, MoreHorizontal, Edit, Trash2, X } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { DataGrid, DataGridContainer } from "@/components/ui/data-grid";
-import { DataGridTable } from "@/components/ui/data-grid-table";
-import { DataGridPagination } from "@/components/ui/data-grid-pagination";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Pagination, PaginationContent, PaginationEllipsis, PaginationItem, PaginationLink, PaginationNext, PaginationPrevious } from "@/components/ui/pagination";
 import { useNavigate } from "react-router-dom";
-import {
-  ColumnDef,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
-  PaginationState,
-  SortingState,
-  useReactTable,
-} from '@tanstack/react-table';
-
-interface FunnelData {
-  id: string;
-  name: string;
-  status: string;
-  type: string;
-  updated: string;
-}
-
+const ITEMS_PER_PAGE = 10;
 export default function Funnels() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -43,19 +23,20 @@ export default function Funnels() {
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
-  const [pagination, setPagination] = useState<PaginationState>({
-    pageIndex: 0,
-    pageSize: 10,
-  });
-  const [sorting, setSorting] = useState<SortingState>([{ id: 'name', desc: false }]);
-  
+  const [currentPage, setCurrentPage] = useState(1);
   const navigate = useNavigate();
-  const { projects, deleteProject } = useProjects();
-  const { folders } = useFolders();
+  const {
+    projects,
+    deleteProject,
+    getProjectStats
+  } = useProjects();
+  const {
+    folders
+  } = useFolders();
+  const funnelStats = getProjectStats();
 
   // Filter only funnel projects
   const funnelProjects = projects.filter(project => project.type === 'funnel');
-
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'active':
@@ -72,140 +53,110 @@ export default function Funnels() {
   };
 
   // Filter projects based on search, folder and status
-  const filteredProjects = useMemo(() => {
-    return funnelProjects.filter(project => {
-      const searchMatch = searchTerm === "" || 
-        project.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
-        (project.folder && project.folder.toLowerCase().includes(searchTerm.toLowerCase()));
-      const folderMatch = selectedFolder === "all" || 
-        (selectedFolder === "no-folder" && !project.folder) || 
-        project.folder === selectedFolder;
-      const statusMatch = selectedStatus === "all" || project.status === selectedStatus;
-      return searchMatch && folderMatch && statusMatch;
-    });
-  }, [funnelProjects, searchTerm, selectedFolder, selectedStatus]);
+  const filteredProjects = funnelProjects.filter(project => {
+    const searchMatch = searchTerm === "" || project.name.toLowerCase().includes(searchTerm.toLowerCase()) || project.folder && project.folder.toLowerCase().includes(searchTerm.toLowerCase());
+    const folderMatch = selectedFolder === "all" || selectedFolder === "no-folder" && !project.folder || project.folder === selectedFolder;
+    const statusMatch = selectedStatus === "all" || project.status === selectedStatus;
+    return searchMatch && folderMatch && statusMatch;
+  });
 
-  const tableData: FunnelData[] = useMemo(() => {
-    return filteredProjects.map(project => ({
-      id: project.id,
-      name: project.name,
-      status: project.status,
-      type: project.type,
-      updated: project.updated,
-    }));
-  }, [filteredProjects]);
+  // Pagination calculations
+  const totalPages = Math.ceil(filteredProjects.length / ITEMS_PER_PAGE);
+  const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+  const endIndex = startIndex + ITEMS_PER_PAGE;
+  const paginatedProjects = filteredProjects.slice(startIndex, endIndex);
 
+  // Reset to page 1 when filters change
+  const handleFilterChange = () => {
+    setCurrentPage(1);
+  };
   const clearAllFilters = () => {
     setSearchTerm("");
     setSelectedFolder("all");
     setSelectedStatus("all");
-    setPagination(prev => ({ ...prev, pageIndex: 0 }));
+    setCurrentPage(1);
   };
-
   const hasActiveFilters = searchTerm !== "" || selectedFolder !== "all" || selectedStatus !== "all";
-
   const handleDeleteClick = (projectId: string) => {
     setProjectToDelete(projectId);
     setDeleteDialogOpen(true);
   };
-
   const handleConfirmDelete = async () => {
     if (projectToDelete) {
       await deleteProject(projectToDelete);
       setProjectToDelete(null);
+      // Adjust page if needed after deletion
+      if (paginatedProjects.length === 1 && currentPage > 1) {
+        setCurrentPage(currentPage - 1);
+      }
     }
     setDeleteDialogOpen(false);
   };
-
   const handleEditClick = (projectId: string) => {
     navigate(`/funnel-editor/${projectId}`);
   };
+  const renderPaginationItems = () => {
+    const items = [];
+    const maxVisiblePages = 3;
+    if (totalPages <= maxVisiblePages + 2) {
+      // Show all pages if total is small
+      for (let i = 1; i <= totalPages; i++) {
+        items.push(<PaginationItem key={i}>
+            <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i} className="cursor-pointer">
+              {i}
+            </PaginationLink>
+          </PaginationItem>);
+      }
+    } else {
+      // Show first page
+      items.push(<PaginationItem key={1}>
+          <PaginationLink onClick={() => setCurrentPage(1)} isActive={currentPage === 1} className="cursor-pointer">
+            1
+          </PaginationLink>
+        </PaginationItem>);
 
-  const columns = useMemo<ColumnDef<FunnelData>[]>(
-    () => [
-      {
-        accessorKey: 'name',
-        header: 'Nome',
-        cell: (info) => <span className="font-medium">{info.getValue() as string}</span>,
-        size: 250,
-      },
-      {
-        accessorKey: 'status',
-        header: 'Status',
-        cell: (info) => getStatusBadge(info.getValue() as string),
-        size: 120,
-      },
-      {
-        accessorKey: 'type',
-        header: 'Tipo',
-        cell: (info) => <span className="capitalize">{info.getValue() as string}</span>,
-        size: 100,
-      },
-      {
-        accessorKey: 'updated',
-        header: 'Atualizado',
-        cell: (info) => new Date(info.getValue() as string).toLocaleDateString('pt-BR'),
-        size: 120,
-      },
-      {
-        id: 'actions',
-        header: () => <span className="sr-only">Ações</span>,
-        cell: ({ row }) => (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleEditClick(row.original.id)}>
-                <Edit className="mr-2 h-4 w-4" />
-                Editar
-              </DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteClick(row.original.id)}>
-                <Trash2 className="mr-2 h-4 w-4" />
-                Excluir
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        ),
-        size: 60,
-        meta: {
-          headerClassName: 'text-right',
-          cellClassName: 'text-right',
-        },
-        enableSorting: false,
-      },
-    ],
-    []
-  );
+      // Show ellipsis if needed
+      if (currentPage > 3) {
+        items.push(<PaginationItem key="ellipsis-start">
+            <PaginationEllipsis />
+          </PaginationItem>);
+      }
 
-  const table = useReactTable({
-    columns,
-    data: tableData,
-    pageCount: Math.ceil(tableData.length / pagination.pageSize),
-    getRowId: (row) => row.id,
-    state: {
-      pagination,
-      sorting,
-    },
-    onPaginationChange: setPagination,
-    onSortingChange: setSorting,
-    getCoreRowModel: getCoreRowModel(),
-    getFilteredRowModel: getFilteredRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    getSortedRowModel: getSortedRowModel(),
-  });
+      // Show current page and neighbors
+      const start = Math.max(2, currentPage - 1);
+      const end = Math.min(totalPages - 1, currentPage + 1);
+      for (let i = start; i <= end; i++) {
+        items.push(<PaginationItem key={i}>
+            <PaginationLink onClick={() => setCurrentPage(i)} isActive={currentPage === i} className="cursor-pointer">
+              {i}
+            </PaginationLink>
+          </PaginationItem>);
+      }
 
-  return (
-    <div className="space-y-6">
+      // Show ellipsis if needed
+      if (currentPage < totalPages - 2) {
+        items.push(<PaginationItem key="ellipsis-end">
+            <PaginationEllipsis />
+          </PaginationItem>);
+      }
+
+      // Show last page
+      items.push(<PaginationItem key={totalPages}>
+          <PaginationLink onClick={() => setCurrentPage(totalPages)} isActive={currentPage === totalPages} className="cursor-pointer">
+            {totalPages}
+          </PaginationLink>
+        </PaginationItem>);
+    }
+    return items;
+  };
+  return <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-foreground">Funis de Vendas</h1>
           <p className="text-muted-foreground">Crie e gerencie seus funis de conversão</p>
         </div>
-        <Button onClick={() => setShowCreateDialog(true)} className="bg-[#1e1e1e]">
+        <Button onClick={() => setShowCreateDialog(true)} className="bg-[neutr] bg-[#1e1e1e]">
           <Plus className="h-4 w-4 mr-2" />
           Criar Funil
         </Button>
@@ -215,51 +166,51 @@ export default function Funnels() {
       <div className="flex items-center space-x-4">
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Buscar funis..." 
-            className="pl-10 bg-input border-border" 
-            value={searchTerm} 
-            onChange={e => setSearchTerm(e.target.value)} 
-          />
+          <Input placeholder="Buscar funis..." className="pl-10 bg-input border-border" value={searchTerm} onChange={e => {
+          setSearchTerm(e.target.value);
+          handleFilterChange();
+        }} />
         </div>
         
         <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
           <PopoverTrigger asChild>
-            <span />
+            
           </PopoverTrigger>
           <PopoverContent className="w-80" align="end">
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h4 className="font-medium text-card-foreground">Filtros</h4>
-                {hasActiveFilters && (
-                  <Button variant="ghost" size="sm" onClick={clearAllFilters}>
+                {hasActiveFilters && <Button variant="ghost" size="sm" onClick={clearAllFilters}>
                     <X className="h-4 w-4 mr-1" />
                     Limpar
-                  </Button>
-                )}
+                  </Button>}
               </div>
               
               <div className="space-y-2">
                 <label className="text-sm font-medium text-card-foreground">Pasta</label>
-                <Select value={selectedFolder} onValueChange={setSelectedFolder}>
+                <Select value={selectedFolder} onValueChange={value => {
+                setSelectedFolder(value);
+                handleFilterChange();
+              }}>
                   <SelectTrigger className="bg-input border-border">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">Todas as pastas</SelectItem>
                     <SelectItem value="no-folder">Sem pasta</SelectItem>
-                    {folders.map(folder => (
-                      <SelectItem key={folder.id} value={folder.name}>
+                    {folders.map(folder => <SelectItem key={folder.id} value={folder.name}>
                         {folder.name}
-                      </SelectItem>
-                    ))}
+                      </SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
               
               <div className="space-y-2">
                 <label className="text-sm font-medium text-card-foreground">Status</label>
-                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                <Select value={selectedStatus} onValueChange={value => {
+                setSelectedStatus(value);
+                handleFilterChange();
+              }}>
                   <SelectTrigger className="bg-input border-border">
                     <SelectValue />
                   </SelectTrigger>
@@ -278,29 +229,30 @@ export default function Funnels() {
       </div>
 
       {/* Active Filters Display */}
-      {hasActiveFilters && (
-        <div className="flex items-center space-x-2 text-sm">
+      {hasActiveFilters && <div className="flex items-center space-x-2 text-sm">
           <span className="text-muted-foreground">Filtros ativos:</span>
-          {searchTerm && (
-            <Badge variant="secondary" className="flex items-center space-x-1">
+          {searchTerm && <Badge variant="secondary" className="flex items-center space-x-1">
               <span>Busca: "{searchTerm}"</span>
-              <X className="h-3 w-3 cursor-pointer" onClick={() => setSearchTerm("")} />
-            </Badge>
-          )}
-          {selectedFolder !== "all" && (
-            <Badge variant="secondary" className="flex items-center space-x-1">
+              <X className="h-3 w-3 cursor-pointer" onClick={() => {
+          setSearchTerm("");
+          handleFilterChange();
+        }} />
+            </Badge>}
+          {selectedFolder !== "all" && <Badge variant="secondary" className="flex items-center space-x-1">
               <span>Pasta: {selectedFolder === "no-folder" ? "Sem pasta" : selectedFolder}</span>
-              <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedFolder("all")} />
-            </Badge>
-          )}
-          {selectedStatus !== "all" && (
-            <Badge variant="secondary" className="flex items-center space-x-1">
+              <X className="h-3 w-3 cursor-pointer" onClick={() => {
+          setSelectedFolder("all");
+          handleFilterChange();
+        }} />
+            </Badge>}
+          {selectedStatus !== "all" && <Badge variant="secondary" className="flex items-center space-x-1">
               <span>Status: {selectedStatus}</span>
-              <X className="h-3 w-3 cursor-pointer" onClick={() => setSelectedStatus("all")} />
-            </Badge>
-          )}
-        </div>
-      )}
+              <X className="h-3 w-3 cursor-pointer" onClick={() => {
+          setSelectedStatus("all");
+          handleFilterChange();
+        }} />
+            </Badge>}
+        </div>}
 
       {/* Funnels List */}
       <Card className="bg-card border-border">
@@ -309,27 +261,71 @@ export default function Funnels() {
           <CardDescription>Todos os seus funis organizados</CardDescription>
         </CardHeader>
         <CardContent>
-          {filteredProjects.length === 0 ? (
-            <div className="text-center py-12">
+          {filteredProjects.length === 0 ? <div className="text-center py-12">
               <Folder className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-medium text-card-foreground mb-2">Nenhum funil encontrado</h3>
               <p className="text-muted-foreground">
                 {hasActiveFilters ? "Tente ajustar os filtros ou criar um novo funil" : "Crie seu primeiro funil para começar"}
               </p>
-            </div>
-          ) : (
-            <DataGrid table={table} recordCount={tableData.length}>
-              <div className="w-full space-y-2.5">
-                <DataGridContainer>
-                  <ScrollArea>
-                    <DataGridTable />
-                    <ScrollBar orientation="horizontal" />
-                  </ScrollArea>
-                </DataGridContainer>
-                <DataGridPagination />
-              </div>
-            </DataGrid>
-          )}
+            </div> : <>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Tipo</TableHead>
+                    <TableHead>Atualizado</TableHead>
+                    <TableHead className="text-right">Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {paginatedProjects.map(project => <TableRow key={project.id}>
+                      <TableCell className="font-medium">{project.name}</TableCell>
+                      <TableCell>{getStatusBadge(project.status)}</TableCell>
+                      <TableCell className="capitalize">{project.type}</TableCell>
+                      <TableCell>
+                        {new Date(project.updated).toLocaleDateString('pt-BR')}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="icon">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end">
+                            <DropdownMenuItem onClick={() => handleEditClick(project.id)}>
+                              <Edit className="mr-2 h-4 w-4" />
+                              Editar
+                            </DropdownMenuItem>
+                            <DropdownMenuItem className="text-destructive" onClick={() => handleDeleteClick(project.id)}>
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Excluir
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </TableCell>
+                    </TableRow>)}
+                </TableBody>
+              </Table>
+
+              {/* Pagination */}
+              {totalPages > 1 && <div className="mt-6">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} className={currentPage === 1 ? "pointer-events-none opacity-50" : "cursor-pointer"} />
+                      </PaginationItem>
+                      
+                      {renderPaginationItems()}
+                      
+                      <PaginationItem>
+                        <PaginationNext onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} className={currentPage === totalPages ? "pointer-events-none opacity-50" : "cursor-pointer"} />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>}
+            </>}
         </CardContent>
       </Card>
 
@@ -337,13 +333,6 @@ export default function Funnels() {
       <CreateFunnelDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} />
 
       {/* Delete Confirmation Dialog */}
-      <DeleteConfirmationDialog 
-        open={deleteDialogOpen} 
-        onOpenChange={setDeleteDialogOpen} 
-        onConfirm={handleConfirmDelete} 
-        title="Excluir Funil" 
-        description="Tem certeza que deseja excluir este funil? Esta ação não pode ser desfeita e todos os elementos do funil serão perdidos." 
-      />
-    </div>
-  );
+      <DeleteConfirmationDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen} onConfirm={handleConfirmDelete} title="Excluir Funil" description="Tem certeza que deseja excluir este funil? Esta ação não pode ser desfeita e todos os elementos do funil serão perdidos." />
+    </div>;
 }
