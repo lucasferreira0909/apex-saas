@@ -289,7 +289,7 @@ export default function Boards() {
         setCustomColumns(['']);
       }
     }}>
-        <SheetContent>
+        <SheetContent className="sm:max-w-xl md:max-w-2xl">
           <SheetHeader>
             <SheetTitle>
               {!selectedTemplate ? 'Escolha um Modelo' : 'Configurar Quadro'}
