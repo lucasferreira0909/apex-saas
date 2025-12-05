@@ -2,8 +2,8 @@ import { useState } from "react";
 import { Folder, ChevronDown, ChevronRight, Plus, MoreVertical, Trash2 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useFolders } from "@/hooks/useFolders";
-import { useProjects } from "@/hooks/useProjects";
 import { useBoards, useUpdateBoardFolder } from "@/hooks/useBoards";
+import { useFunnels, useUpdateFunnelFolder } from "@/hooks/useFunnels";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetBody, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
@@ -19,7 +19,7 @@ interface UnifiedItem {
   name: string;
   type: string;
   folder: string | null | undefined;
-  itemType: 'project' | 'board';
+  itemType: 'board' | 'funnel';
 }
 
 export function FolderManagement() {
@@ -28,12 +28,10 @@ export function FolderManagement() {
     addFolder,
     deleteFolder
   } = useFolders();
-  const {
-    projects,
-    updateProject
-  } = useProjects();
-  const { data: boards = [] } = useBoards();
+  const { data: boards = [], refetch: refetchBoards } = useBoards();
+  const { data: funnels = [], refetch: refetchFunnels } = useFunnels();
   const updateBoardFolder = useUpdateBoardFolder();
+  const updateFunnelFolder = useUpdateFunnelFolder();
 
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
@@ -53,21 +51,21 @@ export function FolderManagement() {
     setExpandedFolders(newExpanded);
   };
 
-  // Combinar projetos e boards em uma lista unificada
+  // Combinar boards e funnels em uma lista unificada
   const allItems: UnifiedItem[] = [
-    ...projects.map(p => ({ 
-      id: p.id, 
-      name: p.name, 
-      type: p.type, 
-      folder: p.folder,
-      itemType: 'project' as const 
-    })),
     ...boards.map(b => ({ 
       id: b.id, 
       name: b.name, 
       type: 'board', 
       folder: (b as any).folder as string | null | undefined,
       itemType: 'board' as const 
+    })),
+    ...funnels.map(f => ({ 
+      id: f.id, 
+      name: f.name, 
+      type: 'funnel', 
+      folder: f.folder,
+      itemType: 'funnel' as const 
     }))
   ];
 
@@ -95,13 +93,10 @@ export function FolderManagement() {
     const folderItems = allItems.filter(item => item.folder === folderId);
     
     for (const item of folderItems) {
-      if (item.itemType === 'project') {
-        const project = projects.find(p => p.id === item.id);
-        if (project) {
-          await updateProject(item.id, { ...project, folder: undefined });
-        }
-      } else {
+      if (item.itemType === 'board') {
         await updateBoardFolder.mutateAsync({ boardId: item.id, folder: null });
+      } else if (item.itemType === 'funnel') {
+        await updateFunnelFolder.mutateAsync({ funnelId: item.id, folder: null });
       }
     }
 
@@ -133,16 +128,16 @@ export function FolderManagement() {
     for (const itemId of selectedItems) {
       const item = allItems.find(i => i.id === itemId);
       if (item) {
-        if (item.itemType === 'project') {
-          const project = projects.find(p => p.id === itemId);
-          if (project) {
-            await updateProject(itemId, { ...project, folder: selectedFolderId });
-          }
-        } else {
+        if (item.itemType === 'board') {
           await updateBoardFolder.mutateAsync({ boardId: itemId, folder: selectedFolderId });
+        } else if (item.itemType === 'funnel') {
+          await updateFunnelFolder.mutateAsync({ funnelId: itemId, folder: selectedFolderId });
         }
       }
     }
+
+    // Refetch data to ensure UI is updated
+    await Promise.all([refetchBoards(), refetchFunnels()]);
 
     toast({
       title: "Sucesso",
@@ -157,10 +152,6 @@ export function FolderManagement() {
     switch (type) {
       case 'funnel':
         return `/funnels/editor/${itemId}`;
-      case 'video':
-        return '/tools';
-      case 'message':
-        return `/messages/editor/${itemId}`;
       case 'board':
         return `/tasks?board=${itemId}`;
       default:
@@ -172,8 +163,6 @@ export function FolderManagement() {
     switch (type) {
       case 'funnel':
         return 'Funil';
-      case 'message':
-        return 'Mensagem';
       case 'board':
         return 'Quadro';
       default:
@@ -181,8 +170,10 @@ export function FolderManagement() {
     }
   };
 
-  // Mostrar todos os itens disponíveis (exceto os que já estão na pasta selecionada)
-  const availableItems = allItems.filter(item => item.folder !== selectedFolderId);
+  // Mostrar todos os itens que NÃO estão na pasta selecionada (incluindo itens sem pasta e em outras pastas)
+  const availableItems = selectedFolderId 
+    ? allItems.filter(item => item.folder !== selectedFolderId)
+    : allItems;
 
   return (
     <>
@@ -246,6 +237,9 @@ export function FolderManagement() {
                         <span className="truncate">{item.name}</span>
                       </NavLink>
                     ))}
+                    {folderItems.length === 0 && (
+                      <span className="px-3 py-1.5 text-xs text-muted-foreground">Pasta vazia</span>
+                    )}
                   </div>
                 )}
               </div>

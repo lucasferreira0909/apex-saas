@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
 
 export interface Funnel {
   id: string;
@@ -8,6 +9,7 @@ export interface Funnel {
   status: string;
   template_type: string | null;
   thumbnail: string | null;
+  folder: string | null;
   created_at: string;
   updated_at: string;
   user_id: string;
@@ -33,12 +35,18 @@ export function useUpdateFunnelFolder() {
   
   return useMutation({
     mutationFn: async ({ funnelId, folder }: { funnelId: string; folder: string | null }) => {
-      // Note: The funnels table doesn't have a folder column yet
-      // This is a placeholder for when we add it
-      console.log('Update funnel folder:', funnelId, folder);
+      const { error } = await supabase
+        .from('funnels')
+        .update({ folder })
+        .eq('id', funnelId);
+      
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['funnels'] });
+    },
+    onError: () => {
+      toast.error('Não foi possível atualizar a pasta do funil');
     }
   });
 }
