@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
 import { useParams } from "react-router-dom";
-import { useProjects } from "@/hooks/useProjects";
 import { useFunnelElements } from "@/hooks/useFunnelElements";
 import { useFunnelProject } from "@/hooks/useFunnelProject";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,8 +15,7 @@ import { getElementIcon } from "@/hooks/useFunnelElements";
 
 export default function FunnelEditor() {
   const { id } = useParams();
-  const { updateProject, projects } = useProjects();
-  const { funnelId, loading: funnelLoading } = useFunnelProject(id);
+  const { funnel, funnelId, loading: funnelLoading } = useFunnelProject(id);
   const { elements, loading: elementsLoading, saveAllElements } = useFunnelElements(funnelId || undefined);
   const [isSaved, setIsSaved] = useState(false);
   const [showExitButton, setShowExitButton] = useState(false);
@@ -25,8 +23,6 @@ export default function FunnelEditor() {
   const [edges, setEdges] = useState<Edge[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-
-  const currentProject = projects.find(p => p.id === id);
 
   // Convert FunnelElements to ReactFlow Nodes
   const elementsToNodes = useCallback((elements: FunnelElement[]): Node[] => {
@@ -106,8 +102,8 @@ export default function FunnelEditor() {
   }, []);
 
   const handleSave = async () => {
-    if (!id || !funnelId) {
-      console.error('No project ID or funnel ID provided');
+    if (!funnelId) {
+      console.error('No funnel ID provided');
       return;
     }
 
@@ -118,16 +114,6 @@ export default function FunnelEditor() {
       console.log('Saving elements:', funnelElements);
       
       await saveAllElements(funnelElements);
-      
-      await updateProject(id, { 
-        status: 'active',
-        stats: {
-          conversion: "0%",
-          visitors: "0", 
-          revenue: "R$ 0",
-          elements: nodes.length.toString()
-        }
-      });
       
       setIsSaved(true);
       setShowExitButton(true);
@@ -204,7 +190,7 @@ export default function FunnelEditor() {
         open={showAddDialog} 
         onOpenChange={setShowAddDialog} 
         onAddElement={handleAddElement}
-        templateType={currentProject?.templateType || null}
+        templateType={funnel?.template_type as 'sales' | 'ltv' | 'quiz' | null || null}
       />
     </div>
   );

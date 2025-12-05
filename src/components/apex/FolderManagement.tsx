@@ -127,44 +127,24 @@ export function FolderManagement({
       <div className="flex flex-col gap-2">
         {!isCollapsed && <div className="flex items-center justify-between px-2">
             <span className="text-sm text-sidebar-foreground/60">Projetos</span>
-            <div className="flex gap-1">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setIsAddProjectsOpen(true)}>
-                    <Plus className="h-3 w-3" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Adicionar Projeto</TooltipContent>
-              </Tooltip>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setIsCreateFolderOpen(true)}>
-                    <Folder className="h-3 w-3" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>Nova Pasta</TooltipContent>
-              </Tooltip>
-            </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setIsCreateFolderOpen(true)}>
+                  <Folder className="h-3 w-3" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Nova Pasta</TooltipContent>
+            </Tooltip>
           </div>}
 
-        {isCollapsed && <div className="flex flex-col gap-1">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="w-full" onClick={() => setIsAddProjectsOpen(true)}>
-                  <Plus className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">Adicionar Projeto</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button variant="ghost" size="icon" className="w-full" onClick={() => setIsCreateFolderOpen(true)}>
-                  <Folder className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent side="right">Nova Pasta</TooltipContent>
-            </Tooltip>
-          </div>}
+        {isCollapsed && <Tooltip>
+            <TooltipTrigger asChild>
+              <Button variant="ghost" size="icon" className="w-full" onClick={() => setIsCreateFolderOpen(true)}>
+                <Folder className="h-4 w-4" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">Nova Pasta</TooltipContent>
+          </Tooltip>}
 
         {/* Folders */}
         <div className="flex flex-col gap-1">
@@ -186,7 +166,14 @@ export function FolderManagement({
                             <MoreVertical className="h-3 w-3" />
                           </Button>
                         </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
+                      <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => {
+                            setSelectedFolderId(folder.id);
+                            setIsAddProjectsOpen(true);
+                          }}>
+                            <Plus className="h-3 w-3 mr-2" />
+                            Adicionar Projeto
+                          </DropdownMenuItem>
                           <DropdownMenuItem onClick={() => handleDeleteFolder(folder.id)} className="text-destructive">
                             <Trash2 className="h-3 w-3 mr-2" />
                             Excluir
