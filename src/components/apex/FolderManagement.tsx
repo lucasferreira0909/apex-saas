@@ -110,14 +110,14 @@ export function FolderManagement({
     setSelectedProjects(new Set());
     setSelectedFolderId("");
   };
-  const getProjectUrl = (type: string) => {
+  const getProjectUrl = (type: string, projectId: string) => {
     switch (type) {
       case 'funnel':
-        return '/funnels';
+        return `/funnels/editor/${projectId}`;
       case 'video':
         return '/tools';
       case 'message':
-        return '/tools';
+        return `/messages/editor/${projectId}`;
       default:
         return '/funnels';
     }
@@ -130,7 +130,7 @@ export function FolderManagement({
             <Tooltip>
               <TooltipTrigger asChild>
                 <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setIsCreateFolderOpen(true)}>
-                  <Folder className="h-3 w-3" />
+                  <Plus className="h-3 w-3" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Nova Pasta</TooltipContent>
@@ -140,7 +140,7 @@ export function FolderManagement({
         {isCollapsed && <Tooltip>
             <TooltipTrigger asChild>
               <Button variant="ghost" size="icon" className="w-full" onClick={() => setIsCreateFolderOpen(true)}>
-                <Folder className="h-4 w-4" />
+                <Plus className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
             <TooltipContent side="right">Nova Pasta</TooltipContent>
@@ -192,7 +192,7 @@ export function FolderManagement({
                 </div>
 
                 {isExpanded && !isCollapsed && <div className="ml-6 flex flex-col gap-1">
-                    {folderProjects.map(project => <NavLink key={project.id} to={getProjectUrl(project.type)} className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-sidebar-foreground hover:bg-sidebar-accent/50">
+                    {folderProjects.map(project => <NavLink key={project.id} to={getProjectUrl(project.type, project.id)} className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-sidebar-foreground hover:bg-sidebar-accent/50">
                         <span className="truncate">{project.name}</span>
                       </NavLink>)}
                   </div>}
