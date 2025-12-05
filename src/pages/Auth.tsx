@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
-import apexLogo from "@/assets/apex-logo-new.png";
+import apexLogo from "@/assets/apex-logo-auth.png";
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
