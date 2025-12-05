@@ -168,9 +168,9 @@ export function FolderManagement({
                         </DropdownMenuTrigger>
                       <DropdownMenuContent align="end">
                           <DropdownMenuItem onClick={() => {
-                            setSelectedFolderId(folder.id);
-                            setIsAddProjectsOpen(true);
-                          }}>
+                      setSelectedFolderId(folder.id);
+                      setIsAddProjectsOpen(true);
+                    }}>
                             <Plus className="h-3 w-3 mr-2" />
                             Adicionar Projeto
                           </DropdownMenuItem>
@@ -214,20 +214,7 @@ export function FolderManagement({
                 <Label htmlFor="folder-name">Nome da Pasta *</Label>
                 <Input id="folder-name" placeholder="Digite o nome da pasta" value={folderName} onChange={e => setFolderName(e.target.value)} />
               </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="folder-type">Tipo</Label>
-                <Select value={folderType} onValueChange={(value: any) => setFolderType(value)}>
-                  <SelectTrigger id="folder-type">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="mixed">Misto</SelectItem>
-                    <SelectItem value="funnel">Funis</SelectItem>
-                    <SelectItem value="video">Vídeos</SelectItem>
-                    <SelectItem value="message">Mensagens</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              
             </div>
           </SheetBody>
           <SheetFooter>
