@@ -2,8 +2,7 @@ import { useState } from "react";
 import { Folder, ChevronDown, ChevronRight, Plus, MoreVertical, Trash2 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useFolders } from "@/hooks/useFolders";
-import { useBoards, useUpdateBoardFolder } from "@/hooks/useBoards";
-import { useFunnels, useUpdateFunnelFolder } from "@/hooks/useFunnels";
+import { useProjects } from "@/hooks/useProjects";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Sheet, SheetBody, SheetClose, SheetContent, SheetDescription, SheetFooter, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
@@ -13,34 +12,28 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/hooks/use-toast";
-
-interface UnifiedItem {
-  id: string;
-  name: string;
-  type: string;
-  folder: string | null | undefined;
-  itemType: 'board' | 'funnel';
+interface FolderManagementProps {
+  isCollapsed: boolean;
 }
-
-export function FolderManagement() {
+export function FolderManagement({
+  isCollapsed
+}: FolderManagementProps) {
   const {
     folders,
     addFolder,
     deleteFolder
   } = useFolders();
-  const { data: boards = [], refetch: refetchBoards } = useBoards();
-  const { data: funnels = [], refetch: refetchFunnels } = useFunnels();
-  const updateBoardFolder = useUpdateBoardFolder();
-  const updateFunnelFolder = useUpdateFunnelFolder();
-
+  const {
+    projects,
+    updateProject
+  } = useProjects();
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [isCreateFolderOpen, setIsCreateFolderOpen] = useState(false);
   const [isAddProjectsOpen, setIsAddProjectsOpen] = useState(false);
   const [selectedFolderId, setSelectedFolderId] = useState<string>("");
   const [folderName, setFolderName] = useState("");
   const [folderType, setFolderType] = useState<'funnel' | 'video' | 'message' | 'mixed'>('mixed');
-  const [selectedItems, setSelectedItems] = useState<Set<string>>(new Set());
-
+  const [selectedProjects, setSelectedProjects] = useState<Set<string>>(new Set());
   const toggleFolder = (folderId: string) => {
     const newExpanded = new Set(expandedFolders);
     if (newExpanded.has(folderId)) {
@@ -50,25 +43,6 @@ export function FolderManagement() {
     }
     setExpandedFolders(newExpanded);
   };
-
-  // Combinar boards e funnels em uma lista unificada
-  const allItems: UnifiedItem[] = [
-    ...boards.map(b => ({ 
-      id: b.id, 
-      name: b.name, 
-      type: 'board', 
-      folder: (b as any).folder as string | null | undefined,
-      itemType: 'board' as const 
-    })),
-    ...funnels.map(f => ({ 
-      id: f.id, 
-      name: f.name, 
-      type: 'funnel', 
-      folder: f.folder,
-      itemType: 'funnel' as const 
-    }))
-  ];
-
   const handleCreateFolder = () => {
     if (!folderName.trim()) {
       toast({
@@ -87,27 +61,22 @@ export function FolderManagement() {
     setFolderName("");
     setFolderType('mixed');
   };
-
-  const handleDeleteFolder = async (folderId: string) => {
-    // Remove folder from all items in this folder
-    const folderItems = allItems.filter(item => item.folder === folderId);
-    
-    for (const item of folderItems) {
-      if (item.itemType === 'board') {
-        await updateBoardFolder.mutateAsync({ boardId: item.id, folder: null });
-      } else if (item.itemType === 'funnel') {
-        await updateFunnelFolder.mutateAsync({ funnelId: item.id, folder: null });
-      }
-    }
-
+  const handleDeleteFolder = (folderId: string) => {
+    // Remove folder from all projects in this folder
+    const folderProjects = projects.filter(p => p.folder === folderId);
+    folderProjects.forEach(project => {
+      updateProject(project.id, {
+        ...project,
+        folder: undefined
+      });
+    });
     deleteFolder(folderId);
     toast({
       title: "Sucesso",
       description: "Pasta excluída com sucesso"
     });
   };
-
-  const handleAddItems = async () => {
+  const handleAddProjects = async () => {
     if (!selectedFolderId) {
       toast({
         title: "Erro",
@@ -116,7 +85,7 @@ export function FolderManagement() {
       });
       return;
     }
-    if (selectedItems.size === 0) {
+    if (selectedProjects.size === 0) {
       toast({
         title: "Erro",
         description: "Selecione pelo menos um projeto",
@@ -124,127 +93,111 @@ export function FolderManagement() {
       });
       return;
     }
-
-    for (const itemId of selectedItems) {
-      const item = allItems.find(i => i.id === itemId);
-      if (item) {
-        if (item.itemType === 'board') {
-          await updateBoardFolder.mutateAsync({ boardId: itemId, folder: selectedFolderId });
-        } else if (item.itemType === 'funnel') {
-          await updateFunnelFolder.mutateAsync({ funnelId: itemId, folder: selectedFolderId });
-        }
+    for (const projectId of selectedProjects) {
+      const project = projects.find(p => p.id === projectId);
+      if (project) {
+        await updateProject(projectId, {
+          ...project,
+          folder: selectedFolderId
+        });
       }
     }
-
-    // Refetch data to ensure UI is updated
-    await Promise.all([refetchBoards(), refetchFunnels()]);
-
     toast({
       title: "Sucesso",
-      description: `${selectedItems.size} item(ns) adicionado(s) à pasta`
+      description: `${selectedProjects.size} projeto(s) adicionado(s) à pasta`
     });
     setIsAddProjectsOpen(false);
-    setSelectedItems(new Set());
+    setSelectedProjects(new Set());
     setSelectedFolderId("");
   };
-
-  const getItemUrl = (type: string, itemId: string) => {
+  const getProjectUrl = (type: string, projectId: string) => {
     switch (type) {
       case 'funnel':
-        return `/funnels/editor/${itemId}`;
-      case 'board':
-        return `/tasks?board=${itemId}`;
+        return `/funnels/editor/${projectId}`;
+      case 'video':
+        return '/tools';
+      case 'message':
+        return `/messages/editor/${projectId}`;
       default:
         return '/funnels';
     }
   };
-
-  const getTypeLabel = (type: string) => {
-    switch (type) {
-      case 'funnel':
-        return 'Funil';
-      case 'board':
-        return 'Quadro';
-      default:
-        return type;
-    }
-  };
-
-  // Mostrar todos os itens que NÃO estão na pasta selecionada (incluindo itens sem pasta e em outras pastas)
-  const availableItems = selectedFolderId 
-    ? allItems.filter(item => item.folder !== selectedFolderId)
-    : allItems;
-
-  return (
-    <>
+  const unassignedProjects = projects.filter(p => !p.folder);
+  return <>
       <div className="flex flex-col gap-2">
-        <div className="flex items-center justify-between px-2">
-          <span className="text-sm text-sidebar-foreground/60">Projetos</span>
-          <Tooltip>
+        {!isCollapsed && <div className="flex items-center justify-between px-2">
+            <span className="text-sm text-sidebar-foreground/60">Projetos</span>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setIsCreateFolderOpen(true)}>
+                  <Plus className="h-3 w-3" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Nova Pasta</TooltipContent>
+            </Tooltip>
+          </div>}
+
+        {isCollapsed && <Tooltip>
             <TooltipTrigger asChild>
-              <Button variant="ghost" size="icon" className="h-5 w-5" onClick={() => setIsCreateFolderOpen(true)}>
-                <Plus className="h-3 w-3" />
+              <Button variant="ghost" size="icon" className="w-full" onClick={() => setIsCreateFolderOpen(true)}>
+                <Plus className="h-4 w-4" />
               </Button>
             </TooltipTrigger>
-            <TooltipContent>Nova Pasta</TooltipContent>
-          </Tooltip>
-        </div>
+            <TooltipContent side="right">Nova Pasta</TooltipContent>
+          </Tooltip>}
 
         {/* Folders */}
         <div className="flex flex-col gap-1">
           {folders.map(folder => {
-            const folderItems = allItems.filter(item => item.folder === folder.id);
-            const isExpanded = expandedFolders.has(folder.id);
-
-            return (
-              <div key={folder.id}>
-                <div className="flex items-center gap-2 rounded-lg px-3 py-2 text-sidebar-foreground hover:bg-sidebar-accent/50">
-                  <button onClick={() => toggleFolder(folder.id)} className="flex items-center gap-2 flex-1">
-                    {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
-                    <Folder className="h-4 w-4" />
-                    <span className="text-sm truncate">{folder.name}</span>
-                  </button>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <Button variant="ghost" size="icon" className="h-6 w-6">
-                        <MoreVertical className="h-3 w-3" />
-                      </Button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent align="end">
-                      <DropdownMenuItem onClick={() => {
-                        setSelectedFolderId(folder.id);
-                        setIsAddProjectsOpen(true);
-                      }}>
-                        <Plus className="h-3 w-3 mr-2" />
-                        Adicionar Projeto
-                      </DropdownMenuItem>
-                      <DropdownMenuItem onClick={() => handleDeleteFolder(folder.id)} className="text-destructive">
-                        <Trash2 className="h-3 w-3 mr-2" />
-                        Excluir
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
+          const folderProjects = projects.filter(p => p.folder === folder.id);
+          const isExpanded = expandedFolders.has(folder.id);
+          return <div key={folder.id}>
+                <div className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sidebar-foreground hover:bg-sidebar-accent/50 ${isCollapsed ? 'justify-center' : ''}`}>
+                  {!isCollapsed && <>
+                      <button onClick={() => toggleFolder(folder.id)} className="flex items-center gap-2 flex-1">
+                        {isExpanded ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                        <Folder className="h-4 w-4" />
+                        <span className="text-sm truncate">{folder.name}</span>
+                        
+                      </button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="icon" className="h-6 w-6">
+                            <MoreVertical className="h-3 w-3" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => {
+                            setSelectedFolderId(folder.id);
+                            setIsAddProjectsOpen(true);
+                          }}>
+                            <Plus className="h-3 w-3 mr-2" />
+                            Adicionar Projeto
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDeleteFolder(folder.id)} className="text-destructive">
+                            <Trash2 className="h-3 w-3 mr-2" />
+                            Excluir
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </>}
+                  {isCollapsed && <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button onClick={() => toggleFolder(folder.id)}>
+                          <Folder className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent side="right">{folder.name} ({folderProjects.length})</TooltipContent>
+                    </Tooltip>}
                 </div>
 
-                {isExpanded && (
-                  <div className="ml-6 flex flex-col gap-1">
-                    {folderItems.map(item => (
-                      <NavLink
-                        key={item.id}
-                        to={getItemUrl(item.type, item.id)}
-                        className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-sidebar-foreground hover:bg-sidebar-accent/50"
-                      >
-                        <span className="truncate">{item.name}</span>
-                      </NavLink>
-                    ))}
-                    {folderItems.length === 0 && (
-                      <span className="px-3 py-1.5 text-xs text-muted-foreground">Pasta vazia</span>
-                    )}
-                  </div>
-                )}
-              </div>
-            );
-          })}
+                {isExpanded && !isCollapsed && <div className="ml-6 flex flex-col gap-1">
+                    {folderProjects.map(project => <NavLink key={project.id} to={getProjectUrl(project.type, project.id)} className="flex items-center gap-2 rounded-lg px-3 py-1.5 text-sm text-sidebar-foreground hover:bg-sidebar-accent/50">
+                        <span className="truncate">{project.name}</span>
+                      </NavLink>)}
+                  </div>}
+              </div>;
+        })}
         </div>
       </div>
 
@@ -260,6 +213,20 @@ export function FolderManagement() {
               <div className="flex flex-col gap-2">
                 <Label htmlFor="folder-name">Nome da Pasta *</Label>
                 <Input id="folder-name" placeholder="Digite o nome da pasta" value={folderName} onChange={e => setFolderName(e.target.value)} />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="folder-type">Tipo</Label>
+                <Select value={folderType} onValueChange={(value: any) => setFolderType(value)}>
+                  <SelectTrigger id="folder-type">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="mixed">Misto</SelectItem>
+                    <SelectItem value="funnel">Funis</SelectItem>
+                    <SelectItem value="video">Vídeos</SelectItem>
+                    <SelectItem value="message">Mensagens</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </SheetBody>
@@ -288,11 +255,9 @@ export function FolderManagement() {
                     <SelectValue placeholder="Escolha uma pasta" />
                   </SelectTrigger>
                   <SelectContent>
-                    {folders.map(folder => (
-                      <SelectItem key={folder.id} value={folder.id}>
+                    {folders.map(folder => <SelectItem key={folder.id} value={folder.id}>
                         {folder.name}
-                      </SelectItem>
-                    ))}
+                      </SelectItem>)}
                   </SelectContent>
                 </Select>
               </div>
@@ -300,35 +265,22 @@ export function FolderManagement() {
               <div className="flex flex-col gap-2">
                 <Label>Selecione os Projetos *</Label>
                 <div className="border rounded-lg p-3 max-h-[300px] overflow-y-auto">
-                  {availableItems.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">Nenhum projeto disponível</p>
-                  ) : (
-                    <div className="flex flex-col gap-2">
-                      {availableItems.map(item => (
-                        <div key={item.id} className="flex items-center gap-2">
-                          <Checkbox
-                            id={item.id}
-                            checked={selectedItems.has(item.id)}
-                            onCheckedChange={checked => {
-                              const newSelected = new Set(selectedItems);
-                              if (checked) {
-                                newSelected.add(item.id);
-                              } else {
-                                newSelected.delete(item.id);
-                              }
-                              setSelectedItems(newSelected);
-                            }}
-                          />
-                          <Label htmlFor={item.id} className="text-sm cursor-pointer flex-1">
-                            {item.name}{" "}
-                            <span className="text-muted-foreground text-xs">
-                              ({getTypeLabel(item.type)})
-                            </span>
+                  {unassignedProjects.length === 0 ? <p className="text-sm text-muted-foreground">Nenhum projeto disponível</p> : <div className="flex flex-col gap-2">
+                      {unassignedProjects.map(project => <div key={project.id} className="flex items-center gap-2">
+                          <Checkbox id={project.id} checked={selectedProjects.has(project.id)} onCheckedChange={checked => {
+                      const newSelected = new Set(selectedProjects);
+                      if (checked) {
+                        newSelected.add(project.id);
+                      } else {
+                        newSelected.delete(project.id);
+                      }
+                      setSelectedProjects(newSelected);
+                    }} />
+                          <Label htmlFor={project.id} className="text-sm cursor-pointer flex-1">
+                            {project.name}
                           </Label>
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                        </div>)}
+                    </div>}
                 </div>
               </div>
             </div>
@@ -337,10 +289,9 @@ export function FolderManagement() {
             <SheetClose asChild>
               <Button variant="outline">Cancelar</Button>
             </SheetClose>
-            <Button onClick={handleAddItems}>Adicionar</Button>
+            <Button onClick={handleAddProjects}>Adicionar</Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>
-    </>
-  );
+    </>;
 }

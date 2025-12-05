@@ -4,7 +4,6 @@ export interface Board {
   name: string;
   description: string | null;
   template_type: 'leads' | 'free';
-  folder: string | null;
   created_at: string;
   updated_at: string;
 }
