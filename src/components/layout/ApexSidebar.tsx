@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import apexLogoFull from "@/assets/apex-logo-full.png";
-
 const projectItems = [{
   title: "Funis",
   url: "/funnels",
@@ -22,7 +21,6 @@ const projectItems = [{
   url: "/tools",
   icon: Wrench
 }];
-
 const menuItems = [{
   title: "Suporte",
   url: "/support",
@@ -32,7 +30,6 @@ const menuItems = [{
   url: "/settings",
   icon: Settings
 }];
-
 export function ApexSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -41,7 +38,6 @@ export function ApexSidebar() {
     profile,
     signOut
   } = useAuth();
-
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -58,7 +54,6 @@ export function ApexSidebar() {
       });
     }
   };
-
   const getInitials = () => {
     if (profile?.first_name && profile?.last_name) {
       return `${profile.first_name[0]}${profile.last_name[0]}`.toUpperCase();
@@ -68,7 +63,6 @@ export function ApexSidebar() {
     }
     return 'U';
   };
-
   const handleNavigate = (url: string) => {
     navigate(url);
     setPopoverOpen(false);
@@ -78,50 +72,27 @@ export function ApexSidebar() {
   useState(() => {
     document.documentElement.classList.add("dark");
   });
-
   const isActive = (url: string) => location.pathname === url;
-
-  const PopoverMenuContent = () => (
-    <div className="flex flex-col gap-1 p-1">
-      {menuItems.map(item => (
-        <button
-          key={item.title}
-          onClick={() => handleNavigate(item.url)}
-          className={`flex items-center gap-3 rounded-lg px-3 py-2 w-full text-left transition-all duration-200 ${
-            isActive(item.url) 
-              ? "bg-accent text-accent-foreground font-medium" 
-              : "text-foreground hover:bg-accent/50"
-          }`}
-        >
+  const PopoverMenuContent = () => <div className="flex flex-col gap-1 p-1">
+      {menuItems.map(item => <button key={item.title} onClick={() => handleNavigate(item.url)} className={`flex items-center gap-3 rounded-lg px-3 py-2 w-full text-left transition-all duration-200 ${isActive(item.url) ? "bg-accent text-accent-foreground font-medium" : "text-foreground hover:bg-accent/50"}`}>
           <item.icon className="h-4 w-4 flex-shrink-0" />
           <span>{item.title}</span>
-        </button>
-      ))}
+        </button>)}
       
       <div className="h-px bg-border my-1" />
       
-      <button 
-        onClick={handleSignOut} 
-        className="flex items-center gap-3 rounded-lg px-3 py-2 w-full text-left text-destructive hover:bg-destructive/10 transition-all duration-200"
-      >
+      <button onClick={handleSignOut} className="flex items-center gap-3 rounded-lg px-3 py-2 w-full text-left text-destructive hover:bg-destructive/10 transition-all duration-200">
         <LogOut className="h-4 w-4 flex-shrink-0" />
         <span>Sair</span>
       </button>
-    </div>
-  );
-
-  return (
-    <Sidebar className="border-r border-sidebar-border">
+    </div>;
+  return <Sidebar className="border-r border-sidebar-border">
       <SidebarHeader className="border-b border-sidebar-border p-4">
         <div className="flex items-center justify-between">
           <img src={apexLogoFull} alt="Apex Logo" className="h-10 w-auto" />
           <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
             <PopoverTrigger asChild>
-              <Button 
-                variant="ghost" 
-                size="icon" 
-                className="h-9 w-9"
-              >
+              <Button variant="ghost" size="icon" className="h-9 w-9">
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={profile?.avatar_url || undefined} />
                   <AvatarFallback className="text-xs">{getInitials()}</AvatarFallback>
@@ -140,44 +111,19 @@ export function ApexSidebar() {
           <SidebarGroupLabel className="text-sidebar-foreground/60">Ferramentas</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {projectItems.map(item => (
-                <SidebarMenuItem key={item.title}>
+              {projectItems.map(item => <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild>
-                    <NavLink 
-                      to={item.url} 
-                      className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all duration-200 ${
-                        isActive(item.url) 
-                          ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" 
-                          : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-                      }`}
-                    >
+                    <NavLink to={item.url} className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all duration-200 ${isActive(item.url) ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"}`}>
                       <item.icon className="h-4 w-4 flex-shrink-0" />
                       <span>{item.title}</span>
                     </NavLink>
                   </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+                </SidebarMenuItem>)}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
-      <SidebarFooter className="border-t border-sidebar-border p-2">
-        <Popover open={popoverOpen} onOpenChange={setPopoverOpen}>
-          <PopoverTrigger asChild>
-            <Button 
-              variant="outline" 
-              className="w-full justify-start gap-3 h-10"
-            >
-              <MoreHorizontal className="h-4 w-4" />
-              <span>Menu</span>
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent align="start" side="top" className="w-48 p-0 bg-popover border border-border">
-            <PopoverMenuContent />
-          </PopoverContent>
-        </Popover>
-      </SidebarFooter>
-    </Sidebar>
-  );
+      
+    </Sidebar>;
 }
