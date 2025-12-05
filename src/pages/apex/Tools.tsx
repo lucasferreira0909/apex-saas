@@ -37,7 +37,7 @@ export default function Tools() {
   return <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-bold text-foreground">​Geradores</h1>
+        <h1 className="text-3xl font-bold text-foreground">Ferramentas</h1>
         <p className="text-muted-foreground">Conjunto de ferramentas para potencializar seus projetos</p>
       </div>
 

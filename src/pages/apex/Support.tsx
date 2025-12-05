@@ -5,40 +5,45 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { MessageCircle, Mail, Phone } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { MessageCircle, Mail, Phone, Ticket, Send } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
 export default function Support() {
-  const {
-    user,
-    loading
-  } = useAuth();
+  const { user, loading } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     subject: "",
     description: "",
     priority: "media"
   });
-  const tickets = [{
-    id: "#APEX-001",
-    subject: "Erro ao salvar funil",
-    status: "Em Andamento",
-    created: "2h atrás",
-    priority: "Alta"
-  }, {
-    id: "#APEX-002",
-    subject: "Dúvida sobre disparos WhatsApp",
-    status: "Resolvido",
-    created: "1d atrás",
-    priority: "Média"
-  }];
+
+  const tickets = [
+    {
+      id: "#APEX-001",
+      subject: "Erro ao salvar funil",
+      status: "Em Andamento",
+      created: "2h atrás",
+      priority: "Alta"
+    },
+    {
+      id: "#APEX-002",
+      subject: "Dúvida sobre disparos WhatsApp",
+      status: "Resolvido",
+      created: "1d atrás",
+      priority: "Média"
+    }
+  ];
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
+
   const handleSubmitTicket = async () => {
     if (!user) {
       toast.error("Você precisa estar logado para enviar um ticket");
@@ -50,10 +55,7 @@ export default function Support() {
     }
     setIsSubmitting(true);
     try {
-      const {
-        data,
-        error
-      } = await supabase.functions.invoke('send-support-ticket', {
+      const { data, error } = await supabase.functions.invoke('send-support-ticket', {
         body: {
           subject: formData.subject,
           description: formData.description,
@@ -82,48 +84,157 @@ export default function Support() {
       setIsSubmitting(false);
     }
   };
-  const handleMailtoFallback = () => {
-    const subject = encodeURIComponent(formData.subject || "Solicitação de Suporte Apex");
-    const body = encodeURIComponent(`Descrição: ${formData.description}\n\nPrioridade: ${formData.priority}\n\nUsuário: ${user?.email}`);
-    window.open(`mailto:apex.suporte.br@gmail.com?subject=${subject}&body=${body}`, '_blank');
+
+  const getPriorityBadgeVariant = (priority: string) => {
+    switch (priority) {
+      case "Alta":
+        return "destructive";
+      case "Média":
+        return "secondary";
+      default:
+        return "outline";
+    }
   };
-  return <div className="space-y-6">
+
+  const getStatusBadgeVariant = (status: string) => {
+    switch (status) {
+      case "Em Andamento":
+        return "secondary";
+      case "Resolvido":
+        return "default";
+      default:
+        return "outline";
+    }
+  };
+
+  return (
+    <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-foreground">Suporte</h1>
         <p className="text-muted-foreground">Estamos aqui para ajudar você com qualquer dúvida</p>
       </div>
 
-      {/* Comunidade Apex */}
+      {/* Comunidade e Ticket Section */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        {/* Comunidade Apex */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="text-card-foreground flex items-center">
+              <MessageCircle className="mr-2 h-5 w-5 text-primary" />
+              Comunidade Apex
+            </CardTitle>
+            <CardDescription>Conecte-se com outros usuários e nossa equipe</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Junte-se à nossa comunidade no WhatsApp para receber suporte rápido, 
+                dicas exclusivas e se conectar com outros usuários do Apex.
+              </p>
+              <Button 
+                onClick={() => window.open('https://chat.whatsapp.com/BLwCE0mb7nX1tZXxiOMKA2', '_blank')} 
+                className="w-full"
+              >
+                <MessageCircle className="mr-2 h-4 w-4" />
+                Entrar na Comunidade WhatsApp
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Novo Ticket */}
+        <Card className="bg-card border-border">
+          <CardHeader>
+            <CardTitle className="text-card-foreground flex items-center">
+              <Ticket className="mr-2 h-5 w-5 text-primary" />
+              Abrir Ticket
+            </CardTitle>
+            <CardDescription>Envie uma solicitação de suporte</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="subject">Assunto</Label>
+                <Input
+                  id="subject"
+                  placeholder="Descreva brevemente o problema"
+                  value={formData.subject}
+                  onChange={(e) => handleInputChange("subject", e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="description">Descrição</Label>
+                <Textarea
+                  id="description"
+                  placeholder="Descreva o problema em detalhes..."
+                  value={formData.description}
+                  onChange={(e) => handleInputChange("description", e.target.value)}
+                  rows={3}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="priority">Prioridade</Label>
+                <Select 
+                  value={formData.priority} 
+                  onValueChange={(value) => handleInputChange("priority", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a prioridade" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="baixa">Baixa</SelectItem>
+                    <SelectItem value="media">Média</SelectItem>
+                    <SelectItem value="alta">Alta</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button 
+                onClick={handleSubmitTicket} 
+                disabled={isSubmitting} 
+                className="w-full"
+              >
+                <Send className="mr-2 h-4 w-4" />
+                {isSubmitting ? "Enviando..." : "Enviar Ticket"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Meus Tickets */}
       <Card className="bg-card border-border">
         <CardHeader>
           <CardTitle className="text-card-foreground flex items-center">
-            <MessageCircle className="mr-2 h-5 w-5 text-primary" />
-            Comunidade Apex
+            <Ticket className="mr-2 h-5 w-5 text-primary" />
+            Meus Tickets
           </CardTitle>
-          <CardDescription>Conecte-se com outros usuários e nossa equipe</CardDescription>
+          <CardDescription>Acompanhe o status das suas solicitações</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Junte-se à nossa comunidade no WhatsApp para receber suporte rápido, 
-              dicas exclusivas e se conectar com outros usuários do Apex.
-            </p>
-            <Button onClick={() => window.open('https://chat.whatsapp.com/BLwCE0mb7nX1tZXxiOMKA2', '_blank')} className="w-full">
-              <MessageCircle className="mr-2 h-4 w-4" />
-              Entrar na Comunidade WhatsApp
-            </Button>
+          <div className="space-y-3">
+            {tickets.map((ticket) => (
+              <div 
+                key={ticket.id} 
+                className="flex items-center justify-between p-3 rounded-lg bg-muted/50 hover:bg-muted/70 transition-colors"
+              >
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-sm font-medium text-foreground">{ticket.id}</span>
+                    <Badge variant={getStatusBadgeVariant(ticket.status)}>
+                      {ticket.status}
+                    </Badge>
+                    <Badge variant={getPriorityBadgeVariant(ticket.priority)}>
+                      {ticket.priority}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground">{ticket.subject}</p>
+                </div>
+                <span className="text-xs text-muted-foreground">{ticket.created}</span>
+              </div>
+            ))}
           </div>
         </CardContent>
       </Card>
-
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mx-0">
-        {/* New Ticket */}
-        
-
-        {/* My Tickets */}
-        
-      </div>
 
       {/* Contact Info */}
       <Card className="bg-card border-border">
@@ -150,5 +261,6 @@ export default function Support() {
           </div>
         </CardContent>
       </Card>
-    </div>;
+    </div>
+  );
 }
