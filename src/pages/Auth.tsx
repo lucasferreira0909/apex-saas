@@ -91,7 +91,7 @@ const Auth = () => {
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-1">
-            <img src={apexLogo} alt="Apex Logo" className="h-16 w-auto" />
+            <img src={apexLogo} alt="Apex Logo" className="h-14 w-auto" />
           </div>
           <CardDescription>
             Acesse sua conta ou crie uma nova
