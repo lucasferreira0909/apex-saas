@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Megaphone, FileText, MousePointer, ShoppingCart, CreditCard, TrendingUp, TrendingDown, Video, Users, ThumbsUp, MessageSquare, Target, HelpCircle, Gift, Star, Play, Tag } from "lucide-react";
+import { Megaphone, FileText, MousePointer, ShoppingCart, CreditCard, TrendingUp, TrendingDown, Video, Users, ThumbsUp, MessageSquare, Target, HelpCircle, Gift, Star, Play, Tag, MessageCircle, Timer } from "lucide-react";
 
 export interface ElementType {
   id: string;
@@ -18,7 +18,7 @@ interface AddElementDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAddElement: (elementType: ElementType) => void;
-  templateType?: 'sales' | 'ltv' | 'quiz' | null;
+  templateType?: 'sales' | 'ltv' | 'quiz' | 'remarketing' | null;
 }
 
 const AVAILABLE_ELEMENTS: ElementType[] = [
@@ -154,6 +154,20 @@ const AVAILABLE_ELEMENTS: ElementType[] = [
     icon: Tag,
     category: "Quiz",
     description: "Apresentação da oferta especial"
+  },
+  {
+    id: "whatsapp-message",
+    name: "Mensagem WhatsApp",
+    icon: MessageCircle,
+    category: "Comunicação",
+    description: "Envie mensagens automáticas via WhatsApp"
+  },
+  {
+    id: "interval",
+    name: "Intervalo",
+    icon: Timer,
+    category: "Automação",
+    description: "Aguarde um período antes do próximo passo"
   }
 ];
 
@@ -175,6 +189,11 @@ export function AddElementDialog({ open, onOpenChange, onAddElement, templateTyp
     if (templateType === 'quiz') {
       return AVAILABLE_ELEMENTS.filter(element => 
         ['question', 'benefits', 'testimonial', 'vsl', 'offer', 'checkout', 'thankyou'].includes(element.id)
+      );
+    }
+    if (templateType === 'remarketing') {
+      return AVAILABLE_ELEMENTS.filter(element => 
+        ['whatsapp-message', 'interval', 'checkout'].includes(element.id)
       );
     }
     return AVAILABLE_ELEMENTS;
