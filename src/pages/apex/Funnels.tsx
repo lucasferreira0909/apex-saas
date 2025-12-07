@@ -5,8 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CreateFunnelDialog } from "@/components/apex/CreateFunnelDialog";
-import { useProjects } from "@/hooks/useProjects";
-import { useFolders } from "@/hooks/useFolders";
+import { useFunnels, useDeleteFunnel } from "@/hooks/useFunnels";
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
 import { DataGrid, DataGridContainer } from "@/components/ui/data-grid";
 import { DataGridTable } from "@/components/ui/data-grid-table";
@@ -51,14 +50,8 @@ export default function Funnels() {
   const [sorting, setSorting] = useState<SortingState>([{ id: 'updated', desc: true }]);
   
   const navigate = useNavigate();
-  const { projects, deleteProject } = useProjects();
-  const { folders } = useFolders();
-
-  // Filter only funnel projects
-  const funnelProjects = useMemo(() => 
-    projects.filter(project => project.type === 'funnel'),
-    [projects]
-  );
+  const { data: funnels = [], isLoading } = useFunnels();
+  const deleteFunnel = useDeleteFunnel();
 
   const getStatusBadge = (status: string) => {
     switch (status) {
@@ -74,6 +67,19 @@ export default function Funnels() {
         return <Badge variant="secondary">{status}</Badge>;
     }
   };
+
+  // Transform funnels to ProjectItem format
+  const funnelProjects = useMemo(() => 
+    funnels.map(funnel => ({
+      id: funnel.id,
+      name: funnel.name,
+      status: funnel.status,
+      type: 'funnel',
+      updated: funnel.updated_at,
+      folder: funnel.folder
+    })),
+    [funnels]
+  );
 
   // Filter projects based on search, folder and status
   const filteredProjects = useMemo(() => {
@@ -105,7 +111,7 @@ export default function Funnels() {
 
   const handleConfirmDelete = async () => {
     if (projectToDelete) {
-      await deleteProject(projectToDelete);
+      await deleteFunnel.mutateAsync(projectToDelete);
       setProjectToDelete(null);
     }
     setDeleteDialogOpen(false);
