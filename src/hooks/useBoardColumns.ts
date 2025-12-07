@@ -45,3 +45,56 @@ export function useUpdateMultipleColumnsOrder() {
     }
   });
 }
+
+export function useUpdateColumnTitle() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ columnId, title }: { columnId: string; title: string }) => {
+      const { error } = await supabase
+        .from('board_columns')
+        .update({ title })
+        .eq('id', columnId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['board'] });
+      toast.success('Coluna atualizada');
+    },
+    onError: () => {
+      toast.error('Erro ao atualizar coluna');
+    }
+  });
+}
+
+export function useDeleteColumn() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async (columnId: string) => {
+      // First delete all cards in this column
+      const { error: cardsError } = await supabase
+        .from('board_cards')
+        .delete()
+        .eq('column_id', columnId);
+
+      if (cardsError) throw cardsError;
+
+      // Then delete the column
+      const { error } = await supabase
+        .from('board_columns')
+        .delete()
+        .eq('id', columnId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['board'] });
+      toast.success('Coluna excluída');
+    },
+    onError: () => {
+      toast.error('Erro ao excluir coluna');
+    }
+  });
+}

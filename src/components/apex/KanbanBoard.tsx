@@ -26,6 +26,7 @@ interface KanbanBoardProps {
   onAddCard: (columnId: string) => void;
   onDeleteCard: (cardId: string) => void;
   onEditColumn?: (columnId: string, currentName: string) => void;
+  onDeleteColumn?: (columnId: string) => void;
 }
 
 function CardItem({ 
@@ -81,7 +82,8 @@ function Column({
   isOverlay,
   onAddCard,
   onDeleteCard,
-  onEditColumn
+  onEditColumn,
+  onDeleteColumn
 }: {
   column: BoardColumn;
   cards: BoardCard[];
@@ -89,6 +91,7 @@ function Column({
   onAddCard: () => void;
   onDeleteCard: (cardId: string) => void;
   onEditColumn?: () => void;
+  onDeleteColumn?: () => void;
 }) {
   return (
     <KanbanColumn value={column.id} className="rounded-md border bg-muted/30 p-2.5 shadow-xs min-w-[300px]">
@@ -106,7 +109,11 @@ function Column({
           <DropdownMenuContent align="end" className="bg-popover">
             <DropdownMenuItem onClick={onEditColumn}>
               <Pencil className="h-4 w-4 mr-2" />
-              Editar quadro
+              Editar coluna
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={onDeleteColumn} className="text-destructive">
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir coluna
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -142,7 +149,8 @@ export function KanbanBoard({
   onColumnMove,
   onAddCard, 
   onDeleteCard,
-  onEditColumn
+  onEditColumn,
+  onDeleteColumn
 }: KanbanBoardProps) {
   const [columnOrder, setColumnOrder] = React.useState<string[]>(() => 
     columns.map(c => c.id)
@@ -216,6 +224,7 @@ export function KanbanBoard({
             onAddCard={() => onAddCard(column.id)}
             onDeleteCard={onDeleteCard}
             onEditColumn={() => onEditColumn?.(column.id, column.title)}
+            onDeleteColumn={() => onDeleteColumn?.(column.id)}
           />
         ))}
       </KanbanBoardUI>
