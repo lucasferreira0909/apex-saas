@@ -12,6 +12,8 @@ import { FlowCanvas } from "@/components/apex/FlowCanvas";
 import { FunnelElement } from "@/types/funnel";
 import { Node, Edge } from "@xyflow/react";
 import { getElementIcon } from "@/hooks/useFunnelElements";
+import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
+import { toast } from "@/hooks/use-toast";
 export default function FunnelEditor() {
   const {
     id
@@ -32,6 +34,29 @@ export default function FunnelEditor() {
   const [edges, setEdges] = useState<Edge[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [nodeToDelete, setNodeToDelete] = useState<string | null>(null);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+
+  // Handle delete node request
+  const handleDeleteRequest = useCallback((nodeId: string) => {
+    setNodeToDelete(nodeId);
+    setShowDeleteConfirm(true);
+  }, []);
+
+  // Confirm delete node
+  const handleConfirmDelete = useCallback(() => {
+    if (nodeToDelete) {
+      setNodes(prev => prev.filter(node => node.id !== nodeToDelete));
+      // Also remove edges connected to this node
+      setEdges(prev => prev.filter(edge => edge.source !== nodeToDelete && edge.target !== nodeToDelete));
+      toast({
+        title: "Elemento excluído",
+        description: "O elemento foi removido do funil.",
+      });
+    }
+    setNodeToDelete(null);
+    setShowDeleteConfirm(false);
+  }, [nodeToDelete]);
 
   // Convert FunnelElements to ReactFlow Nodes
   const elementsToNodes = useCallback((elements: FunnelElement[]): Node[] => {
@@ -43,10 +68,11 @@ export default function FunnelEditor() {
         label: element.type,
         icon: element.icon,
         configured: element.configured,
-        stats: element.stats
+        stats: element.stats,
+        onDelete: handleDeleteRequest
       }
     }));
-  }, []);
+  }, [handleDeleteRequest]);
 
   // Convert ReactFlow Nodes to FunnelElements
   const nodesToElements = useCallback((nodes: Node[]): FunnelElement[] => {
@@ -94,7 +120,8 @@ export default function FunnelEditor() {
         label: elementType.name,
         icon: elementType.icon,
         configured: false,
-        stats: {}
+        stats: {},
+        onDelete: handleDeleteRequest
       }
     };
     setNodes(prev => [...prev, newNode]);
@@ -166,5 +193,14 @@ export default function FunnelEditor() {
 
       {/* Add Element Dialog */}
       <AddElementDialog open={showAddDialog} onOpenChange={setShowAddDialog} onAddElement={handleAddElement} templateType={funnel?.template_type as 'sales' | 'ltv' | 'remarketing' | null || null} />
+      
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog
+        open={showDeleteConfirm}
+        onOpenChange={setShowDeleteConfirm}
+        onConfirm={handleConfirmDelete}
+        title="Excluir elemento"
+        description="Tem certeza que deseja excluir este elemento? Esta ação não pode ser desfeita."
+      />
     </div>;
 }
