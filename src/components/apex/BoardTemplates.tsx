@@ -41,7 +41,7 @@ export function BoardTemplates({ onSelectTemplate }: BoardTemplatesProps) {
             <CardHeader>
               <div className="flex items-center space-x-3">
                 <div className="p-2 rounded-lg bg-muted">
-                  <template.icon className="h-5 w-5 text-primary" />
+                  <template.icon className="h-5 w-5 text-foreground" />
                 </div>
                 <div>
                   <CardTitle className="text-sm">{template.title}</CardTitle>
