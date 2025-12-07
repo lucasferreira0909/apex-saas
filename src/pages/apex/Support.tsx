@@ -135,44 +135,7 @@ export default function Support() {
         </Card>
 
         {/* Novo Ticket */}
-        <Card className="bg-card border-border">
-          <CardHeader>
-            <CardTitle className="text-card-foreground flex items-center">
-              <Ticket className="mr-2 h-5 w-5 text-primary" />
-              Abrir Ticket
-            </CardTitle>
-            <CardDescription>Envie uma solicitação de suporte</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="subject">Assunto</Label>
-                <Input id="subject" placeholder="Descreva brevemente o problema" value={formData.subject} onChange={e => handleInputChange("subject", e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Descrição</Label>
-                <Textarea id="description" placeholder="Descreva o problema em detalhes..." value={formData.description} onChange={e => handleInputChange("description", e.target.value)} rows={3} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="priority">Prioridade</Label>
-                <Select value={formData.priority} onValueChange={value => handleInputChange("priority", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a prioridade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="baixa">Baixa</SelectItem>
-                    <SelectItem value="media">Média</SelectItem>
-                    <SelectItem value="alta">Alta</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button onClick={handleSubmitTicket} disabled={isSubmitting} className="w-full">
-                <Send className="mr-2 h-4 w-4" />
-                {isSubmitting ? "Enviando..." : "Enviar Ticket"}
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
+        
       </div>
 
       {/* Meus Tickets */}
