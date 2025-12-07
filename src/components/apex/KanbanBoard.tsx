@@ -6,11 +6,16 @@ import {
   KanbanBoard as KanbanBoardUI,
   KanbanColumn,
   KanbanColumnContent,
-  KanbanColumnHandle,
   KanbanItem,
   KanbanOverlay,
 } from '@/components/ui/kanban';
-import { GripVertical, Plus, Trash2 } from 'lucide-react';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { MoreVertical, Pencil, Plus, Trash2 } from 'lucide-react';
 import { BoardCard, BoardColumn } from '@/types/board';
 
 interface KanbanBoardProps {
@@ -20,6 +25,7 @@ interface KanbanBoardProps {
   onColumnMove?: (columnId: string, newOrderIndex: number) => void;
   onAddCard: (columnId: string) => void;
   onDeleteCard: (cardId: string) => void;
+  onEditColumn?: (columnId: string, currentName: string) => void;
 }
 
 function CardItem({ 
@@ -74,13 +80,15 @@ function Column({
   cards, 
   isOverlay,
   onAddCard,
-  onDeleteCard 
+  onDeleteCard,
+  onEditColumn
 }: {
   column: BoardColumn;
   cards: BoardCard[];
   isOverlay?: boolean;
   onAddCard: () => void;
   onDeleteCard: (cardId: string) => void;
+  onEditColumn?: () => void;
 }) {
   return (
     <KanbanColumn value={column.id} className="rounded-md border bg-muted/30 p-2.5 shadow-xs min-w-[300px]">
@@ -89,11 +97,19 @@ function Column({
           <span className="font-semibold text-sm">{column.title}</span>
           <Badge variant="secondary">{cards.length}</Badge>
         </div>
-        <KanbanColumnHandle asChild>
-          <Button variant="ghost" size="sm" className="h-7 w-7 p-0 cursor-grab active:cursor-grabbing">
-            <GripVertical className="h-4 w-4" />
-          </Button>
-        </KanbanColumnHandle>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-popover">
+            <DropdownMenuItem onClick={onEditColumn}>
+              <Pencil className="h-4 w-4 mr-2" />
+              Editar quadro
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
       <KanbanColumnContent value={column.id} className="flex flex-col gap-2.5 p-0.5 min-h-[200px]">
         {cards.map((card) => (
@@ -125,7 +141,8 @@ export function KanbanBoard({
   onCardMove, 
   onColumnMove,
   onAddCard, 
-  onDeleteCard 
+  onDeleteCard,
+  onEditColumn
 }: KanbanBoardProps) {
   const [columnOrder, setColumnOrder] = React.useState<string[]>(() => 
     columns.map(c => c.id)
@@ -198,6 +215,7 @@ export function KanbanBoard({
             cards={columnsState[column.id] || []}
             onAddCard={() => onAddCard(column.id)}
             onDeleteCard={onDeleteCard}
+            onEditColumn={() => onEditColumn?.(column.id, column.title)}
           />
         ))}
       </KanbanBoardUI>
