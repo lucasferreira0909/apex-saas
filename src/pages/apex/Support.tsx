@@ -111,27 +111,7 @@ export default function Support() {
 
       {/* Comunidade e Ticket Section */}
       {/* Comunidade Apex */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="text-card-foreground flex items-center">
-            <MessageCircle className="mr-2 h-5 w-5 text-primary" />
-            Comunidade Apex
-          </CardTitle>
-          <CardDescription>Conecte-se com outros usuários e nossa equipe</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              Junte-se à nossa comunidade no WhatsApp para receber suporte rápido, 
-              dicas exclusivas e se conectar com outros usuários do Apex.
-            </p>
-            <Button onClick={() => window.open('https://chat.whatsapp.com/BLwCE0mb7nX1tZXxiOMKA2', '_blank')} className="w-full">
-              <MessageCircle className="mr-2 h-4 w-4" />
-              Entrar na Comunidade WhatsApp
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      
 
       {/* Meus Tickets */}
       
