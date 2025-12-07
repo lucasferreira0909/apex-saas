@@ -1,8 +1,8 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { TrendingUp, DollarSign, ClipboardList, Pencil, RefreshCw } from "lucide-react";
+import { TrendingUp, DollarSign, Pencil, RefreshCw } from "lucide-react";
 interface FunnelTemplatesProps {
-  onSelectTemplate: (templateType: 'sales' | 'ltv' | 'quiz' | 'blank' | 'remarketing') => void;
+  onSelectTemplate: (templateType: 'sales' | 'ltv' | 'blank' | 'remarketing') => void;
 }
 export function FunnelTemplates({
   onSelectTemplate
@@ -21,13 +21,6 @@ export function FunnelTemplates({
     icon: DollarSign,
     color: 'text-blue-600',
     features: ['Upsell', 'Cross-sell', 'Retenção', 'Fidelização']
-  }, {
-    id: 'quiz',
-    title: 'Funil de Quiz',
-    description: 'Engaje e qualifique leads através de quizzes interativos',
-    icon: ClipboardList,
-    color: 'text-purple-600',
-    features: ['Quiz Interativo', 'Qualificação', 'Segmentação', 'Resultados Personalizados']
   }, {
     id: 'remarketing',
     title: 'Funil de Remarketing',
@@ -66,7 +59,7 @@ export function FunnelTemplates({
                     {feature}
                   </li>)}
               </ul>
-              <Button size="sm" onClick={() => onSelectTemplate(template.id as 'sales' | 'ltv' | 'quiz' | 'blank' | 'remarketing')} className="w-full bg-[#1e1e1e]">
+              <Button size="sm" onClick={() => onSelectTemplate(template.id as 'sales' | 'ltv' | 'blank' | 'remarketing')} className="w-full bg-[#1e1e1e]">
                 Usar Modelo
               </Button>
             </CardContent>
