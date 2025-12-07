@@ -56,6 +56,13 @@ export default function FunnelEditor() {
   
   const initialLoadDone = useRef(false);
 
+  // Reset when funnelId changes (navigation between funnels)
+  useEffect(() => {
+    initialLoadDone.current = false;
+    setNodes([]);
+    setEdges([]);
+  }, [funnelId]);
+
   // Handle delete node request
   const handleDeleteRequest = useCallback((nodeId: string) => {
     setNodeToDelete(nodeId);
@@ -107,14 +114,16 @@ export default function FunnelEditor() {
 
   // Load elements and edges from database
   useEffect(() => {
+    // Only process after all data has loaded and we haven't done initial load yet
     if (!elementsLoading && !funnelLoading && !edgesLoading && !initialLoadDone.current) {
-      if (elements.length > 0) {
-        const convertedNodes = elementsToNodes(elements);
-        setNodes(convertedNodes);
-      }
-      if (savedEdges.length > 0) {
-        setEdges(savedEdges);
-      }
+      // Load nodes (even if empty - valid for new canvas)
+      const convertedNodes = elementsToNodes(elements);
+      setNodes(convertedNodes);
+      
+      // Load edges (even if empty)
+      setEdges(savedEdges);
+      
+      // Mark as done AFTER processing
       initialLoadDone.current = true;
     }
   }, [elements, savedEdges, elementsLoading, funnelLoading, edgesLoading, elementsToNodes]);
