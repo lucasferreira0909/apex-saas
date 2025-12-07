@@ -16,8 +16,8 @@ import { DataGridPagination } from '@/components/ui/data-grid-pagination';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useBoards, useBoard, useCreateBoard, useDeleteBoard } from '@/hooks/useBoards';
 import { useCreateCard, useUpdateCard, useDeleteCard } from '@/hooks/useBoardCards';
-import { useUpdateMultipleColumnsOrder, useUpdateColumnTitle, useDeleteColumn } from '@/hooks/useBoardColumns';
-import { BoardTemplate, Board } from '@/types/board';
+import { useCreateColumn, useUpdateMultipleColumnsOrder, useUpdateColumnTitle, useDeleteColumn } from '@/hooks/useBoardColumns';
+import { BoardTemplate, Board, BoardCard } from '@/types/board';
 import { Plus, ArrowLeft, Trash2, Search, MoreHorizontal, Edit } from 'lucide-react';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 import { toast } from 'sonner';
@@ -59,6 +59,21 @@ export default function Boards() {
   const [editingColumnName, setEditingColumnName] = useState('');
   const [columnDeleteDialogOpen, setColumnDeleteDialogOpen] = useState(false);
   const [columnToDelete, setColumnToDelete] = useState<string | null>(null);
+  
+  // Add column states
+  const [isAddColumnSheetOpen, setIsAddColumnSheetOpen] = useState(false);
+  const [newColumnName, setNewColumnName] = useState('');
+  
+  // Card delete confirmation states
+  const [cardDeleteDialogOpen, setCardDeleteDialogOpen] = useState(false);
+  const [cardToDelete, setCardToDelete] = useState<string | null>(null);
+  
+  // Card editing states
+  const [isEditCardSheetOpen, setIsEditCardSheetOpen] = useState(false);
+  const [editingCard, setEditingCard] = useState<BoardCard | null>(null);
+  const [editCardTitle, setEditCardTitle] = useState('');
+  const [editCardDescription, setEditCardDescription] = useState('');
+  const [editCardPriority, setEditCardPriority] = useState<'low' | 'medium' | 'high'>('medium');
 
   const { data: boards, isLoading: loadingBoards } = useBoards();
   const { data: boardData, isLoading: loadingBoard } = useBoard(selectedBoardId);
@@ -70,6 +85,7 @@ export default function Boards() {
   const updateColumnsOrder = useUpdateMultipleColumnsOrder();
   const updateColumnTitle = useUpdateColumnTitle();
   const deleteColumn = useDeleteColumn();
+  const createColumn = useCreateColumn();
 
   const handleTemplateSelect = (template: BoardTemplate) => {
     setSelectedTemplate(template);
@@ -156,11 +172,55 @@ export default function Boards() {
   };
 
   const handleDeleteCard = (cardId: string) => {
-    if (!selectedBoardId) return;
+    setCardToDelete(cardId);
+    setCardDeleteDialogOpen(true);
+  };
+
+  const handleConfirmDeleteCard = () => {
+    if (!selectedBoardId || !cardToDelete) return;
     deleteCard.mutate({
-      id: cardId,
+      id: cardToDelete,
       board_id: selectedBoardId
     });
+    setCardDeleteDialogOpen(false);
+    setCardToDelete(null);
+  };
+
+  // Add column handler
+  const handleAddColumn = async () => {
+    if (!selectedBoardId || !newColumnName.trim()) {
+      toast.error('Digite um nome para a coluna');
+      return;
+    }
+    await createColumn.mutateAsync({ boardId: selectedBoardId, title: newColumnName });
+    setIsAddColumnSheetOpen(false);
+    setNewColumnName('');
+  };
+
+  // Edit card handlers
+  const handleEditCard = (card: BoardCard) => {
+    setEditingCard(card);
+    setEditCardTitle(card.title);
+    setEditCardDescription(card.description || '');
+    setEditCardPriority((card.priority as 'low' | 'medium' | 'high') || 'medium');
+    setIsEditCardSheetOpen(true);
+  };
+
+  const handleSaveCard = async () => {
+    if (!editingCard || !selectedBoardId || !editCardTitle.trim()) {
+      toast.error('Preencha o título do card');
+      return;
+    }
+    await updateCard.mutateAsync({
+      id: editingCard.id,
+      board_id: selectedBoardId,
+      title: editCardTitle,
+      description: editCardDescription || undefined,
+      priority: editCardPriority
+    });
+    toast.success('Card atualizado');
+    setIsEditCardSheetOpen(false);
+    setEditingCard(null);
   };
 
   const handleDeleteBoard = async () => {
@@ -310,6 +370,10 @@ export default function Boards() {
               {boardData.board.description && <p className="text-muted-foreground">{boardData.board.description}</p>}
             </div>
           </div>
+          <Button onClick={() => setIsAddColumnSheetOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nova Coluna
+          </Button>
         </div>
 
         {loadingBoard ? (
@@ -329,6 +393,7 @@ export default function Boards() {
             onDeleteCard={handleDeleteCard}
             onEditColumn={handleEditColumn}
             onDeleteColumn={handleOpenDeleteColumnDialog}
+            onEditCard={handleEditCard}
           />
         )}
 
@@ -407,6 +472,94 @@ export default function Boards() {
           title="Excluir Coluna"
           description="Tem certeza que deseja excluir esta coluna? Todos os cards nela serão excluídos também."
         />
+
+        {/* Delete Card Dialog */}
+        <DeleteConfirmationDialog
+          open={cardDeleteDialogOpen}
+          onOpenChange={setCardDeleteDialogOpen}
+          onConfirm={handleConfirmDeleteCard}
+          title="Excluir Card"
+          description="Tem certeza que deseja excluir este card? Esta ação não pode ser desfeita."
+        />
+
+        {/* Add Column Sheet */}
+        <Sheet open={isAddColumnSheetOpen} onOpenChange={setIsAddColumnSheetOpen}>
+          <SheetContent>
+            <SheetHeader>
+              <SheetTitle>Nova Coluna</SheetTitle>
+              <SheetDescription>Adicione uma nova coluna ao quadro</SheetDescription>
+            </SheetHeader>
+            <SheetBody>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="new-column-name">Nome da Coluna *</Label>
+                <Input 
+                  id="new-column-name" 
+                  placeholder="Digite o nome da coluna" 
+                  value={newColumnName} 
+                  onChange={e => setNewColumnName(e.target.value)} 
+                />
+              </div>
+            </SheetBody>
+            <SheetFooter>
+              <SheetClose asChild>
+                <Button variant="outline">Cancelar</Button>
+              </SheetClose>
+              <Button onClick={handleAddColumn}>Criar</Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+
+        {/* Edit Card Sheet */}
+        <Sheet open={isEditCardSheetOpen} onOpenChange={setIsEditCardSheetOpen}>
+          <SheetContent>
+            <SheetHeader>
+              <SheetTitle>Editar Card</SheetTitle>
+              <SheetDescription>Altere as informações do card</SheetDescription>
+            </SheetHeader>
+            <SheetBody>
+              <div className="grid gap-5">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="edit-card-title">Título *</Label>
+                  <Input 
+                    id="edit-card-title" 
+                    placeholder="Digite o título do card" 
+                    value={editCardTitle} 
+                    onChange={e => setEditCardTitle(e.target.value)} 
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="edit-card-description">Descrição</Label>
+                  <Textarea 
+                    id="edit-card-description" 
+                    placeholder="Adicione uma descrição (opcional)" 
+                    rows={4} 
+                    value={editCardDescription} 
+                    onChange={e => setEditCardDescription(e.target.value)} 
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="edit-card-priority">Prioridade</Label>
+                  <Select value={editCardPriority} onValueChange={(value: 'low' | 'medium' | 'high') => setEditCardPriority(value)}>
+                    <SelectTrigger id="edit-card-priority">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Baixa</SelectItem>
+                      <SelectItem value="medium">Média</SelectItem>
+                      <SelectItem value="high">Alta</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </SheetBody>
+            <SheetFooter>
+              <SheetClose asChild>
+                <Button variant="outline">Cancelar</Button>
+              </SheetClose>
+              <Button onClick={handleSaveCard}>Salvar</Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
       </div>
     );
   }

@@ -27,18 +27,29 @@ interface KanbanBoardProps {
   onDeleteCard: (cardId: string) => void;
   onEditColumn?: (columnId: string, currentName: string) => void;
   onDeleteColumn?: (columnId: string) => void;
+  onEditCard?: (card: BoardCard) => void;
 }
 
 function CardItem({ 
   card, 
-  onDelete 
+  onDelete,
+  onEdit
 }: { 
   card: BoardCard; 
   onDelete: () => void;
+  onEdit?: () => void;
 }) {
   return (
     <KanbanItem value={card.id}>
-      <div className="rounded-md border bg-card p-3 shadow-xs group cursor-grab active:cursor-grabbing">
+      <div 
+        className="rounded-md border bg-card p-3 shadow-xs group cursor-grab active:cursor-grabbing hover:border-primary/50 transition-colors"
+        onClick={(e) => {
+          // Only trigger edit if not dragging
+          if (!(e.target as HTMLElement).closest('button')) {
+            onEdit?.();
+          }
+        }}
+      >
         <div className="flex flex-col gap-2.5">
           <div className="flex items-center justify-between gap-2">
             <span className="line-clamp-1 font-medium text-sm">{card.title}</span>
@@ -83,7 +94,8 @@ function Column({
   onAddCard,
   onDeleteCard,
   onEditColumn,
-  onDeleteColumn
+  onDeleteColumn,
+  onEditCard
 }: {
   column: BoardColumn;
   cards: BoardCard[];
@@ -92,6 +104,7 @@ function Column({
   onDeleteCard: (cardId: string) => void;
   onEditColumn?: () => void;
   onDeleteColumn?: () => void;
+  onEditCard?: (card: BoardCard) => void;
 }) {
   return (
     <KanbanColumn value={column.id} className="rounded-md border bg-muted/30 p-2.5 shadow-xs min-w-[300px]">
@@ -124,6 +137,7 @@ function Column({
             key={card.id} 
             card={card} 
             onDelete={() => onDeleteCard(card.id)}
+            onEdit={() => onEditCard?.(card)}
           />
         ))}
         {!isOverlay && (
@@ -150,7 +164,8 @@ export function KanbanBoard({
   onAddCard, 
   onDeleteCard,
   onEditColumn,
-  onDeleteColumn
+  onDeleteColumn,
+  onEditCard
 }: KanbanBoardProps) {
   const [columnOrder, setColumnOrder] = React.useState<string[]>(() => 
     columns.map(c => c.id)
@@ -225,6 +240,7 @@ export function KanbanBoard({
             onDeleteCard={onDeleteCard}
             onEditColumn={() => onEditColumn?.(column.id, column.title)}
             onDeleteColumn={() => onDeleteColumn?.(column.id)}
+            onEditCard={onEditCard}
           />
         ))}
       </KanbanBoardUI>

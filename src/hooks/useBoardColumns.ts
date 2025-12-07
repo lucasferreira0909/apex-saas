@@ -2,6 +2,41 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
+export function useCreateColumn() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ boardId, title }: { boardId: string; title: string }) => {
+      // Get the max order_index for this board
+      const { data: existingColumns } = await supabase
+        .from('board_columns')
+        .select('order_index')
+        .eq('board_id', boardId)
+        .order('order_index', { ascending: false })
+        .limit(1);
+
+      const maxOrderIndex = existingColumns?.[0]?.order_index ?? -1;
+
+      const { error } = await supabase
+        .from('board_columns')
+        .insert({
+          board_id: boardId,
+          title,
+          order_index: maxOrderIndex + 1
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['board'] });
+      toast.success('Coluna criada');
+    },
+    onError: () => {
+      toast.error('Erro ao criar coluna');
+    }
+  });
+}
+
 export function useUpdateColumnOrder() {
   const queryClient = useQueryClient();
 
