@@ -330,7 +330,7 @@ export default function Funnels() {
       {/* Funnels List with DataGrid */}
       <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-card-foreground">Meus Funis ({filteredProjects.length})</CardTitle>
+          <CardTitle className="text-card-foreground">Meus Funis</CardTitle>
           <CardDescription>Todos os seus funis organizados</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
