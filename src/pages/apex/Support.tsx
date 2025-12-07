@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageCircle, Mail, Phone, Ticket, Send } from "lucide-react";
+import { MessageCircle, Mail, Phone, Ticket, Send, Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Support() {
@@ -14,6 +14,8 @@ export default function Support() {
     description: "",
     priority: "media"
   });
+  const [generatedLink, setGeneratedLink] = useState("");
+
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
@@ -21,12 +23,7 @@ export default function Support() {
     }));
   };
 
-  const handleSubmitTicket = () => {
-    if (!formData.subject.trim() || !formData.description.trim()) {
-      toast.error("Por favor, preencha todos os campos obrigatórios");
-      return;
-    }
-
+  const generateWhatsAppLink = () => {
     const supportNumber = "5511915722726";
     
     const priorityLabel = {
@@ -44,12 +41,29 @@ export default function Support() {
 ⚡ *Prioridade:* ${priorityLabel}`;
 
     const encodedMessage = encodeURIComponent(message);
-    const whatsappLink = `https://wa.me/${supportNumber}?text=${encodedMessage}`;
+    return `https://wa.me/${supportNumber}?text=${encodedMessage}`;
+  };
+
+  const handleSubmitTicket = () => {
+    if (!formData.subject.trim() || !formData.description.trim()) {
+      toast.error("Por favor, preencha todos os campos obrigatórios");
+      return;
+    }
+
+    const whatsappLink = generateWhatsAppLink();
+    setGeneratedLink(whatsappLink);
     
-    window.open(whatsappLink, "_blank");
-    
-    toast.success("Redirecionando para o WhatsApp...");
-    setFormData({ subject: "", description: "", priority: "media" });
+    // Usar location.href para evitar bloqueio de pop-up no desktop
+    window.location.href = whatsappLink;
+  };
+
+  const copyLink = () => {
+    navigator.clipboard.writeText(generatedLink);
+    toast.success("Link copiado!");
+  };
+
+  const openLink = () => {
+    window.location.href = generatedLink;
   };
   return <div className="space-y-6">
       <div>
@@ -116,8 +130,24 @@ export default function Support() {
               </div>
               <Button onClick={handleSubmitTicket} className="w-full">
                 <Send className="mr-2 h-4 w-4" />
-                Enviar Ticket
+                Enviar Ticket via WhatsApp
               </Button>
+
+              {generatedLink && (
+                <div className="mt-4 p-3 bg-muted rounded-lg space-y-2">
+                  <p className="text-xs text-muted-foreground">Caso o redirecionamento não funcione, use as opções abaixo:</p>
+                  <div className="flex gap-2">
+                    <Button variant="outline" size="sm" onClick={copyLink} className="flex-1">
+                      <Copy className="mr-2 h-3 w-3" />
+                      Copiar Link
+                    </Button>
+                    <Button variant="outline" size="sm" onClick={openLink} className="flex-1">
+                      <ExternalLink className="mr-2 h-3 w-3" />
+                      Abrir
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
