@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { FunnelTemplates } from "./FunnelTemplates";
+import { checkFunnelNameExists } from "@/hooks/useFunnels";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface CreateFunnelDialogProps {
   open: boolean;
@@ -18,8 +20,10 @@ interface CreateFunnelDialogProps {
 export function CreateFunnelDialog({ open, onOpenChange, templateType: initialTemplate }: CreateFunnelDialogProps) {
   const [name, setName] = useState("");
   const [templateType, setTemplateType] = useState<'sales' | 'ltv' | 'quiz' | 'blank' | null>(initialTemplate || null);
+  const [isChecking, setIsChecking] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
+  const queryClient = useQueryClient();
 
   const handleCreate = async () => {
     if (!name.trim()) {
@@ -32,7 +36,16 @@ export function CreateFunnelDialog({ open, onOpenChange, templateType: initialTe
       return;
     }
 
+    setIsChecking(true);
     try {
+      // Verificar se já existe um funil com o mesmo nome
+      const exists = await checkFunnelNameExists(name, user.id);
+      if (exists) {
+        toast.error("Já existe um funil com este nome. Por favor, escolha outro nome.");
+        setIsChecking(false);
+        return;
+      }
+
       // Criar o funil diretamente
       const { data: funnelData, error: funnelError } = await supabase
         .from('funnels')
@@ -49,8 +62,12 @@ export function CreateFunnelDialog({ open, onOpenChange, templateType: initialTe
       if (funnelError) {
         console.error('Error creating funnel:', funnelError);
         toast.error("Erro ao criar funil");
+        setIsChecking(false);
         return;
       }
+
+      // Invalidar cache para atualizar a lista
+      queryClient.invalidateQueries({ queryKey: ['funnels'] });
 
       toast.success("Funil criado com sucesso!");
       setName("");
@@ -62,6 +79,8 @@ export function CreateFunnelDialog({ open, onOpenChange, templateType: initialTe
     } catch (error) {
       console.error('Error in handleCreate:', error);
       toast.error("Erro ao criar funil");
+    } finally {
+      setIsChecking(false);
     }
   };
 
@@ -115,11 +134,11 @@ export function CreateFunnelDialog({ open, onOpenChange, templateType: initialTe
         <SheetFooter>
           {templateType && (
             <>
-              <Button variant="outline" onClick={() => setTemplateType(null)}>
+              <Button variant="outline" onClick={() => setTemplateType(null)} disabled={isChecking}>
                 Voltar
               </Button>
-              <Button onClick={handleCreate} disabled={!name.trim()}>
-                Criar Funil
+              <Button onClick={handleCreate} disabled={!name.trim() || isChecking}>
+                {isChecking ? "Verificando..." : "Criar Funil"}
               </Button>
             </>
           )}

@@ -49,7 +49,7 @@ export default function Tools() {
               <CardHeader>
                 <div className="flex items-center space-x-3">
                   <div className="p-3 rounded-lg bg-muted/50 group-hover:bg-primary/10 transition-colors">
-                    <IconComponent className="h-6 w-6 text-primary" />
+                    <IconComponent className="h-6 w-6 text-foreground" />
                   </div>
                   <div>
                     <CardTitle className="text-card-foreground">{tool.title}</CardTitle>

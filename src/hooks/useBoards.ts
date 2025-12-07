@@ -44,6 +44,22 @@ export function useBoard(boardId: string | null) {
   });
 }
 
+export async function checkBoardNameExists(name: string, userId: string): Promise<boolean> {
+  const { data, error } = await supabase
+    .from('boards')
+    .select('id')
+    .eq('user_id', userId)
+    .ilike('name', name.trim())
+    .limit(1);
+  
+  if (error) {
+    console.error('Error checking board name:', error);
+    return false;
+  }
+  
+  return data && data.length > 0;
+}
+
 export function useCreateBoard() {
   const queryClient = useQueryClient();
   
@@ -56,6 +72,12 @@ export function useCreateBoard() {
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
+      
+      // Verificar se já existe um quadro com o mesmo nome
+      const exists = await checkBoardNameExists(data.name, user.id);
+      if (exists) {
+        throw new Error('Já existe um quadro com este nome');
+      }
       
       const { data: board, error: boardError } = await supabase
         .from('boards')

@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { User, Lock, Camera, Save } from "lucide-react";
+import { User, Lock, Camera, Save, CreditCard } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { toast } from "@/hooks/use-toast";
@@ -37,6 +37,10 @@ export default function ApexSettings() {
     id: "security",
     label: "Segurança",
     icon: Lock
+  }, {
+    id: "plans",
+    label: "Planos",
+    icon: CreditCard
   }];
   const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -272,8 +276,77 @@ export default function ApexSettings() {
                 </CardContent>
               </Card>
 
-              {/* Security Status */}
-              
+            </>}
+
+          {activeTab === "plans" && <>
+              {/* Current Plan */}
+              <Card className="bg-card border-border">
+                <CardHeader>
+                  <CardTitle className="text-card-foreground">Plano Atual</CardTitle>
+                  <CardDescription>Informações sobre seu plano de assinatura</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/30">
+                    <div className="flex items-center space-x-4">
+                      <div className="p-3 rounded-full bg-primary/10">
+                        <CreditCard className="h-6 w-6 text-primary" />
+                      </div>
+                      <div>
+                        <h3 className="font-semibold text-card-foreground">Plano Gratuito</h3>
+                        <p className="text-sm text-muted-foreground">Acesso básico às funcionalidades</p>
+                      </div>
+                    </div>
+                    <Badge variant="secondary">Ativo</Badge>
+                  </div>
+                  
+                  <div className="space-y-3">
+                    <h4 className="font-medium text-card-foreground">Recursos incluídos:</h4>
+                    <ul className="space-y-2 text-sm text-muted-foreground">
+                      <li className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                        <span>Até 5 funis de vendas</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                        <span>Até 3 quadros Kanban</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                        <span>Ferramentas básicas</span>
+                      </li>
+                      <li className="flex items-center space-x-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                        <span>Suporte por email</span>
+                      </li>
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Upgrade Options */}
+              <Card className="bg-card border-border">
+                <CardHeader>
+                  <CardTitle className="text-card-foreground">Fazer Upgrade</CardTitle>
+                  <CardDescription>Desbloqueie recursos avançados</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  <div className="p-4 rounded-lg border-2 border-primary/50 bg-primary/5">
+                    <div className="flex items-center justify-between mb-3">
+                      <h3 className="font-semibold text-card-foreground">Plano Pro</h3>
+                      <span className="text-lg font-bold text-primary">R$ 49/mês</span>
+                    </div>
+                    <ul className="space-y-2 text-sm text-muted-foreground mb-4">
+                      <li>• Funis e quadros ilimitados</li>
+                      <li>• Ferramentas avançadas</li>
+                      <li>• Relatórios detalhados</li>
+                      <li>• Suporte prioritário</li>
+                    </ul>
+                    <Button className="w-full">
+                      Fazer Upgrade
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
             </>}
 
         </div>
