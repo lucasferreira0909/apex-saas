@@ -222,66 +222,6 @@ export default function Funnels() {
           />
         </div>
         
-        <Popover open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-          <PopoverTrigger asChild>
-            <Button variant="outline" size="icon">
-              <Folder className="h-4 w-4" />
-            </Button>
-          </PopoverTrigger>
-          <PopoverContent className="w-80" align="end">
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h4 className="font-medium text-card-foreground">Filtros</h4>
-                {hasActiveFilters && (
-                  <Button variant="ghost" size="sm" onClick={clearAllFilters}>
-                    <X className="h-4 w-4 mr-1" />
-                    Limpar
-                  </Button>
-                )}
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-card-foreground">Pasta</label>
-                <Select value={selectedFolder} onValueChange={value => {
-                  setSelectedFolder(value);
-                  setPagination(prev => ({ ...prev, pageIndex: 0 }));
-                }}>
-                  <SelectTrigger className="bg-input border-border">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todas as pastas</SelectItem>
-                    <SelectItem value="no-folder">Sem pasta</SelectItem>
-                    {folders.map(folder => (
-                      <SelectItem key={folder.id} value={folder.name}>
-                        {folder.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-card-foreground">Status</label>
-                <Select value={selectedStatus} onValueChange={value => {
-                  setSelectedStatus(value);
-                  setPagination(prev => ({ ...prev, pageIndex: 0 }));
-                }}>
-                  <SelectTrigger className="bg-input border-border">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os status</SelectItem>
-                    <SelectItem value="active">Ativo</SelectItem>
-                    <SelectItem value="completed">Concluído</SelectItem>
-                    <SelectItem value="draft">Rascunho</SelectItem>
-                    <SelectItem value="paused">Pausado</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </PopoverContent>
-        </Popover>
       </div>
 
       {/* Active Filters Display */}
