@@ -26,12 +26,11 @@ import {
   useReactTable,
 } from '@tanstack/react-table';
 
-interface ProjectItem {
+interface FunnelItem {
   id: string;
   name: string;
-  status: string;
-  type: string;
-  updated: string;
+  template_type: string | null;
+  created_at: string;
   folder?: string | null;
 }
 
@@ -39,32 +38,29 @@ export default function Funnels() {
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFolder, setSelectedFolder] = useState<string>("all");
-  const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
   });
-  const [sorting, setSorting] = useState<SortingState>([{ id: 'updated', desc: true }]);
+  const [sorting, setSorting] = useState<SortingState>([{ id: 'created_at', desc: true }]);
   
   const navigate = useNavigate();
   const { data: funnels = [], isLoading } = useFunnels();
   const deleteFunnel = useDeleteFunnel();
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active':
-        return <Badge className="bg-success text-success-foreground">Ativo</Badge>;
-      case 'completed':
-        return <Badge className="bg-blue-600 text-white">Concluído</Badge>;
-      case 'draft':
-        return <Badge variant="secondary">Rascunho</Badge>;
-      case 'paused':
-        return <Badge variant="outline">Pausado</Badge>;
+  const getTypeBadge = (templateType: string | null) => {
+    switch (templateType) {
+      case 'ltv':
+        return <Badge variant="secondary" className="capitalize">LTV</Badge>;
+      case 'vendas':
+        return <Badge variant="secondary" className="capitalize">Vendas</Badge>;
+      case 'remarketing':
+        return <Badge variant="secondary" className="capitalize">Remarketing</Badge>;
+      case 'livre':
       default:
-        return <Badge variant="secondary">{status}</Badge>;
+        return <Badge variant="secondary" className="capitalize">Livre</Badge>;
     }
   };
 
@@ -73,15 +69,14 @@ export default function Funnels() {
     funnels.map(funnel => ({
       id: funnel.id,
       name: funnel.name,
-      status: funnel.status,
-      type: 'funnel',
-      updated: funnel.updated_at,
+      template_type: funnel.template_type,
+      created_at: funnel.created_at,
       folder: funnel.folder
     })),
     [funnels]
   );
 
-  // Filter projects based on search, folder and status
+  // Filter projects based on search and folder
   const filteredProjects = useMemo(() => {
     return funnelProjects.filter(project => {
       const searchMatch = searchTerm === "" || 
@@ -90,19 +85,17 @@ export default function Funnels() {
       const folderMatch = selectedFolder === "all" || 
         (selectedFolder === "no-folder" && !project.folder) || 
         project.folder === selectedFolder;
-      const statusMatch = selectedStatus === "all" || project.status === selectedStatus;
-      return searchMatch && folderMatch && statusMatch;
+      return searchMatch && folderMatch;
     });
-  }, [funnelProjects, searchTerm, selectedFolder, selectedStatus]);
+  }, [funnelProjects, searchTerm, selectedFolder]);
 
   const clearAllFilters = () => {
     setSearchTerm("");
     setSelectedFolder("all");
-    setSelectedStatus("all");
     setPagination(prev => ({ ...prev, pageIndex: 0 }));
   };
 
-  const hasActiveFilters = searchTerm !== "" || selectedFolder !== "all" || selectedStatus !== "all";
+  const hasActiveFilters = searchTerm !== "" || selectedFolder !== "all";
 
   const handleDeleteClick = (projectId: string) => {
     setProjectToDelete(projectId);
@@ -121,7 +114,7 @@ export default function Funnels() {
     navigate(`/funnel-editor/${projectId}`);
   };
 
-  const columns = useMemo<ColumnDef<ProjectItem>[]>(() => [
+  const columns = useMemo<ColumnDef<FunnelItem>[]>(() => [
     {
       accessorKey: 'name',
       header: 'Nome',
@@ -129,21 +122,15 @@ export default function Funnels() {
       size: 250,
     },
     {
-      accessorKey: 'status',
-      header: 'Status',
-      cell: ({ row }) => getStatusBadge(row.original.status),
+      accessorKey: 'template_type',
+      header: 'Tipo',
+      cell: ({ row }) => getTypeBadge(row.original.template_type),
       size: 120,
     },
     {
-      accessorKey: 'type',
-      header: 'Tipo',
-      cell: (info) => <span className="capitalize">{info.getValue() as string}</span>,
-      size: 100,
-    },
-    {
-      accessorKey: 'updated',
-      header: 'Atualizado',
-      cell: (info) => new Date(info.getValue() as Date).toLocaleDateString('pt-BR'),
+      accessorKey: 'created_at',
+      header: 'Criado em',
+      cell: (info) => new Date(info.getValue() as string).toLocaleDateString('pt-BR'),
       size: 150,
     },
     {
@@ -152,19 +139,25 @@ export default function Funnels() {
       cell: ({ row }) => (
         <div className="text-right">
           <DropdownMenu>
-            <DropdownMenuTrigger asChild>
+            <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
               <Button variant="ghost" size="icon" className="h-8 w-8">
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => handleEditClick(row.original.id)}>
+              <DropdownMenuItem onClick={(e) => {
+                e.stopPropagation();
+                handleEditClick(row.original.id);
+              }}>
                 <Edit className="mr-2 h-4 w-4" />
                 Editar
               </DropdownMenuItem>
               <DropdownMenuItem 
                 className="text-destructive" 
-                onClick={() => handleDeleteClick(row.original.id)}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleDeleteClick(row.original.id);
+                }}
               >
                 <Trash2 className="mr-2 h-4 w-4" />
                 Excluir
@@ -253,18 +246,6 @@ export default function Funnels() {
                 className="h-3 w-3 cursor-pointer" 
                 onClick={() => {
                   setSelectedFolder("all");
-                  setPagination(prev => ({ ...prev, pageIndex: 0 }));
-                }} 
-              />
-            </Badge>
-          )}
-          {selectedStatus !== "all" && (
-            <Badge variant="secondary" className="flex items-center space-x-1">
-              <span>Status: {selectedStatus}</span>
-              <X 
-                className="h-3 w-3 cursor-pointer" 
-                onClick={() => {
-                  setSelectedStatus("all");
                   setPagination(prev => ({ ...prev, pageIndex: 0 }));
                 }} 
               />
