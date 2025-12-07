@@ -41,6 +41,19 @@ export default function AudiobookGenerator() {
       return;
     }
 
+    // Limpar áudio anterior antes de gerar novo
+    if (audioElement) {
+      audioElement.pause();
+      audioElement.src = '';
+    }
+    setAudioElement(null);
+    setIsPlaying(false);
+    
+    // Revogar URL anterior para liberar memória
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl);
+    }
+
     setIsGenerating(true);
     setAudioUrl(null);
 
