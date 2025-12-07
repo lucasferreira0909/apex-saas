@@ -18,25 +18,15 @@ const DatabaseSchemaFunnelNode = memo((props: NodeProps) => {
       </DatabaseSchemaNodeHeader>
       <DatabaseSchemaNodeBody className="relative">
         {/* Handle de entrada (esquerda) */}
-        <Handle id="input" type="target" position={Position.Left} className="!w-3 !h-3 !border-2 !border-primary !bg-background" style={{
-        top: '50%'
+        <Handle id="input" type="target" position={Position.Left} className="!w-3 !h-3 !border-2 !bg-background" style={{
+        top: '50%',
+        borderColor: '#1c1c1c'
       }} />
-
-        <DatabaseSchemaTableRow className="bg-[#0b0b0b]">
-          <DatabaseSchemaTableCell className="pl-4 pr-16 w-full bg-[#0b0b0b]">
-            {statsEntries.length > 0 ? <div className="flex flex-col gap-1 py-2">
-                {statsEntries.map(([key, value]) => <div key={key} className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">{key}:</span>
-                    <span className="font-medium">{String(value)}</span>
-                  </div>)}
-              </div> : <span className="text-muted-foreground text-sm py-2 block">​ </span>}
-          </DatabaseSchemaTableCell>
-        </DatabaseSchemaTableRow>
 
         {/* Handle Neutro (topo) */}
         <Handle id="neutral" type="source" position={Position.Right} className="!w-3 !h-3 !border-2" style={{
         backgroundColor: '#9ca3af',
-        borderColor: '#6b7280',
+        borderColor: '#1c1c1c',
         top: '25%'
       }} />
         
@@ -44,7 +34,7 @@ const DatabaseSchemaFunnelNode = memo((props: NodeProps) => {
         {/* Handle Se sim (meio) */}
         <Handle id="positive" type="source" position={Position.Right} className="!w-3 !h-3 !border-2" style={{
         backgroundColor: '#22c55e',
-        borderColor: '#16a34a',
+        borderColor: '#1c1c1c',
         top: '50%'
       }} />
         
@@ -52,7 +42,7 @@ const DatabaseSchemaFunnelNode = memo((props: NodeProps) => {
         {/* Handle Negado (base) */}
         <Handle id="negative" type="source" position={Position.Right} className="!w-3 !h-3 !border-2" style={{
         backgroundColor: '#ef4444',
-        borderColor: '#dc2626',
+        borderColor: '#1c1c1c',
         top: '75%'
       }} />
         
