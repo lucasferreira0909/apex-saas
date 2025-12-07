@@ -1,8 +1,6 @@
 import { memo } from "react";
-import { Position, NodeProps } from "@xyflow/react";
-import { LabeledHandle } from "./LabeledHandle";
+import { Position, NodeProps, Handle } from "@xyflow/react";
 import { DatabaseSchemaNode, DatabaseSchemaNodeHeader, DatabaseSchemaNodeBody, DatabaseSchemaTableRow, DatabaseSchemaTableCell } from "./DatabaseSchemaNode";
-import { Badge } from "@/components/ui/badge";
 export type DatabaseSchemaFunnelNodeData = {
   label: string;
   icon: any;
@@ -20,27 +18,23 @@ const DatabaseSchemaFunnelNode = memo((props: NodeProps) => {
         
       </DatabaseSchemaNodeHeader>
       <DatabaseSchemaNodeBody>
-        <DatabaseSchemaTableRow>
-          <DatabaseSchemaTableCell className="pl-0 pr-6 font-light w-full">
-            <LabeledHandle id="input" title="Entrada" type="target" position={Position.Left} />
+        <DatabaseSchemaTableRow className="relative">
+          <Handle id="left" type="source" position={Position.Left} className="!w-3 !h-3 !border-2 !border-primary !bg-background" />
+          <DatabaseSchemaTableCell className="pl-4 pr-4 w-full">
+            {statsEntries.length > 0 ? (
+              <div className="flex flex-col gap-1 py-1">
+                {statsEntries.map(([key, value]) => (
+                  <div key={key} className="flex justify-between text-sm">
+                    <span className="text-muted-foreground">{key}:</span>
+                    <span className="font-medium">{String(value)}</span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <span className="text-muted-foreground text-sm">Sem estatísticas</span>
+            )}
           </DatabaseSchemaTableCell>
-        </DatabaseSchemaTableRow>
-
-        {statsEntries.length > 0 && <>
-            {statsEntries.map(([key, value]) => <DatabaseSchemaTableRow key={key}>
-                <DatabaseSchemaTableCell className="pl-4 text-muted-foreground">
-                  {key}:
-                </DatabaseSchemaTableCell>
-                <DatabaseSchemaTableCell className="pr-4 font-medium ml-auto">
-                  {String(value)}
-                </DatabaseSchemaTableCell>
-              </DatabaseSchemaTableRow>)}
-          </>}
-
-        <DatabaseSchemaTableRow>
-          <DatabaseSchemaTableCell className="pr-0 font-thin w-full justify-end">
-            <LabeledHandle id="output" title="Saída" type="source" position={Position.Right} className="w-full justify-end" />
-          </DatabaseSchemaTableCell>
+          <Handle id="right" type="source" position={Position.Right} className="!w-3 !h-3 !border-2 !border-primary !bg-background" />
         </DatabaseSchemaTableRow>
       </DatabaseSchemaNodeBody>
     </DatabaseSchemaNode>;
