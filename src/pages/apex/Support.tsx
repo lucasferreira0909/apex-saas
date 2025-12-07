@@ -1,58 +1,15 @@
 import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MessageCircle, Mail, Phone, Ticket, Send, X } from "lucide-react";
-import { toast } from "sonner";
 
 export default function Support() {
-  const [formData, setFormData] = useState({
-    subject: "",
-    description: "",
-    priority: "media"
-  });
   const [generatedLink, setGeneratedLink] = useState("");
 
-  const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value
-    }));
-  };
-
-  const generateWhatsAppLink = () => {
-    const supportNumber = "5511915722726";
-    
-    const priorityLabel = {
-      baixa: "Baixa",
-      media: "Média", 
-      alta: "Alta"
-    }[formData.priority] || "Média";
-    
-    const message = `🎫 *TICKET DE SUPORTE APEX*
-
-📌 *Assunto:* ${formData.subject}
-
-📝 *Descrição:* ${formData.description}
-
-⚡ *Prioridade:* ${priorityLabel}`;
-
-    const encodedMessage = encodeURIComponent(message);
-    return `https://wa.me/${supportNumber}?text=${encodedMessage}`;
-  };
-
   const handleSubmitTicket = () => {
-    if (!formData.subject.trim() || !formData.description.trim()) {
-      toast.error("Por favor, preencha todos os campos obrigatórios");
-      return;
-    }
-
-    const whatsappLink = generateWhatsAppLink();
+    const supportNumber = "5511915722726";
+    const whatsappLink = `https://wa.me/${supportNumber}`;
     setGeneratedLink(whatsappLink);
-    toast.success("Ticket preparado! Clique no botão abaixo para enviar.");
   };
 
   const openWhatsApp = () => {
@@ -60,9 +17,9 @@ export default function Support() {
   };
 
   const resetForm = () => {
-    setFormData({ subject: "", description: "", priority: "media" });
     setGeneratedLink("");
   };
+
   return <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-foreground">Suporte</h1>
@@ -105,36 +62,19 @@ export default function Support() {
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="subject">Assunto</Label>
-                <Input id="subject" placeholder="Descreva brevemente o problema" value={formData.subject} onChange={e => handleInputChange("subject", e.target.value)} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Descrição</Label>
-                <Textarea id="description" placeholder="Descreva o problema em detalhes..." value={formData.description} onChange={e => handleInputChange("description", e.target.value)} rows={3} />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="priority">Prioridade</Label>
-                <Select value={formData.priority} onValueChange={value => handleInputChange("priority", value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a prioridade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="baixa">Baixa</SelectItem>
-                    <SelectItem value="media">Média</SelectItem>
-                    <SelectItem value="alta">Alta</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button onClick={handleSubmitTicket} className="w-full">
-                <Send className="mr-2 h-4 w-4" />
-                Enviar Ticket via WhatsApp
-              </Button>
-
-              {generatedLink && (
-                <div className="mt-4 p-4 bg-primary/10 border border-primary/20 rounded-lg space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Clique no botão abaixo para abrir uma conversa com nosso suporte via WhatsApp.
+              </p>
+              
+              {!generatedLink ? (
+                <Button onClick={handleSubmitTicket} className="w-full">
+                  <Send className="mr-2 h-4 w-4" />
+                  Enviar Ticket via WhatsApp
+                </Button>
+              ) : (
+                <div className="p-4 bg-primary/10 border border-primary/20 rounded-lg space-y-3">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm font-medium text-foreground">Ticket pronto para envio!</p>
+                    <p className="text-sm font-medium text-foreground">Pronto para abrir!</p>
                     <Button variant="ghost" size="icon" onClick={resetForm} className="h-6 w-6">
                       <X className="h-4 w-4" />
                     </Button>
