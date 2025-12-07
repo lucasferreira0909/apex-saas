@@ -1,13 +1,14 @@
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
+import { PostLoginLoading } from "@/components/PostLoginLoading";
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
-  const { user, loading } = useAuth();
+  const { user, loading, isPostLoginLoading, setPostLoginComplete } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -15,6 +16,11 @@ export const ProtectedRoute = ({ children }: ProtectedRouteProps) => {
       navigate("/auth");
     }
   }, [user, loading, navigate]);
+
+  // Show post-login loading screen
+  if (isPostLoginLoading) {
+    return <PostLoginLoading onComplete={setPostLoginComplete} />;
+  }
 
   if (loading) {
     return (
