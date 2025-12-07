@@ -304,29 +304,29 @@ export default function ApexSettings() {
                     <ul className="space-y-2 text-sm text-muted-foreground">
                       <li className="flex items-center space-x-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                        <span>Até 5 funis de vendas</span>
+                        <span>Funis ilimitados</span>
                       </li>
                       <li className="flex items-center space-x-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                        <span>Até 3 quadros Kanban</span>
+                        <span>Quadros ilimitados</span>
                       </li>
                       <li className="flex items-center space-x-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                        <span>Ferramentas básicas</span>
+                        <span>Todas as ferramentas</span>
                       </li>
                       <li className="flex items-center space-x-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                        <span>Suporte por email</span>
+                        <span>Suporte email/WhatsApp</span>
                       </li>
                     </ul>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Upgrade Options */}
+              {/* Renovar Plano */}
               <Card className="bg-card border-border">
                 <CardHeader>
-                  <CardTitle className="text-card-foreground">Fazer Upgrade</CardTitle>
+                  <CardTitle className="text-card-foreground">Renovar Plano</CardTitle>
                   <CardDescription>Desbloqueie recursos avançados</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -342,7 +342,7 @@ export default function ApexSettings() {
                       <li>• Suporte prioritário</li>
                     </ul>
                     <Button className="w-full">
-                      Fazer Upgrade
+                      Renovar Plano
                     </Button>
                   </div>
                 </CardContent>
