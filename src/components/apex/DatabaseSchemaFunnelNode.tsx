@@ -11,8 +11,8 @@ const DatabaseSchemaFunnelNode = memo((props: NodeProps) => {
   const data = props.data as DatabaseSchemaFunnelNodeData;
   const Icon = data?.icon;
   const statsEntries = Object.entries(data?.stats || {});
-  return <DatabaseSchemaNode className="p-0 min-h-[120px]">
-      <DatabaseSchemaNodeHeader>
+  return <DatabaseSchemaNode className="p-0 min-h-[120px] bg-[#0b0b0b]">
+      <DatabaseSchemaNodeHeader className="bg-muted">
         {Icon && <Icon className="h-5 w-5" />}
         <span>{data?.label}</span>
       </DatabaseSchemaNodeHeader>
@@ -22,8 +22,8 @@ const DatabaseSchemaFunnelNode = memo((props: NodeProps) => {
         top: '50%'
       }} />
 
-        <DatabaseSchemaTableRow>
-          <DatabaseSchemaTableCell className="pl-4 pr-16 w-full">
+        <DatabaseSchemaTableRow className="bg-[#0b0b0b]">
+          <DatabaseSchemaTableCell className="pl-4 pr-16 w-full bg-[#0b0b0b]">
             {statsEntries.length > 0 ? <div className="flex flex-col gap-1 py-2">
                 {statsEntries.map(([key, value]) => <div key={key} className="flex justify-between text-sm">
                     <span className="text-muted-foreground">{key}:</span>
