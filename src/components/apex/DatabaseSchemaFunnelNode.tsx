@@ -1,20 +1,58 @@
 import { memo } from "react";
 import { Position, NodeProps, Handle } from "@xyflow/react";
+import { MoreVertical, Trash2 } from "lucide-react";
 import { DatabaseSchemaNode, DatabaseSchemaNodeHeader, DatabaseSchemaNodeBody, DatabaseSchemaTableRow, DatabaseSchemaTableCell } from "./DatabaseSchemaNode";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 export type DatabaseSchemaFunnelNodeData = {
   label: string;
   icon: any;
   configured: boolean;
   stats: Record<string, string | number>;
+  onDelete?: (nodeId: string) => void;
 };
 const DatabaseSchemaFunnelNode = memo((props: NodeProps) => {
   const data = props.data as DatabaseSchemaFunnelNodeData;
   const Icon = data?.icon;
   const statsEntries = Object.entries(data?.stats || {});
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (data?.onDelete) {
+      data.onDelete(props.id);
+    }
+  };
+
   return <DatabaseSchemaNode className="p-0 min-h-[120px] bg-[#0b0b0b]">
-      <DatabaseSchemaNodeHeader className="bg-muted">
+      <DatabaseSchemaNodeHeader className="bg-muted relative">
         {Icon && <Icon className="h-5 w-5" />}
-        <span>{data?.label}</span>
+        <span className="flex-1">{data?.label}</span>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="h-6 w-6 p-0 hover:bg-background/20"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-popover z-50">
+            <DropdownMenuItem
+              onClick={handleDelete}
+              className="text-destructive focus:text-destructive cursor-pointer"
+            >
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </DatabaseSchemaNodeHeader>
       <DatabaseSchemaNodeBody className="relative">
         {/* Handle de entrada (esquerda) */}
