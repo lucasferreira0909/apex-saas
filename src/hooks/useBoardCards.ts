@@ -53,12 +53,42 @@ export function useUpdateCard() {
         .eq('id', id);
       
       if (error) throw error;
+      return data;
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ['board', variables.board_id] });
+    onMutate: async (newData) => {
+      // Cancel any outgoing refetches
+      await queryClient.cancelQueries({ queryKey: ['board', newData.board_id] });
+
+      // Snapshot the previous value
+      const previousBoard = queryClient.getQueryData(['board', newData.board_id]);
+
+      // Optimistically update the cache
+      queryClient.setQueryData(['board', newData.board_id], (old: any) => {
+        if (!old) return old;
+        
+        return {
+          ...old,
+          cards: old.cards.map((card: any) => 
+            card.id === newData.id 
+              ? { ...card, ...newData }
+              : card
+          )
+        };
+      });
+
+      // Return context with the snapshotted value
+      return { previousBoard };
     },
-    onError: () => {
+    onError: (err, newData, context) => {
+      // Rollback to the previous value on error
+      if (context?.previousBoard) {
+        queryClient.setQueryData(['board', newData.board_id], context.previousBoard);
+      }
       toast.error('Não foi possível atualizar o card');
+    },
+    onSettled: (_, __, variables) => {
+      // Always refetch after error or success to ensure sync
+      queryClient.invalidateQueries({ queryKey: ['board', variables.board_id] });
     }
   });
 }
