@@ -133,6 +133,50 @@ export type Database = {
         }
         Relationships: []
       }
+      funnel_edges: {
+        Row: {
+          created_at: string
+          edge_style: Json | null
+          funnel_id: string
+          id: string
+          source_handle: string | null
+          source_node_id: string
+          target_handle: string | null
+          target_node_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          edge_style?: Json | null
+          funnel_id: string
+          id?: string
+          source_handle?: string | null
+          source_node_id: string
+          target_handle?: string | null
+          target_node_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          edge_style?: Json | null
+          funnel_id?: string
+          id?: string
+          source_handle?: string | null
+          source_node_id?: string
+          target_handle?: string | null
+          target_node_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "funnel_edges_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       funnel_elements: {
         Row: {
           configured: boolean
