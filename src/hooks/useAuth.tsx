@@ -35,17 +35,15 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [isPostLoginLoading, setIsPostLoginLoading] = useState(false);
 
   useEffect(() => {
-    // Check if this is a fresh login
-    const isFreshLogin = sessionStorage.getItem("apex_fresh_login") === "true";
-    
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
+      (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
         
-        // Only show post-login loading for fresh login
-        if (event === "SIGNED_IN" && isFreshLogin) {
+        // Check for fresh login flag on SIGNED_IN event
+        const isFreshLogin = sessionStorage.getItem("apex_fresh_login") === "true";
+        if ((event === "SIGNED_IN") && isFreshLogin) {
           setIsPostLoginLoading(true);
         }
         
@@ -73,7 +71,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       
-      // Only show post-login loading for fresh login with existing session
+      // Check for fresh login flag on initial load
+      const isFreshLogin = sessionStorage.getItem("apex_fresh_login") === "true";
       if (session?.user && isFreshLogin) {
         setIsPostLoginLoading(true);
       }
