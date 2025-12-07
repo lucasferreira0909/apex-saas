@@ -21,8 +21,8 @@ const DatabaseSchemaFunnelNode = memo((props: NodeProps) => {
       data.onDelete(props.id);
     }
   };
-  return <DatabaseSchemaNode className="p-0 min-h-[120px] bg-[#0b0b0b]">
-      <DatabaseSchemaNodeHeader className="bg-muted relative">
+  return <DatabaseSchemaNode className="p-0 min-h-[120px] bg-muted">
+      <DatabaseSchemaNodeHeader className="relative bg-[#131313]">
         {Icon && <Icon className="h-5 w-5" />}
         <span className="flex-1">{data?.label}</span>
         <DropdownMenu>
@@ -45,8 +45,8 @@ const DatabaseSchemaFunnelNode = memo((props: NodeProps) => {
         top: '50%'
       }} />
 
-        <DatabaseSchemaTableRow className="bg-[#0b0b0b]">
-          <DatabaseSchemaTableCell className="pl-4 pr-16 w-full bg-[#0b0b0b]">
+        <DatabaseSchemaTableRow className="bg-muted">
+          <DatabaseSchemaTableCell className="pl-4 pr-16 w-full bg-muted">
             {statsEntries.length > 0 ? <div className="flex flex-col gap-1 py-2">
                 {statsEntries.map(([key, value]) => <div key={key} className="flex justify-between text-sm">
                     <span className="text-muted-foreground">{key}:</span>
