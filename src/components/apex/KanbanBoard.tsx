@@ -194,9 +194,12 @@ export function KanbanBoard({
   const handleValueChange = (newColumns: Record<string, BoardCard[]>) => {
     setColumnsState(newColumns);
     
+    // Find cards that have changed position or column
     Object.entries(newColumns).forEach(([columnId, columnCards]) => {
       columnCards.forEach((card, index) => {
-        if (card.column_id !== columnId || card.order_index !== index) {
+        const originalCard = cards.find(c => c.id === card.id);
+        // Only trigger update if column or position actually changed
+        if (originalCard && (originalCard.column_id !== columnId || originalCard.order_index !== index)) {
           onCardMove(card.id, columnId, index);
         }
       });

@@ -97,25 +97,36 @@ export function Kanban<T = any>({
     const activeId = active.id as string;
     const overId = over.id as string;
 
-    // Find source and destination columns
+    // Find source column
     let sourceColumn: string | null = null;
-    let destColumn: string | null = null;
-
     for (const [columnId, items] of Object.entries(value)) {
       if (items.some((item) => getItemValue(item) === activeId)) {
         sourceColumn = columnId;
-      }
-      if (items.some((item) => getItemValue(item) === overId) || columnId === overId) {
-        destColumn = overId.startsWith('column-') ? overId.replace('column-', '') : columnId;
+        break;
       }
     }
 
-    // Check if dropping on an empty column content area
+    if (!sourceColumn) return;
+
+    // Determine destination column
+    let destColumn: string | null = null;
+    
+    // Check if dropping on column content area
     if (overId.startsWith('content-')) {
       destColumn = overId.replace('content-', '');
+    } else if (overId.startsWith('column-')) {
+      destColumn = overId.replace('column-', '');
+    } else {
+      // Dropping on an item - find which column contains it
+      for (const [columnId, items] of Object.entries(value)) {
+        if (items.some((item) => getItemValue(item) === overId)) {
+          destColumn = columnId;
+          break;
+        }
+      }
     }
 
-    if (!sourceColumn || !destColumn || sourceColumn === destColumn) return;
+    if (!destColumn || sourceColumn === destColumn) return;
 
     // Move item to different column
     const newValue = { ...value };
@@ -123,8 +134,9 @@ export function Kanban<T = any>({
     const destItems = [...(newValue[destColumn] || [])];
 
     const activeIndex = sourceItems.findIndex((item) => getItemValue(item) === activeId);
+    if (activeIndex === -1) return;
+    
     const [movedItem] = sourceItems.splice(activeIndex, 1);
-
     destItems.push(movedItem);
 
     newValue[sourceColumn] = sourceItems;
@@ -152,22 +164,21 @@ export function Kanban<T = any>({
       }
     }
 
-    if (draggingType === 'item' && over) {
+    if (draggingType === 'item' && over && activeColumnId) {
       const activeId = active.id as string;
       const overId = over.id as string;
 
-      if (activeId !== overId && activeColumnId) {
+      // Handle reordering within the same column
+      if (!overId.startsWith('content-') && !overId.startsWith('column-')) {
         const items = [...(value[activeColumnId] || [])];
         const activeIndex = items.findIndex((item) => getItemValue(item) === activeId);
         const overIndex = items.findIndex((item) => getItemValue(item) === overId);
 
         if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
-          const [movedItem] = items.splice(activeIndex, 1);
-          items.splice(overIndex, 0, movedItem);
-
+          const newItems = arrayMove(items, activeIndex, overIndex);
           onValueChange({
             ...value,
-            [activeColumnId]: items,
+            [activeColumnId]: newItems,
           });
         }
       }
