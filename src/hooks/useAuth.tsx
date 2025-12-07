@@ -20,6 +20,7 @@ interface AuthContextType {
   profile: Profile | null;
   loading: boolean;
   isPostLoginLoading: boolean;
+  showEntryAnimation: boolean;
   setPostLoginComplete: () => void;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<{ error: any }>;
@@ -33,6 +34,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPostLoginLoading, setIsPostLoginLoading] = useState(false);
+  const [showEntryAnimation, setShowEntryAnimation] = useState(false);
 
   useEffect(() => {
     // Set up auth state listener
@@ -98,7 +100,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   const setPostLoginComplete = () => {
     setIsPostLoginLoading(false);
+    setShowEntryAnimation(true);
     sessionStorage.removeItem("apex_fresh_login");
+    
+    // Reset entry animation after it plays
+    setTimeout(() => {
+      setShowEntryAnimation(false);
+    }, 1000);
   };
 
   const signOut = async () => {
@@ -135,6 +143,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       profile, 
       loading, 
       isPostLoginLoading,
+      showEntryAnimation,
       setPostLoginComplete,
       signOut, 
       updateProfile 
