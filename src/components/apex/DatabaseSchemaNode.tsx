@@ -8,10 +8,10 @@ const DatabaseSchemaNode = React.forwardRef<
   <div
     ref={ref}
     className={cn(
-      "rounded-lg border-2 border-primary text-card-foreground shadow-lg min-w-[240px]",
+      "rounded-lg border-2 border-primary bg-card text-card-foreground shadow-lg min-w-[240px]",
       className
     )}
-    style={{ backgroundColor: '#e8e8e8', ...style }}
+    style={style}
     {...props}
   />
 ));
