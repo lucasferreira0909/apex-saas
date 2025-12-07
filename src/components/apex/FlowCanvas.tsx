@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useRef } from "react";
 import {
   ReactFlow,
   Background,
@@ -8,10 +8,12 @@ import {
   Edge,
   Node,
   addEdge,
-  useNodesState,
-  useEdgesState,
   BackgroundVariant,
   ConnectionMode,
+  NodeChange,
+  EdgeChange,
+  applyNodeChanges,
+  applyEdgeChanges,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import DatabaseSchemaFunnelNode from "./DatabaseSchemaFunnelNode";
@@ -33,17 +35,8 @@ export function FlowCanvas({
   onNodesChange,
   onEdgesChange,
 }: FlowCanvasProps) {
-  const [nodes, setNodes, onNodesChangeInternal] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChangeInternal] = useEdgesState(initialEdges);
-
-  // Sync with external state changes
-  useEffect(() => {
-    setNodes(initialNodes);
-  }, [initialNodes, setNodes]);
-
-  useEffect(() => {
-    setEdges(initialEdges);
-  }, [initialEdges, setEdges]);
+  // Use refs to track if we're currently processing changes to avoid loops
+  const isProcessingRef = useRef(false);
 
   // Get edge color based on source handle
   const getEdgeStyle = useCallback((sourceHandle: string | null | undefined) => {
@@ -84,46 +77,50 @@ export function FlowCanvas({
             color: edgeStyle.markerColor,
           },
         },
-        edges
+        initialEdges
       );
-      setEdges(newEdges);
       onEdgesChange?.(newEdges);
     },
-    [edges, setEdges, onEdgesChange, getEdgeStyle]
+    [initialEdges, onEdgesChange, getEdgeStyle]
   );
 
   const handleNodesChange = useCallback(
-    (changes: any) => {
-      onNodesChangeInternal(changes);
-      // Delay to get updated nodes after internal state change
-      setTimeout(() => {
-        setNodes((currentNodes) => {
-          onNodesChange?.(currentNodes);
-          return currentNodes;
-        });
-      }, 0);
+    (changes: NodeChange[]) => {
+      if (isProcessingRef.current) return;
+      isProcessingRef.current = true;
+      
+      const updatedNodes = applyNodeChanges(changes, initialNodes);
+      onNodesChange?.(updatedNodes);
+      
+      // Reset flag after microtask
+      Promise.resolve().then(() => {
+        isProcessingRef.current = false;
+      });
     },
-    [onNodesChangeInternal, onNodesChange, setNodes]
+    [initialNodes, onNodesChange]
   );
 
   const handleEdgesChange = useCallback(
-    (changes: any) => {
-      onEdgesChangeInternal(changes);
-      setTimeout(() => {
-        setEdges((currentEdges) => {
-          onEdgesChange?.(currentEdges);
-          return currentEdges;
-        });
-      }, 0);
+    (changes: EdgeChange[]) => {
+      if (isProcessingRef.current) return;
+      isProcessingRef.current = true;
+      
+      const updatedEdges = applyEdgeChanges(changes, initialEdges);
+      onEdgesChange?.(updatedEdges);
+      
+      // Reset flag after microtask
+      Promise.resolve().then(() => {
+        isProcessingRef.current = false;
+      });
     },
-    [onEdgesChangeInternal, onEdgesChange, setEdges]
+    [initialEdges, onEdgesChange]
   );
 
   return (
     <div className="w-full h-full min-h-[600px]">
       <ReactFlow
-        nodes={nodes}
-        edges={edges}
+        nodes={initialNodes}
+        edges={initialEdges}
         onNodesChange={handleNodesChange}
         onEdgesChange={handleEdgesChange}
         onConnect={onConnect}
