@@ -18,7 +18,7 @@ interface AddElementDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onAddElement: (elementType: ElementType) => void;
-  templateType?: 'sales' | 'ltv' | 'quiz' | 'remarketing' | null;
+  templateType?: 'sales' | 'ltv' | 'remarketing' | null;
 }
 
 const AVAILABLE_ELEMENTS: ElementType[] = [
@@ -184,11 +184,6 @@ export function AddElementDialog({ open, onOpenChange, onAddElement, templateTyp
     if (templateType === 'sales') {
       return AVAILABLE_ELEMENTS.filter(element => 
         ['capture', 'sales', 'checkout', 'upsell', 'downsell', 'thankyou'].includes(element.id)
-      );
-    }
-    if (templateType === 'quiz') {
-      return AVAILABLE_ELEMENTS.filter(element => 
-        ['question', 'benefits', 'testimonial', 'vsl', 'offer', 'checkout', 'thankyou'].includes(element.id)
       );
     }
     if (templateType === 'remarketing') {

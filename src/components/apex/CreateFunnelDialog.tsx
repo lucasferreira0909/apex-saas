@@ -14,12 +14,12 @@ import { useQueryClient } from "@tanstack/react-query";
 interface CreateFunnelDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  templateType?: 'sales' | 'ltv' | 'quiz' | 'blank' | 'remarketing' | null;
+  templateType?: 'sales' | 'ltv' | 'blank' | 'remarketing' | null;
 }
 
 export function CreateFunnelDialog({ open, onOpenChange, templateType: initialTemplate }: CreateFunnelDialogProps) {
   const [name, setName] = useState("");
-  const [templateType, setTemplateType] = useState<'sales' | 'ltv' | 'quiz' | 'blank' | 'remarketing' | null>(initialTemplate || null);
+  const [templateType, setTemplateType] = useState<'sales' | 'ltv' | 'blank' | 'remarketing' | null>(initialTemplate || null);
   const [isChecking, setIsChecking] = useState(false);
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -84,7 +84,7 @@ export function CreateFunnelDialog({ open, onOpenChange, templateType: initialTe
     }
   };
 
-  const handleSelectTemplate = (template: 'sales' | 'ltv' | 'quiz' | 'blank' | 'remarketing') => {
+  const handleSelectTemplate = (template: 'sales' | 'ltv' | 'blank' | 'remarketing') => {
     setTemplateType(template);
   };
 
@@ -101,8 +101,7 @@ export function CreateFunnelDialog({ open, onOpenChange, templateType: initialTe
           <SheetTitle>
             {!templateType ? 'Escolha um Modelo' : templateType === 'blank' ? 'Criar Funil do Zero' : `Criar Funil - ${
               templateType === 'sales' ? 'Vendas' : 
-              templateType === 'ltv' ? 'LTV' : 
-              templateType === 'remarketing' ? 'Remarketing' : 'Quiz'
+              templateType === 'ltv' ? 'LTV' : 'Remarketing'
             }`}
           </SheetTitle>
           <SheetDescription>
@@ -110,7 +109,7 @@ export function CreateFunnelDialog({ open, onOpenChange, templateType: initialTe
               ? 'Selecione o tipo de funil que deseja criar'
               : templateType === 'blank'
                 ? 'Configure as informações básicas do seu funil personalizado'
-                : `Configurando um funil do tipo ${templateType === 'sales' ? 'Vendas' : templateType === 'ltv' ? 'LTV' : templateType === 'remarketing' ? 'Remarketing' : 'Quiz'} com elementos pré-selecionados`
+                : `Configurando um funil do tipo ${templateType === 'sales' ? 'Vendas' : templateType === 'ltv' ? 'LTV' : 'Remarketing'} com elementos pré-selecionados`
             }
           </SheetDescription>
         </SheetHeader>
