@@ -28,21 +28,22 @@ import {
 export default function FunnelEditor() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const {
-    funnel,
-    funnelId,
-    loading: funnelLoading
-  } = useFunnelProject(id);
+  
+  // Use id directly from URL params for fetching elements and edges
+  // This ensures data loads immediately without waiting for useFunnelProject
   const {
     elements,
     loading: elementsLoading,
     saveAllElements
-  } = useFunnelElements(funnelId || undefined);
+  } = useFunnelElements(id);
   const {
     edges: savedEdges,
     loading: edgesLoading,
     saveAllEdges
-  } = useFunnelEdges(funnelId || undefined);
+  } = useFunnelEdges(id);
+  
+  // useFunnelProject still used for metadata (name, template_type)
+  const { funnel, loading: funnelLoading } = useFunnelProject(id);
 
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
@@ -56,12 +57,13 @@ export default function FunnelEditor() {
   
   const initialLoadDone = useRef(false);
 
-  // Reset when funnelId changes (navigation between funnels)
+  // Reset when funnel id changes (navigation between funnels)
   useEffect(() => {
     initialLoadDone.current = false;
     setNodes([]);
     setEdges([]);
-  }, [funnelId]);
+    setHasUnsavedChanges(false);
+  }, [id]);
 
   // Handle delete node request
   const handleDeleteRequest = useCallback((nodeId: string) => {
@@ -114,19 +116,27 @@ export default function FunnelEditor() {
 
   // Load elements and edges from database
   useEffect(() => {
-    // Only process after all data has loaded and we haven't done initial load yet
-    if (!elementsLoading && !funnelLoading && !edgesLoading && !initialLoadDone.current) {
-      // Load nodes (even if empty - valid for new canvas)
-      const convertedNodes = elementsToNodes(elements);
-      setNodes(convertedNodes);
-      
-      // Load edges (even if empty)
-      setEdges(savedEdges);
-      
-      // Mark as done AFTER processing
-      initialLoadDone.current = true;
-    }
-  }, [elements, savedEdges, elementsLoading, funnelLoading, edgesLoading, elementsToNodes]);
+    // Guard: need valid id and loading must be complete
+    if (!id) return;
+    if (elementsLoading || edgesLoading) return;
+    if (initialLoadDone.current) return;
+    
+    console.log('FunnelEditor: Loading data', { 
+      id, 
+      elementsCount: elements.length, 
+      edgesCount: savedEdges.length 
+    });
+    
+    // Load nodes (even if empty - valid for new canvas)
+    const convertedNodes = elementsToNodes(elements);
+    setNodes(convertedNodes);
+    
+    // Load edges (even if empty)
+    setEdges(savedEdges);
+    
+    // Mark as done AFTER processing
+    initialLoadDone.current = true;
+  }, [id, elements, savedEdges, elementsLoading, edgesLoading, elementsToNodes]);
 
   const generateUniqueId = () => crypto.randomUUID();
 
@@ -175,7 +185,7 @@ export default function FunnelEditor() {
   }, []);
 
   const handleSave = async () => {
-    if (!funnelId) {
+    if (!id) {
       console.error('No funnel ID provided');
       return;
     }
