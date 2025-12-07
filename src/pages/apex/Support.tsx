@@ -5,7 +5,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { MessageCircle, Mail, Phone, Ticket, Send, Copy, ExternalLink } from "lucide-react";
+import { MessageCircle, Mail, Phone, Ticket, Send, X } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Support() {
@@ -52,18 +52,16 @@ export default function Support() {
 
     const whatsappLink = generateWhatsAppLink();
     setGeneratedLink(whatsappLink);
-    
-    // Usar location.href para evitar bloqueio de pop-up no desktop
-    window.location.href = whatsappLink;
+    toast.success("Ticket preparado! Clique no botão abaixo para enviar.");
   };
 
-  const copyLink = () => {
-    navigator.clipboard.writeText(generatedLink);
-    toast.success("Link copiado!");
-  };
-
-  const openLink = () => {
+  const openWhatsApp = () => {
     window.location.href = generatedLink;
+  };
+
+  const resetForm = () => {
+    setFormData({ subject: "", description: "", priority: "media" });
+    setGeneratedLink("");
   };
   return <div className="space-y-6">
       <div>
@@ -134,18 +132,17 @@ export default function Support() {
               </Button>
 
               {generatedLink && (
-                <div className="mt-4 p-3 bg-muted rounded-lg space-y-2">
-                  <p className="text-xs text-muted-foreground">Caso o redirecionamento não funcione, use as opções abaixo:</p>
-                  <div className="flex gap-2">
-                    <Button variant="outline" size="sm" onClick={copyLink} className="flex-1">
-                      <Copy className="mr-2 h-3 w-3" />
-                      Copiar Link
-                    </Button>
-                    <Button variant="outline" size="sm" onClick={openLink} className="flex-1">
-                      <ExternalLink className="mr-2 h-3 w-3" />
-                      Abrir
+                <div className="mt-4 p-4 bg-primary/10 border border-primary/20 rounded-lg space-y-3">
+                  <div className="flex items-center justify-between">
+                    <p className="text-sm font-medium text-foreground">Ticket pronto para envio!</p>
+                    <Button variant="ghost" size="icon" onClick={resetForm} className="h-6 w-6">
+                      <X className="h-4 w-4" />
                     </Button>
                   </div>
+                  <Button onClick={openWhatsApp} className="w-full">
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    Abrir no WhatsApp
+                  </Button>
                 </div>
               )}
             </div>
