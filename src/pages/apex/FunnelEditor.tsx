@@ -12,11 +12,20 @@ import { FlowCanvas } from "@/components/apex/FlowCanvas";
 import { FunnelElement } from "@/types/funnel";
 import { Node, Edge } from "@xyflow/react";
 import { getElementIcon } from "@/hooks/useFunnelElements";
-
 export default function FunnelEditor() {
-  const { id } = useParams();
-  const { funnel, funnelId, loading: funnelLoading } = useFunnelProject(id);
-  const { elements, loading: elementsLoading, saveAllElements } = useFunnelElements(funnelId || undefined);
+  const {
+    id
+  } = useParams();
+  const {
+    funnel,
+    funnelId,
+    loading: funnelLoading
+  } = useFunnelProject(id);
+  const {
+    elements,
+    loading: elementsLoading,
+    saveAllElements
+  } = useFunnelElements(funnelId || undefined);
   const [isSaved, setIsSaved] = useState(false);
   const [showExitButton, setShowExitButton] = useState(false);
   const [nodes, setNodes] = useState<Node[]>([]);
@@ -34,8 +43,8 @@ export default function FunnelEditor() {
         label: element.type,
         icon: element.icon,
         configured: element.configured,
-        stats: element.stats,
-      },
+        stats: element.stats
+      }
     }));
   }, []);
 
@@ -47,7 +56,7 @@ export default function FunnelEditor() {
       icon: node.data.icon,
       position: node.position,
       configured: node.data.configured as boolean,
-      stats: node.data.stats as Record<string, string | number>,
+      stats: node.data.stats as Record<string, string | number>
     }));
   }, []);
 
@@ -61,12 +70,13 @@ export default function FunnelEditor() {
       setEdges([]);
     }
   }, [elements, elementsLoading, funnelLoading, elementsToNodes]);
-
   const generateUniqueId = () => crypto.randomUUID();
-
   const findOptimalPosition = () => {
     if (nodes.length === 0) {
-      return { x: 50, y: 50 };
+      return {
+        x: 50,
+        y: 50
+      };
     }
     const lastNode = nodes[nodes.length - 1];
     return {
@@ -74,7 +84,6 @@ export default function FunnelEditor() {
       y: lastNode.position.y
     };
   };
-
   const handleAddElement = (elementType: ElementType) => {
     const position = findOptimalPosition();
     const newNode: Node = {
@@ -85,36 +94,29 @@ export default function FunnelEditor() {
         label: elementType.name,
         icon: elementType.icon,
         configured: false,
-        stats: {},
-      },
+        stats: {}
+      }
     };
-    
     setNodes(prev => [...prev, newNode]);
     setShowAddDialog(false);
   };
-
   const handleNodesChange = useCallback((updatedNodes: Node[]) => {
     setNodes(updatedNodes);
   }, []);
-
   const handleEdgesChange = useCallback((updatedEdges: Edge[]) => {
     setEdges(updatedEdges);
   }, []);
-
   const handleSave = async () => {
     if (!funnelId) {
       console.error('No funnel ID provided');
       return;
     }
-
     setIsLoading(true);
     try {
       // Convert nodes back to FunnelElements
       const funnelElements = nodesToElements(nodes);
       console.log('Saving elements:', funnelElements);
-      
       await saveAllElements(funnelElements);
-      
       setIsSaved(true);
       setShowExitButton(true);
       console.log('Funnel saved successfully');
@@ -124,9 +126,7 @@ export default function FunnelEditor() {
       setIsLoading(false);
     }
   };
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -140,23 +140,7 @@ export default function FunnelEditor() {
           </div>
         </div>
         
-        <div className="flex items-center space-x-2">
-          <Button 
-            onClick={handleSave} 
-            className={isSaved ? "bg-success" : ""} 
-            disabled={isLoading}
-          >
-            <Save className="mr-2 h-4 w-4" />
-            {isLoading ? "Salvando..." : isSaved ? "Salvo" : "Salvar"}
-          </Button>
-          {showExitButton && (
-            <Link to="/funnels">
-              <Button variant="secondary">
-                Sair do Projeto
-              </Button>
-            </Link>
-          )}
-        </div>
+        
       </div>
 
       {/* Funnel Canvas */}
@@ -175,23 +159,12 @@ export default function FunnelEditor() {
         </CardHeader>
         <CardContent>
           <div className="relative bg-muted/20 rounded-lg h-[600px] w-full">
-            <FlowCanvas
-              initialNodes={nodes}
-              initialEdges={edges}
-              onNodesChange={handleNodesChange}
-              onEdgesChange={handleEdgesChange}
-            />
+            <FlowCanvas initialNodes={nodes} initialEdges={edges} onNodesChange={handleNodesChange} onEdgesChange={handleEdgesChange} />
           </div>
         </CardContent>
       </Card>
 
       {/* Add Element Dialog */}
-      <AddElementDialog 
-        open={showAddDialog} 
-        onOpenChange={setShowAddDialog} 
-        onAddElement={handleAddElement}
-        templateType={funnel?.template_type as 'sales' | 'ltv' | 'quiz' | null || null}
-      />
-    </div>
-  );
+      <AddElementDialog open={showAddDialog} onOpenChange={setShowAddDialog} onAddElement={handleAddElement} templateType={funnel?.template_type as 'sales' | 'ltv' | 'quiz' | null || null} />
+    </div>;
 }
