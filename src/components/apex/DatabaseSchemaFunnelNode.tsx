@@ -47,42 +47,53 @@ const DatabaseSchemaFunnelNode = memo((props: NodeProps) => {
           </DatabaseSchemaTableCell>
         </DatabaseSchemaTableRow>
 
-        {/* 3 Handles de saída (direita) - empilhados verticalmente */}
-        <div className="absolute right-0 top-0 bottom-0 flex flex-col justify-around py-3 pr-1">
-          {/* Neutro */}
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] text-muted-foreground">Neutro</span>
-            <Handle 
-              id="neutral" 
-              type="source" 
-              position={Position.Right}
-              className="!relative !transform-none !w-3 !h-3 !border-2"
-              style={{ backgroundColor: '#9ca3af', borderColor: '#6b7280' }}
-            />
-          </div>
-          {/* Se sim (positivo) */}
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] text-green-600">Se sim</span>
-            <Handle 
-              id="positive" 
-              type="source" 
-              position={Position.Right}
-              className="!relative !transform-none !w-3 !h-3 !border-2"
-              style={{ backgroundColor: '#22c55e', borderColor: '#16a34a' }}
-            />
-          </div>
-          {/* Negado */}
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] text-red-600">Negado</span>
-            <Handle 
-              id="negative" 
-              type="source" 
-              position={Position.Right}
-              className="!relative !transform-none !w-3 !h-3 !border-2"
-              style={{ backgroundColor: '#ef4444', borderColor: '#dc2626' }}
-            />
-          </div>
-        </div>
+        {/* Handle Neutro (topo) */}
+        <Handle 
+          id="neutral" 
+          type="source" 
+          position={Position.Right}
+          className="!w-3 !h-3 !border-2"
+          style={{ 
+            backgroundColor: '#9ca3af', 
+            borderColor: '#6b7280',
+            top: '25%'
+          }}
+        />
+        <span className="absolute text-[10px] text-muted-foreground" style={{ right: '16px', top: '25%', transform: 'translateY(-50%)' }}>
+          Neutro
+        </span>
+
+        {/* Handle Se sim (meio) */}
+        <Handle 
+          id="positive" 
+          type="source" 
+          position={Position.Right}
+          className="!w-3 !h-3 !border-2"
+          style={{ 
+            backgroundColor: '#22c55e', 
+            borderColor: '#16a34a',
+            top: '50%'
+          }}
+        />
+        <span className="absolute text-[10px] text-green-600" style={{ right: '16px', top: '50%', transform: 'translateY(-50%)' }}>
+          Se sim
+        </span>
+
+        {/* Handle Negado (base) */}
+        <Handle 
+          id="negative" 
+          type="source" 
+          position={Position.Right}
+          className="!w-3 !h-3 !border-2"
+          style={{ 
+            backgroundColor: '#ef4444', 
+            borderColor: '#dc2626',
+            top: '75%'
+          }}
+        />
+        <span className="absolute text-[10px] text-red-600" style={{ right: '16px', top: '75%', transform: 'translateY(-50%)' }}>
+          Negado
+        </span>
       </DatabaseSchemaNodeBody>
     </DatabaseSchemaNode>
   );
