@@ -126,7 +126,24 @@ export function Kanban<T = any>({
       }
     }
 
-    if (!destColumn || sourceColumn === destColumn) return;
+    if (!destColumn) return;
+
+    // If same column, handle reordering
+    if (sourceColumn === destColumn) {
+      const items = [...(value[sourceColumn] || [])];
+      const activeIndex = items.findIndex((item) => getItemValue(item) === activeId);
+      const overIndex = items.findIndex((item) => getItemValue(item) === overId);
+
+      if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
+        const newItems = arrayMove(items, activeIndex, overIndex);
+        const newValue = {
+          ...value,
+          [sourceColumn]: newItems,
+        };
+        onValueChange(newValue);
+      }
+      return;
+    }
 
     // Move item to different column
     const newValue = { ...value };
@@ -137,7 +154,14 @@ export function Kanban<T = any>({
     if (activeIndex === -1) return;
     
     const [movedItem] = sourceItems.splice(activeIndex, 1);
-    destItems.push(movedItem);
+    
+    // Find the position to insert based on the over item
+    const overIndex = destItems.findIndex((item) => getItemValue(item) === overId);
+    if (overIndex !== -1) {
+      destItems.splice(overIndex, 0, movedItem);
+    } else {
+      destItems.push(movedItem);
+    }
 
     newValue[sourceColumn] = sourceItems;
     newValue[destColumn] = destItems;
@@ -160,26 +184,6 @@ export function Kanban<T = any>({
         if (oldIndex !== -1 && newIndex !== -1) {
           const newOrder = arrayMove(columnOrder, oldIndex, newIndex);
           onColumnOrderChange(newOrder);
-        }
-      }
-    }
-
-    if (draggingType === 'item' && over && activeColumnId) {
-      const activeId = active.id as string;
-      const overId = over.id as string;
-
-      // Handle reordering within the same column
-      if (!overId.startsWith('content-') && !overId.startsWith('column-')) {
-        const items = [...(value[activeColumnId] || [])];
-        const activeIndex = items.findIndex((item) => getItemValue(item) === activeId);
-        const overIndex = items.findIndex((item) => getItemValue(item) === overId);
-
-        if (activeIndex !== -1 && overIndex !== -1 && activeIndex !== overIndex) {
-          const newItems = arrayMove(items, activeIndex, overIndex);
-          onValueChange({
-            ...value,
-            [activeColumnId]: newItems,
-          });
         }
       }
     }
