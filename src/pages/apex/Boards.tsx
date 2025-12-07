@@ -16,7 +16,7 @@ import { DataGridPagination } from '@/components/ui/data-grid-pagination';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useBoards, useBoard, useCreateBoard, useDeleteBoard } from '@/hooks/useBoards';
 import { useCreateCard, useUpdateCard, useDeleteCard } from '@/hooks/useBoardCards';
-import { useUpdateMultipleColumnsOrder } from '@/hooks/useBoardColumns';
+import { useUpdateMultipleColumnsOrder, useUpdateColumnTitle, useDeleteColumn } from '@/hooks/useBoardColumns';
 import { BoardTemplate, Board } from '@/types/board';
 import { Plus, ArrowLeft, Trash2, Search, MoreHorizontal, Edit } from 'lucide-react';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
@@ -52,6 +52,13 @@ export default function Boards() {
     pageSize: 10,
   });
   const [sorting, setSorting] = useState<SortingState>([{ id: 'created_at', desc: true }]);
+  
+  // Column editing states
+  const [isEditColumnSheetOpen, setIsEditColumnSheetOpen] = useState(false);
+  const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
+  const [editingColumnName, setEditingColumnName] = useState('');
+  const [columnDeleteDialogOpen, setColumnDeleteDialogOpen] = useState(false);
+  const [columnToDelete, setColumnToDelete] = useState<string | null>(null);
 
   const { data: boards, isLoading: loadingBoards } = useBoards();
   const { data: boardData, isLoading: loadingBoard } = useBoard(selectedBoardId);
@@ -61,6 +68,8 @@ export default function Boards() {
   const updateCard = useUpdateCard();
   const deleteCard = useDeleteCard();
   const updateColumnsOrder = useUpdateMultipleColumnsOrder();
+  const updateColumnTitle = useUpdateColumnTitle();
+  const deleteColumn = useDeleteColumn();
 
   const handleTemplateSelect = (template: BoardTemplate) => {
     setSelectedTemplate(template);
@@ -167,6 +176,36 @@ export default function Boards() {
   const handleOpenDeleteDialog = (boardId: string) => {
     setBoardToDelete(boardId);
     setDeleteDialogOpen(true);
+  };
+
+  // Column handlers
+  const handleEditColumn = (columnId: string, currentName: string) => {
+    setEditingColumnId(columnId);
+    setEditingColumnName(currentName);
+    setIsEditColumnSheetOpen(true);
+  };
+
+  const handleSaveColumnName = async () => {
+    if (!editingColumnId || !editingColumnName.trim()) {
+      toast.error('Digite um nome para a coluna');
+      return;
+    }
+    await updateColumnTitle.mutateAsync({ columnId: editingColumnId, title: editingColumnName });
+    setIsEditColumnSheetOpen(false);
+    setEditingColumnId(null);
+    setEditingColumnName('');
+  };
+
+  const handleOpenDeleteColumnDialog = (columnId: string) => {
+    setColumnToDelete(columnId);
+    setColumnDeleteDialogOpen(true);
+  };
+
+  const handleDeleteColumn = async () => {
+    if (!columnToDelete) return;
+    await deleteColumn.mutateAsync(columnToDelete);
+    setColumnDeleteDialogOpen(false);
+    setColumnToDelete(null);
   };
 
   // Filter boards based on search
@@ -287,7 +326,9 @@ export default function Boards() {
               setSelectedColumnId(columnId);
               setIsAddCardSheetOpen(true);
             }} 
-            onDeleteCard={handleDeleteCard} 
+            onDeleteCard={handleDeleteCard}
+            onEditColumn={handleEditColumn}
+            onDeleteColumn={handleOpenDeleteColumnDialog}
           />
         )}
 
@@ -330,6 +371,42 @@ export default function Boards() {
             </SheetFooter>
           </SheetContent>
         </Sheet>
+
+        {/* Edit Column Sheet */}
+        <Sheet open={isEditColumnSheetOpen} onOpenChange={setIsEditColumnSheetOpen}>
+          <SheetContent>
+            <SheetHeader>
+              <SheetTitle>Editar Coluna</SheetTitle>
+              <SheetDescription>Altere o nome da coluna</SheetDescription>
+            </SheetHeader>
+            <SheetBody>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="column-name">Nome da Coluna *</Label>
+                <Input 
+                  id="column-name" 
+                  placeholder="Digite o nome da coluna" 
+                  value={editingColumnName} 
+                  onChange={e => setEditingColumnName(e.target.value)} 
+                />
+              </div>
+            </SheetBody>
+            <SheetFooter>
+              <SheetClose asChild>
+                <Button variant="outline">Cancelar</Button>
+              </SheetClose>
+              <Button onClick={handleSaveColumnName}>Salvar</Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
+
+        {/* Delete Column Dialog */}
+        <DeleteConfirmationDialog
+          open={columnDeleteDialogOpen}
+          onOpenChange={setColumnDeleteDialogOpen}
+          onConfirm={handleDeleteColumn}
+          title="Excluir Coluna"
+          description="Tem certeza que deseja excluir esta coluna? Todos os cards nela serão excluídos também."
+        />
       </div>
     );
   }
