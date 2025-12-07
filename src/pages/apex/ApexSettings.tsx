@@ -156,8 +156,8 @@ export default function ApexSettings() {
   };
   return <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-foreground">Configurações</h1>
-        <p className="text-muted-foreground">Gerencie suas preferências e configurações de conta</p>
+        <h1 className="text-3xl font-bold text-foreground">Minha Conta</h1>
+        <p className="text-muted-foreground">Gerencie suas preferências e configurações</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
