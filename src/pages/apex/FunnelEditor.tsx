@@ -1,13 +1,13 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useParams } from "react-router-dom";
 import { useFunnelElements } from "@/hooks/useFunnelElements";
 import { useFunnelProject } from "@/hooks/useFunnelProject";
+import { useDebounceValue } from "@/hooks/useDebounceValue";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Save, ArrowLeft, Plus } from "lucide-react";
+import { ArrowLeft, Plus, Loader2, Check } from "lucide-react";
 import { Link } from "react-router-dom";
 import { AddElementDialog, ElementType } from "@/components/apex/AddElementDialog";
-import { EmptyCanvas } from "@/components/apex/EmptyCanvas";
 import { FlowCanvas } from "@/components/apex/FlowCanvas";
 import { FunnelElement } from "@/types/funnel";
 import { Node, Edge } from "@xyflow/react";
@@ -28,14 +28,14 @@ export default function FunnelEditor() {
     loading: elementsLoading,
     saveAllElements
   } = useFunnelElements(funnelId || undefined);
-  const [isSaved, setIsSaved] = useState(false);
-  const [showExitButton, setShowExitButton] = useState(false);
   const [nodes, setNodes] = useState<Node[]>([]);
   const [edges, setEdges] = useState<Edge[]>([]);
   const [showAddDialog, setShowAddDialog] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
   const [nodeToDelete, setNodeToDelete] = useState<string | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const isInitialLoad = useRef(true);
 
   // Handle delete node request
   const handleDeleteRequest = useCallback((nodeId: string) => {
@@ -92,10 +92,56 @@ export default function FunnelEditor() {
       console.log('Loading elements from DB:', elements);
       const convertedNodes = elementsToNodes(elements);
       setNodes(convertedNodes);
-      // TODO: Load edges from database if stored
       setEdges([]);
+      // Mark initial load as complete after a short delay
+      setTimeout(() => {
+        isInitialLoad.current = false;
+      }, 500);
+    } else if (!elementsLoading && !funnelLoading && elements.length === 0) {
+      isInitialLoad.current = false;
     }
   }, [elements, elementsLoading, funnelLoading, elementsToNodes]);
+
+  // Convert nodes to elements for saving
+  const elementsForSave = nodesToElements(nodes);
+
+  // Debounced elements for auto-save
+  const debouncedElements = useDebounceValue(elementsForSave, 1000);
+
+  // Auto-save when elements change
+  useEffect(() => {
+    const autoSave = async () => {
+      if (isInitialLoad.current || !funnelId || debouncedElements.length === 0) {
+        return;
+      }
+
+      setIsSaving(true);
+      setSaveStatus('saving');
+      
+      try {
+        await saveAllElements(debouncedElements);
+        setSaveStatus('saved');
+        console.log('Auto-saved funnel elements');
+        
+        // Reset status after 2 seconds
+        setTimeout(() => {
+          setSaveStatus('idle');
+        }, 2000);
+      } catch (error) {
+        console.error('Error auto-saving:', error);
+        toast({
+          title: "Erro ao salvar",
+          description: "Não foi possível salvar as alterações automaticamente.",
+          variant: "destructive",
+        });
+        setSaveStatus('idle');
+      } finally {
+        setIsSaving(false);
+      }
+    };
+
+    autoSave();
+  }, [debouncedElements, funnelId, saveAllElements]);
   const generateUniqueId = () => crypto.randomUUID();
   const findOptimalPosition = () => {
     if (nodes.length === 0) {
@@ -133,26 +179,6 @@ export default function FunnelEditor() {
   const handleEdgesChange = useCallback((updatedEdges: Edge[]) => {
     setEdges(updatedEdges);
   }, []);
-  const handleSave = async () => {
-    if (!funnelId) {
-      console.error('No funnel ID provided');
-      return;
-    }
-    setIsLoading(true);
-    try {
-      // Convert nodes back to FunnelElements
-      const funnelElements = nodesToElements(nodes);
-      console.log('Saving elements:', funnelElements);
-      await saveAllElements(funnelElements);
-      setIsSaved(true);
-      setShowExitButton(true);
-      console.log('Funnel saved successfully');
-    } catch (error) {
-      console.error('Error saving funnel:', error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
   return <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
@@ -167,7 +193,21 @@ export default function FunnelEditor() {
           </div>
         </div>
         
-        
+        {/* Save Status Indicator */}
+        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          {saveStatus === 'saving' && (
+            <>
+              <Loader2 className="h-4 w-4 animate-spin" />
+              <span>Salvando...</span>
+            </>
+          )}
+          {saveStatus === 'saved' && (
+            <>
+              <Check className="h-4 w-4 text-green-500" />
+              <span className="text-green-500">Salvo</span>
+            </>
+          )}
+        </div>
       </div>
 
       {/* Funnel Canvas */}
