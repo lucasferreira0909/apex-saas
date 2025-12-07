@@ -79,7 +79,7 @@ export function useFunnelEdges(funnelId?: string) {
       // Only insert if there are edges to save
       if (edgesToSave.length > 0) {
         const edgesData = edgesToSave.map(edge => ({
-          id: edge.id,
+          id: crypto.randomUUID(), // Generate proper UUID instead of using ReactFlow's edge id
           funnel_id: funnelId,
           source_node_id: edge.source,
           target_node_id: edge.target,
