@@ -165,6 +165,6 @@ export default function FunnelEditor() {
       </Card>
 
       {/* Add Element Dialog */}
-      <AddElementDialog open={showAddDialog} onOpenChange={setShowAddDialog} onAddElement={handleAddElement} templateType={funnel?.template_type as 'sales' | 'ltv' | 'quiz' | null || null} />
+      <AddElementDialog open={showAddDialog} onOpenChange={setShowAddDialog} onAddElement={handleAddElement} templateType={funnel?.template_type as 'sales' | 'ltv' | 'quiz' | 'remarketing' | null || null} />
     </div>;
 }
