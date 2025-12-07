@@ -8,20 +8,37 @@ import { ArrowLeft, BookAudio, Play, Download, Loader2, Volume2 } from "lucide-r
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-
-const voices = [
-  { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah (Feminina)" },
-  { id: "9BWtsMINqrJLrRacOk9x", name: "Aria (Feminina)" },
-  { id: "FGY2WhTYpPnrIDTdsKH5", name: "Laura (Feminina)" },
-  { id: "XB0fDUnXU5powFXDhCwa", name: "Charlotte (Feminina)" },
-  { id: "pFZP5JQG7iQjIQuC4Bku", name: "Lily (Feminina)" },
-  { id: "CwhRBWXzGAHq8TQ4Fs17", name: "Roger (Masculina)" },
-  { id: "JBFqnCBsd6RMkjVDRZzb", name: "George (Masculina)" },
-  { id: "TX3LPaxmHKxFdv7VOQHJ", name: "Liam (Masculina)" },
-  { id: "nPczCjzI2devNBz1zQrb", name: "Brian (Masculina)" },
-  { id: "onwK4e9ZLuTAKqWW03F9", name: "Daniel (Masculina)" },
-];
-
+const voices = [{
+  id: "EXAVITQu4vr4xnSDxMaL",
+  name: "Sarah (Feminina)"
+}, {
+  id: "9BWtsMINqrJLrRacOk9x",
+  name: "Aria (Feminina)"
+}, {
+  id: "FGY2WhTYpPnrIDTdsKH5",
+  name: "Laura (Feminina)"
+}, {
+  id: "XB0fDUnXU5powFXDhCwa",
+  name: "Charlotte (Feminina)"
+}, {
+  id: "pFZP5JQG7iQjIQuC4Bku",
+  name: "Lily (Feminina)"
+}, {
+  id: "CwhRBWXzGAHq8TQ4Fs17",
+  name: "Roger (Masculina)"
+}, {
+  id: "JBFqnCBsd6RMkjVDRZzb",
+  name: "George (Masculina)"
+}, {
+  id: "TX3LPaxmHKxFdv7VOQHJ",
+  name: "Liam (Masculina)"
+}, {
+  id: "nPczCjzI2devNBz1zQrb",
+  name: "Brian (Masculina)"
+}, {
+  id: "onwK4e9ZLuTAKqWW03F9",
+  name: "Daniel (Masculina)"
+}];
 export default function AudiobookGenerator() {
   const [text, setText] = useState("");
   const [selectedVoice, setSelectedVoice] = useState(voices[0].id);
@@ -29,42 +46,40 @@ export default function AudiobookGenerator() {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [isPlaying, setIsPlaying] = useState(false);
   const [audioElement, setAudioElement] = useState<HTMLAudioElement | null>(null);
-
   const generateAudio = async () => {
     if (!text.trim()) {
       toast.error("Por favor, insira um texto para converter");
       return;
     }
-
     if (text.length > 5000) {
       toast.error("O texto deve ter no máximo 5000 caracteres");
       return;
     }
-
     setIsGenerating(true);
     setAudioUrl(null);
-
     try {
-      const { data, error } = await supabase.functions.invoke('text-to-speech', {
-        body: { text: text.trim(), voice: selectedVoice },
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('text-to-speech', {
+        body: {
+          text: text.trim(),
+          voice: selectedVoice
+        }
       });
-
       if (error) {
         throw new Error(error.message);
       }
-
       if (data.error) {
         throw new Error(data.error);
       }
 
       // Convert base64 to audio URL
-      const audioBlob = new Blob(
-        [Uint8Array.from(atob(data.audioContent), c => c.charCodeAt(0))],
-        { type: 'audio/mpeg' }
-      );
+      const audioBlob = new Blob([Uint8Array.from(atob(data.audioContent), c => c.charCodeAt(0))], {
+        type: 'audio/mpeg'
+      });
       const url = URL.createObjectURL(audioBlob);
       setAudioUrl(url);
-
       toast.success("Áudio gerado com sucesso!");
     } catch (error: any) {
       console.error('Error generating audio:', error);
@@ -73,10 +88,8 @@ export default function AudiobookGenerator() {
       setIsGenerating(false);
     }
   };
-
   const playAudio = () => {
     if (!audioUrl) return;
-
     if (audioElement) {
       if (isPlaying) {
         audioElement.pause();
@@ -93,10 +106,8 @@ export default function AudiobookGenerator() {
       setAudioElement(audio);
     }
   };
-
   const downloadAudio = () => {
     if (!audioUrl) return;
-
     const link = document.createElement('a');
     link.href = audioUrl;
     link.download = 'audiobook.mp3';
@@ -105,9 +116,7 @@ export default function AudiobookGenerator() {
     document.body.removeChild(link);
     toast.success("Download iniciado!");
   };
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center space-x-4">
         <Link to="/tools">
@@ -132,24 +141,7 @@ export default function AudiobookGenerator() {
             <CardDescription>Insira o texto e escolha a voz</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="voice">Voz</Label>
-              <Select value={selectedVoice} onValueChange={setSelectedVoice}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma voz" />
-                </SelectTrigger>
-                <SelectContent>
-                  {voices.map((voice) => (
-                    <SelectItem key={voice.id} value={voice.id}>
-                      {voice.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Escolha a voz que irá narrar seu texto
-              </p>
-            </div>
+            
 
             <div className="space-y-2">
               <div className="flex justify-between items-center">
@@ -158,35 +150,20 @@ export default function AudiobookGenerator() {
                   {text.length}/5000 caracteres
                 </span>
               </div>
-              <Textarea
-                id="text"
-                placeholder="Cole ou digite o texto que deseja converter em áudio..."
-                value={text}
-                onChange={(e) => setText(e.target.value)}
-                rows={10}
-                maxLength={5000}
-              />
+              <Textarea id="text" placeholder="Cole ou digite o texto que deseja converter em áudio..." value={text} onChange={e => setText(e.target.value)} rows={10} maxLength={5000} />
               <p className="text-xs text-muted-foreground">
                 O texto será convertido em áudio usando a voz selecionada
               </p>
             </div>
 
-            <Button 
-              onClick={generateAudio} 
-              className="w-full" 
-              disabled={isGenerating || !text.trim()}
-            >
-              {isGenerating ? (
-                <>
+            <Button onClick={generateAudio} className="w-full" disabled={isGenerating || !text.trim()}>
+              {isGenerating ? <>
                   <Loader2 className="h-4 w-4 mr-2 animate-spin" />
                   Gerando Áudio...
-                </>
-              ) : (
-                <>
+                </> : <>
                   <BookAudio className="h-4 w-4 mr-2" />
                   Gerar Audiobook
-                </>
-              )}
+                </>}
             </Button>
           </CardContent>
         </Card>
@@ -198,38 +175,20 @@ export default function AudiobookGenerator() {
             <CardDescription>Ouça e baixe seu audiobook</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {!audioUrl ? (
-              <div className="text-center py-8">
+            {!audioUrl ? <div className="text-center py-8">
                 <Volume2 className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                 <p className="text-muted-foreground">
-                  {isGenerating 
-                    ? "Gerando seu áudio..." 
-                    : "Preencha o texto acima para gerar seu audiobook"
-                  }
+                  {isGenerating ? "Gerando seu áudio..." : "Preencha o texto acima para gerar seu audiobook"}
                 </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
+              </div> : <div className="space-y-4">
                 {/* Audio Player */}
                 <div className="p-4 bg-muted/20 rounded-lg">
                   <div className="flex items-center justify-center gap-4">
-                    <Button
-                      onClick={playAudio}
-                      variant="outline"
-                      size="lg"
-                      className="w-16 h-16 rounded-full"
-                    >
+                    <Button onClick={playAudio} variant="outline" size="lg" className="w-16 h-16 rounded-full">
                       <Play className={`h-6 w-6 ${isPlaying ? 'text-primary' : ''}`} />
                     </Button>
                     <div className="flex-1">
-                      <audio 
-                        src={audioUrl} 
-                        controls 
-                        className="w-full"
-                        onPlay={() => setIsPlaying(true)}
-                        onPause={() => setIsPlaying(false)}
-                        onEnded={() => setIsPlaying(false)}
-                      />
+                      <audio src={audioUrl} controls className="w-full" onPlay={() => setIsPlaying(true)} onPause={() => setIsPlaying(false)} onEnded={() => setIsPlaying(false)} />
                     </div>
                   </div>
                 </div>
@@ -263,11 +222,9 @@ export default function AudiobookGenerator() {
                     <p>• Você pode gerar novos áudios alterando o texto</p>
                   </div>
                 </div>
-              </div>
-            )}
+              </div>}
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 }
