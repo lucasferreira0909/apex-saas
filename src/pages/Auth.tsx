@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
+import { CheckCircle2, XCircle } from "lucide-react";
 import apexLogo from "@/assets/apex-logo-auth.png";
 const Auth = () => {
   const [email, setEmail] = useState("");
@@ -29,6 +31,17 @@ const Auth = () => {
     };
     checkUser();
   }, [navigate]);
+
+  // Password validation
+  const passwordValidation = useMemo(() => {
+    const hasMinLength = password.length >= 6;
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>\/\\]/.test(password);
+    return {
+      hasMinLength,
+      hasSpecialChar,
+      isValid: hasMinLength && hasSpecialChar
+    };
+  }, [password]);
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -55,6 +68,12 @@ const Auth = () => {
   };
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (!passwordValidation.isValid) {
+      toast.error("A senha não atende aos requisitos mínimos.");
+      return;
+    }
+    
     setLoading(true);
     try {
       const {
@@ -146,9 +165,35 @@ const Auth = () => {
                   <Input id="signup-password" type="password" placeholder="Sua senha" value={password} onChange={e => setPassword(e.target.value)} required />
                 </div>
 
-                
+                {/* Password validation feedback */}
+                {password.length > 0 && (
+                  <Alert variant={passwordValidation.isValid ? "default" : "destructive"} className="py-3">
+                    <AlertDescription className="space-y-1.5">
+                      <div className="flex items-center gap-2">
+                        {passwordValidation.hasMinLength ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4" />
+                        )}
+                        <span className={passwordValidation.hasMinLength ? "text-green-500" : ""}>
+                          Mínimo 6 caracteres
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {passwordValidation.hasSpecialChar ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-500" />
+                        ) : (
+                          <XCircle className="h-4 w-4" />
+                        )}
+                        <span className={passwordValidation.hasSpecialChar ? "text-green-500" : ""}>
+                          Um caractere especial (como /, @, etc)
+                        </span>
+                      </div>
+                    </AlertDescription>
+                  </Alert>
+                )}
 
-                <Button type="submit" className="w-full" disabled={loading}>
+                <Button type="submit" className="w-full" disabled={loading || !passwordValidation.isValid}>
                   {loading ? "Carregando..." : "Criar Conta"}
                 </Button>
               </form>
