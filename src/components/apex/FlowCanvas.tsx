@@ -45,20 +45,43 @@ export function FlowCanvas({
     setEdges(initialEdges);
   }, [initialEdges, setEdges]);
 
+  // Get edge color based on source handle
+  const getEdgeStyle = useCallback((sourceHandle: string | null | undefined) => {
+    switch (sourceHandle) {
+      case 'positive':
+        return {
+          stroke: 'hsl(142, 76%, 36%)', // green
+          markerColor: 'hsl(142, 76%, 36%)',
+        };
+      case 'negative':
+        return {
+          stroke: 'hsl(0, 84%, 60%)', // red
+          markerColor: 'hsl(0, 84%, 60%)',
+        };
+      case 'neutral':
+      default:
+        return {
+          stroke: 'hsl(var(--muted-foreground))', // gray
+          markerColor: 'hsl(var(--muted-foreground))',
+        };
+    }
+  }, []);
+
   const onConnect = useCallback(
     (connection: Connection) => {
+      const edgeStyle = getEdgeStyle(connection.sourceHandle);
       const newEdges = addEdge(
         {
           ...connection,
           type: "default",
           animated: true,
           style: {
-            stroke: "hsl(var(--primary))",
+            stroke: edgeStyle.stroke,
             strokeWidth: 2,
           },
           markerEnd: {
             type: "arrowclosed",
-            color: "hsl(var(--primary))",
+            color: edgeStyle.markerColor,
           },
         },
         edges
@@ -66,7 +89,7 @@ export function FlowCanvas({
       setEdges(newEdges);
       onEdgesChange?.(newEdges);
     },
-    [edges, setEdges, onEdgesChange]
+    [edges, setEdges, onEdgesChange, getEdgeStyle]
   );
 
   const handleNodesChange = useCallback(
