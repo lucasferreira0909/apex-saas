@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Megaphone, FileText, MousePointer, ShoppingCart, CreditCard, TrendingUp, TrendingDown, Video, Users, ThumbsUp, MessageSquare, Target, HelpCircle, Gift, Star, Play, Tag, MessageCircle, Timer } from "lucide-react";
+import { Megaphone, FileText, MousePointer, ShoppingCart, CreditCard, TrendingUp, TrendingDown, Video, Users, ThumbsUp, Gift, Star, Play, Tag, MessageCircle, Timer, Mail } from "lucide-react";
 
 export interface ElementType {
   id: string;
@@ -107,27 +107,6 @@ const AVAILABLE_ELEMENTS: ElementType[] = [
     description: "Página de confirmação pós-compra"
   },
   {
-    id: "message",
-    name: "Mensagem",
-    icon: MessageSquare,
-    category: "Comunicação",
-    description: "Mensagens personalizadas para clientes"
-  },
-  {
-    id: "remarketing",
-    name: "Remarketing",
-    icon: Target,
-    category: "Marketing",
-    description: "Campanhas de remarketing para reconversão"
-  },
-  {
-    id: "question",
-    name: "Página de Pergunta",
-    icon: HelpCircle,
-    category: "Quiz",
-    description: "Página com perguntas interativas do quiz"
-  },
-  {
     id: "benefits",
     name: "Benefícios",
     icon: Gift,
@@ -163,6 +142,13 @@ const AVAILABLE_ELEMENTS: ElementType[] = [
     description: "Envie mensagens automáticas via WhatsApp"
   },
   {
+    id: "email-message",
+    name: "Mensagem de Email",
+    icon: Mail,
+    category: "Comunicação",
+    description: "Envie emails automáticos para seus leads"
+  },
+  {
     id: "interval",
     name: "Intervalo",
     icon: Timer,
@@ -188,7 +174,7 @@ export function AddElementDialog({ open, onOpenChange, onAddElement, templateTyp
     }
     if (templateType === 'remarketing') {
       return AVAILABLE_ELEMENTS.filter(element => 
-        ['whatsapp-message', 'interval', 'checkout'].includes(element.id)
+        ['whatsapp-message', 'email-message', 'interval', 'checkout'].includes(element.id)
       );
     }
     return AVAILABLE_ELEMENTS;
