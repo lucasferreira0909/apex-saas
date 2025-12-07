@@ -4,104 +4,52 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { MessageCircle, Mail, Phone, Ticket, Send } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+
 export default function Support() {
-  const {
-    user,
-    loading
-  } = useAuth();
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     subject: "",
     description: "",
     priority: "media"
   });
-  const tickets = [{
-    id: "#APEX-001",
-    subject: "Erro ao salvar funil",
-    status: "Em Andamento",
-    created: "2h atrás",
-    priority: "Alta"
-  }, {
-    id: "#APEX-002",
-    subject: "Dúvida sobre disparos WhatsApp",
-    status: "Resolvido",
-    created: "1d atrás",
-    priority: "Média"
-  }];
   const handleInputChange = (field: string, value: string) => {
     setFormData(prev => ({
       ...prev,
       [field]: value
     }));
   };
-  const handleSubmitTicket = async () => {
-    if (!user) {
-      toast.error("Você precisa estar logado para enviar um ticket");
-      return;
-    }
+
+  const handleSubmitTicket = () => {
     if (!formData.subject.trim() || !formData.description.trim()) {
       toast.error("Por favor, preencha todos os campos obrigatórios");
       return;
     }
-    setIsSubmitting(true);
-    try {
-      const {
-        data,
-        error
-      } = await supabase.functions.invoke('send-support-ticket', {
-        body: {
-          subject: formData.subject,
-          description: formData.description,
-          priority: formData.priority
-        }
-      });
-      if (error) {
-        console.error('Error sending support ticket:', error);
-        toast.error("Erro ao enviar ticket: " + error.message);
-        return;
-      }
-      if (data?.success) {
-        toast.success(`Ticket ${data.ticketId} enviado com sucesso!`);
-        setFormData({
-          subject: "",
-          description: "",
-          priority: "media"
-        });
-      } else {
-        toast.error("Erro ao enviar ticket. Tente novamente.");
-      }
-    } catch (error: any) {
-      console.error('Error submitting support ticket:', error);
-      toast.error("Erro ao enviar ticket: " + error.message);
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
-  const getPriorityBadgeVariant = (priority: string) => {
-    switch (priority) {
-      case "Alta":
-        return "destructive";
-      case "Média":
-        return "secondary";
-      default:
-        return "outline";
-    }
-  };
-  const getStatusBadgeVariant = (status: string) => {
-    switch (status) {
-      case "Em Andamento":
-        return "secondary";
-      case "Resolvido":
-        return "default";
-      default:
-        return "outline";
-    }
+
+    const supportNumber = "5511915722726";
+    
+    const priorityLabel = {
+      baixa: "Baixa",
+      media: "Média", 
+      alta: "Alta"
+    }[formData.priority] || "Média";
+    
+    const message = `🎫 *TICKET DE SUPORTE APEX*
+
+📌 *Assunto:* ${formData.subject}
+
+📝 *Descrição:* ${formData.description}
+
+⚡ *Prioridade:* ${priorityLabel}`;
+
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappLink = `https://wa.me/${supportNumber}?text=${encodedMessage}`;
+    
+    window.open(whatsappLink, "_blank");
+    
+    toast.success("Redirecionando para o WhatsApp...");
+    setFormData({ subject: "", description: "", priority: "media" });
   };
   return <div className="space-y-6">
       <div>
@@ -166,9 +114,9 @@ export default function Support() {
                   </SelectContent>
                 </Select>
               </div>
-              <Button onClick={handleSubmitTicket} disabled={isSubmitting} className="w-full">
+              <Button onClick={handleSubmitTicket} className="w-full">
                 <Send className="mr-2 h-4 w-4" />
-                {isSubmitting ? "Enviando..." : "Enviar Ticket"}
+                Enviar Ticket
               </Button>
             </div>
           </CardContent>
