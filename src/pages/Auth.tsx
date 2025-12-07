@@ -74,7 +74,10 @@ const Auth = () => {
       if (error) {
         toast.error(error.message);
       } else {
-        toast.success("Conta criada com sucesso! Verifique seu email.");
+        // Set flag to show post-login loading screen for signup too
+        sessionStorage.setItem("apex_fresh_login", "true");
+        toast.success("Conta criada com sucesso!");
+        navigate("/");
       }
     } catch (error) {
       toast.error("Erro inesperado. Tente novamente.");
