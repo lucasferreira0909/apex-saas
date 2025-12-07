@@ -19,6 +19,8 @@ interface AuthContextType {
   session: Session | null;
   profile: Profile | null;
   loading: boolean;
+  isPostLoginLoading: boolean;
+  setPostLoginComplete: () => void;
   signOut: () => Promise<void>;
   updateProfile: (updates: Partial<Profile>) => Promise<{ error: any }>;
 }
@@ -30,13 +32,22 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isPostLoginLoading, setIsPostLoginLoading] = useState(false);
 
   useEffect(() => {
+    // Check if this is a fresh login
+    const isFreshLogin = sessionStorage.getItem("apex_fresh_login") === "true";
+    
     // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         setSession(session);
         setUser(session?.user ?? null);
+        
+        // Only show post-login loading for fresh login
+        if (event === "SIGNED_IN" && isFreshLogin) {
+          setIsPostLoginLoading(true);
+        }
         
         if (session?.user) {
           // Fetch user profile
@@ -62,6 +73,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       setSession(session);
       setUser(session?.user ?? null);
       
+      // Only show post-login loading for fresh login with existing session
+      if (session?.user && isFreshLogin) {
+        setIsPostLoginLoading(true);
+      }
+      
       if (session?.user) {
         // Fetch user profile for existing session
         setTimeout(async () => {
@@ -81,7 +97,13 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     return () => subscription.unsubscribe();
   }, []);
 
+  const setPostLoginComplete = () => {
+    setIsPostLoginLoading(false);
+    sessionStorage.removeItem("apex_fresh_login");
+  };
+
   const signOut = async () => {
+    sessionStorage.removeItem("apex_fresh_login");
     await supabase.auth.signOut();
   };
 
@@ -108,7 +130,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, session, profile, loading, signOut, updateProfile }}>
+    <AuthContext.Provider value={{ 
+      user, 
+      session, 
+      profile, 
+      loading, 
+      isPostLoginLoading,
+      setPostLoginComplete,
+      signOut, 
+      updateProfile 
+    }}>
       {children}
     </AuthContext.Provider>
   );

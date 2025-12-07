@@ -42,6 +42,8 @@ const Auth = () => {
       if (error) {
         toast.error(error.message);
       } else {
+        // Set flag to show post-login loading screen
+        sessionStorage.setItem("apex_fresh_login", "true");
         toast.success("Login realizado com sucesso!");
         navigate("/");
       }
