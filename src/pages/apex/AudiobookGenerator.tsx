@@ -195,12 +195,7 @@ export default function AudiobookGenerator() {
 
                 {/* Info */}
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Voz:</span>
-                    <span className="font-medium">
-                      {voices.find(v => v.id === selectedVoice)?.name}
-                    </span>
-                  </div>
+                  
                   <div className="flex items-center justify-between text-sm">
                     <span className="text-muted-foreground">Caracteres:</span>
                     <span className="font-medium">{text.length}</span>
