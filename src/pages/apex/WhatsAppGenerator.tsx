@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, MessageCircle, Copy, ExternalLink, Smartphone } from "lucide-react";
+import { ArrowLeft, MessageCircle, Copy, ExternalLink, Smartphone, Send } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -177,7 +177,7 @@ export default function WhatsAppGenerator() {
                   <p className="text-[#667781] text-sm">Mensagem</p>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-[#00A884] flex items-center justify-center">
-                  <MessageCircle className="h-5 w-5 text-white" />
+                  <Send className="h-5 w-5 text-white" />
                 </div>
               </div>
             </div>
