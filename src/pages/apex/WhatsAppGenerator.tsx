@@ -152,7 +152,9 @@ export default function WhatsAppGenerator() {
                 {message ? (
                   <div className="flex justify-end">
                     <div className="bg-[#DCF8C6] rounded-lg rounded-tr-none px-3 py-2 max-w-[85%] shadow-sm">
-                      <p className="text-[#303030] text-sm whitespace-pre-wrap">{message}</p>
+                      <div className="max-h-[120px] overflow-y-auto">
+                        <p className="text-[#303030] text-sm whitespace-pre-wrap break-words">{message}</p>
+                      </div>
                       <div className="flex items-center justify-end gap-1 mt-1">
                         <span className="text-[10px] text-[#667781]">
                           {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
