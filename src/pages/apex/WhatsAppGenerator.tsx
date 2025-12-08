@@ -122,65 +122,87 @@ export default function WhatsAppGenerator() {
         {/* Preview & Result */}
         <Card>
           <CardHeader>
-            <CardTitle>Prévia do Link</CardTitle>
-            <CardDescription>Seu link do WhatsApp</CardDescription>
+            <CardTitle>Prévia da Conversa</CardTitle>
+            <CardDescription>Visualize como será a mensagem no WhatsApp</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {!generatedLink ? (
-              <div className="text-center py-8">
-                <Smartphone className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <p className="text-muted-foreground">
-                  Preencha os dados acima para gerar seu link
-                </p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {/* Link Display */}
-                <div className="p-3 bg-muted/20 rounded-lg">
-                  <Label className="text-xs text-muted-foreground">Link Gerado:</Label>
-                  <div className="mt-1 text-sm text-foreground break-all">
-                    {generatedLink}
-                  </div>
+            {/* WhatsApp Chat Mockup */}
+            <div className="rounded-xl overflow-hidden border border-border">
+              {/* WhatsApp Header */}
+              <div className="bg-[#075E54] px-4 py-3 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-full bg-[#128C7E] flex items-center justify-center">
+                  <MessageCircle className="h-5 w-5 text-white" />
                 </div>
+                <div className="flex-1">
+                  <p className="text-white font-medium text-sm">
+                    {phoneNumber ? formatPhoneDisplay(phoneNumber) : "Número do contato"}
+                  </p>
+                  <p className="text-white/70 text-xs">online</p>
+                </div>
+              </div>
 
-                {/* Preview Info */}
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-muted-foreground">Número:</span>
-                    <span className="font-medium">{formatPhoneDisplay(phoneNumber)}</span>
-                  </div>
-                  {message && (
-                    <div className="text-sm">
-                      <span className="text-muted-foreground">Mensagem:</span>
-                      <div className="mt-1 p-2 bg-muted/10 rounded text-xs">
-                        {message}
+              {/* Chat Area */}
+              <div 
+                className="p-4 min-h-[200px] flex flex-col justify-end"
+                style={{
+                  backgroundColor: "#ECE5DD",
+                  backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")"
+                }}
+              >
+                {message ? (
+                  <div className="flex justify-end">
+                    <div className="bg-[#DCF8C6] rounded-lg rounded-tr-none px-3 py-2 max-w-[85%] shadow-sm">
+                      <p className="text-[#303030] text-sm whitespace-pre-wrap">{message}</p>
+                      <div className="flex items-center justify-end gap-1 mt-1">
+                        <span className="text-[10px] text-[#667781]">
+                          {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                        </span>
                       </div>
                     </div>
-                  )}
-                </div>
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full">
+                    <p className="text-[#667781] text-sm text-center">
+                      Digite uma mensagem personalizada para visualizar a prévia
+                    </p>
+                  </div>
+                )}
+              </div>
 
-                {/* Action Buttons */}
+              {/* Input Area Mockup */}
+              <div className="bg-[#F0F0F0] px-3 py-2 flex items-center gap-2">
+                <div className="flex-1 bg-white rounded-full px-4 py-2">
+                  <p className="text-[#667781] text-sm">Mensagem</p>
+                </div>
+                <div className="w-10 h-10 rounded-full bg-[#00A884] flex items-center justify-center">
+                  <MessageCircle className="h-5 w-5 text-white" />
+                </div>
+              </div>
+            </div>
+
+            {/* Copy Button */}
+            {generatedLink && (
+              <div className="space-y-3">
+                <div className="p-3 bg-muted/20 rounded-lg">
+                  <p className="text-xs text-muted-foreground mb-1">Link gerado:</p>
+                  <p className="text-xs text-foreground break-all font-mono">{generatedLink}</p>
+                </div>
                 <div className="flex gap-2">
-                  <Button onClick={copyLink} variant="outline" className="flex-1">
+                  <Button onClick={copyLink} className="flex-1">
                     <Copy className="h-4 w-4 mr-2" />
                     Copiar Link
                   </Button>
-                  <Button onClick={openLink} className="flex-1">
-                    <ExternalLink className="h-4 w-4 mr-2" />
-                    Testar Link
+                  <Button onClick={openLink} variant="outline" size="icon">
+                    <ExternalLink className="h-4 w-4" />
                   </Button>
                 </div>
-
-                {/* Instructions */}
-                <div className="mt-4 p-4 rounded-lg bg-muted/10">
-                  <h4 className="font-medium text-foreground mb-2">Como usar:</h4>
-                  <div className="text-sm text-muted-foreground space-y-1">
-                    <p>• Copie o link e use em sites, redes sociais ou e-mails</p>
-                    <p>• Ao clicar, abre o WhatsApp com a conversa iniciada</p>
-                    <p>• A mensagem aparecerá pré-preenchida (se configurada)</p>
-                  </div>
-                </div>
               </div>
+            )}
+
+            {!generatedLink && (
+              <p className="text-center text-sm text-muted-foreground">
+                Preencha os dados e clique em "Gerar Link" para obter seu link
+              </p>
             )}
           </CardContent>
         </Card>
