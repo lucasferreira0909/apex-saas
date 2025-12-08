@@ -7,12 +7,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, MessageCircle, Copy, ExternalLink, Smartphone, Send } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-
 export default function WhatsAppGenerator() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [message, setMessage] = useState("");
   const [generatedLink, setGeneratedLink] = useState("");
-
   const generateLink = () => {
     if (!phoneNumber.trim()) {
       toast.error("Por favor, insira um número de telefone");
@@ -21,20 +19,18 @@ export default function WhatsAppGenerator() {
 
     // Remove caracteres especiais e espaços do número
     const cleanNumber = phoneNumber.replace(/\D/g, "");
-    
+
     // Adiciona código do país se não tiver
     const formattedNumber = cleanNumber.startsWith("55") ? cleanNumber : `55${cleanNumber}`;
-    
+
     // Codifica a mensagem para URL
     const encodedMessage = encodeURIComponent(message);
-    
+
     // Gera o link do WhatsApp
     const link = `https://wa.me/${formattedNumber}${encodedMessage ? `?text=${encodedMessage}` : ""}`;
-    
     setGeneratedLink(link);
     toast.success("Link gerado com sucesso!");
   };
-
   const copyLink = async () => {
     try {
       await navigator.clipboard.writeText(generatedLink);
@@ -43,13 +39,11 @@ export default function WhatsAppGenerator() {
       toast.error("Erro ao copiar link");
     }
   };
-
   const openLink = () => {
     if (generatedLink) {
       window.open(generatedLink, "_blank");
     }
   };
-
   const formatPhoneDisplay = (phone: string) => {
     const cleaned = phone.replace(/\D/g, "");
     if (cleaned.length === 11) {
@@ -57,9 +51,7 @@ export default function WhatsAppGenerator() {
     }
     return phone;
   };
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center space-x-4">
         <Link to="/tools">
@@ -86,27 +78,13 @@ export default function WhatsAppGenerator() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="phone">Número do WhatsApp</Label>
-              <Input
-                id="phone"
-                type="tel"
-                placeholder="11999999999 ou (11) 99999-9999"
-                value={phoneNumber}
-                onChange={(e) => setPhoneNumber(e.target.value)}
-              />
-              <p className="text-xs text-muted-foreground">
-                Digite apenas números ou use formato brasileiro
-              </p>
+              <Input id="phone" type="tel" placeholder="11999999999 ou (11) 99999-9999" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} />
+              <p className="text-xs text-muted-foreground">Digite apenas números ou</p>
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="message">Mensagem Personalizada (Opcional)</Label>
-              <Textarea
-                id="message"
-                placeholder="Olá! Gostaria de saber mais sobre..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-                rows={4}
-              />
+              <Textarea id="message" placeholder="Olá! Gostaria de saber mais sobre..." value={message} onChange={e => setMessage(e.target.value)} rows={4} />
               <p className="text-xs text-muted-foreground">
                 Esta mensagem aparecerá pré-preenchida no WhatsApp
               </p>
@@ -142,33 +120,29 @@ export default function WhatsAppGenerator() {
               </div>
 
               {/* Chat Area */}
-              <div 
-                className="p-4 min-h-[200px] flex flex-col justify-end"
-                style={{
-                  backgroundColor: "#ECE5DD",
-                  backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")"
-                }}
-              >
-                {message ? (
-                  <div className="flex justify-end">
+              <div className="p-4 min-h-[200px] flex flex-col justify-end" style={{
+              backgroundColor: "#ECE5DD",
+              backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")"
+            }}>
+                {message ? <div className="flex justify-end">
                     <div className="bg-[#DCF8C6] rounded-lg rounded-tr-none px-3 py-2 max-w-[85%] shadow-sm">
                       <div className="max-h-[120px] overflow-y-auto">
                         <p className="text-[#303030] text-sm whitespace-pre-wrap break-words">{message}</p>
                       </div>
                       <div className="flex items-center justify-end gap-1 mt-1">
                         <span className="text-[10px] text-[#667781]">
-                          {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                          {new Date().toLocaleTimeString('pt-BR', {
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
                         </span>
                       </div>
                     </div>
-                  </div>
-                ) : (
-                  <div className="flex items-center justify-center h-full">
+                  </div> : <div className="flex items-center justify-center h-full">
                     <p className="text-[#667781] text-sm text-center">
                       Digite uma mensagem personalizada para visualizar a prévia
                     </p>
-                  </div>
-                )}
+                  </div>}
               </div>
 
               {/* Input Area Mockup */}
@@ -183,8 +157,7 @@ export default function WhatsAppGenerator() {
             </div>
 
             {/* Copy Button */}
-            {generatedLink && (
-              <div className="space-y-3">
+            {generatedLink && <div className="space-y-3">
                 <div className="p-3 bg-muted/20 rounded-lg">
                   <p className="text-xs text-muted-foreground mb-1">Link gerado:</p>
                   <p className="text-xs text-foreground break-all font-mono">{generatedLink}</p>
@@ -198,17 +171,13 @@ export default function WhatsAppGenerator() {
                     <ExternalLink className="h-4 w-4" />
                   </Button>
                 </div>
-              </div>
-            )}
+              </div>}
 
-            {!generatedLink && (
-              <p className="text-center text-sm text-muted-foreground">
+            {!generatedLink && <p className="text-center text-sm text-muted-foreground">
                 Preencha os dados e clique em "Gerar Link" para obter seu link
-              </p>
-            )}
+              </p>}
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 }
