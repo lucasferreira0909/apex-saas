@@ -79,7 +79,7 @@ export default function WhatsAppGenerator() {
             <div className="space-y-2">
               <Label htmlFor="phone">Número do WhatsApp</Label>
               <Input id="phone" type="tel" placeholder="11999999999 ou (11) 99999-9999" value={phoneNumber} onChange={e => setPhoneNumber(e.target.value)} />
-              <p className="text-xs text-muted-foreground">Digite apenas números ou</p>
+              <p className="text-xs text-muted-foreground">Digite apenas números  </p>
             </div>
             
             <div className="space-y-2">
