@@ -1,16 +1,58 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, MessageCircle, Copy, ExternalLink, Smartphone, Send } from "lucide-react";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { ArrowLeft, MessageCircle, Copy, ExternalLink, Smartphone, Send, Bold, Italic, Strikethrough, Code } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 export default function WhatsAppGenerator() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [message, setMessage] = useState("");
   const [generatedLink, setGeneratedLink] = useState("");
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const applyFormatting = (format: string) => {
+    const textarea = textareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selectedText = message.substring(start, end);
+    
+    let prefix = "";
+    let suffix = "";
+    
+    switch (format) {
+      case "bold":
+        prefix = "*";
+        suffix = "*";
+        break;
+      case "italic":
+        prefix = "_";
+        suffix = "_";
+        break;
+      case "strikethrough":
+        prefix = "~";
+        suffix = "~";
+        break;
+      case "monospace":
+        prefix = "```";
+        suffix = "```";
+        break;
+    }
+    
+    const newText = message.substring(0, start) + prefix + selectedText + suffix + message.substring(end);
+    setMessage(newText);
+    
+    // Restore focus and selection
+    setTimeout(() => {
+      textarea.focus();
+      textarea.setSelectionRange(start + prefix.length, end + prefix.length);
+    }, 0);
+  };
   const generateLink = () => {
     if (!phoneNumber.trim()) {
       toast.error("Por favor, insira um número de telefone");
@@ -84,7 +126,60 @@ export default function WhatsAppGenerator() {
             
             <div className="space-y-2">
               <Label htmlFor="message">Mensagem Personalizada (Opcional)</Label>
-              <Textarea id="message" placeholder="Olá! Gostaria de saber mais sobre..." value={message} onChange={e => setMessage(e.target.value)} rows={4} />
+              
+              {/* Formatting Toolbar */}
+              <div className="flex items-center gap-1 p-1 bg-muted/30 rounded-md border border-border">
+                <ToggleGroup type="multiple" className="gap-0.5">
+                  <ToggleGroupItem 
+                    value="bold" 
+                    aria-label="Negrito"
+                    size="sm"
+                    onClick={() => applyFormatting("bold")}
+                    className="h-8 w-8 data-[state=on]:bg-primary/20"
+                  >
+                    <Bold className="h-4 w-4" />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem 
+                    value="italic" 
+                    aria-label="Itálico"
+                    size="sm"
+                    onClick={() => applyFormatting("italic")}
+                    className="h-8 w-8 data-[state=on]:bg-primary/20"
+                  >
+                    <Italic className="h-4 w-4" />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem 
+                    value="strikethrough" 
+                    aria-label="Tachado"
+                    size="sm"
+                    onClick={() => applyFormatting("strikethrough")}
+                    className="h-8 w-8 data-[state=on]:bg-primary/20"
+                  >
+                    <Strikethrough className="h-4 w-4" />
+                  </ToggleGroupItem>
+                  <ToggleGroupItem 
+                    value="monospace" 
+                    aria-label="Monoespaçado"
+                    size="sm"
+                    onClick={() => applyFormatting("monospace")}
+                    className="h-8 w-8 data-[state=on]:bg-primary/20"
+                  >
+                    <Code className="h-4 w-4" />
+                  </ToggleGroupItem>
+                </ToggleGroup>
+                <span className="text-[10px] text-muted-foreground ml-auto mr-2">
+                  Selecione o texto e clique para formatar
+                </span>
+              </div>
+              
+              <Textarea 
+                ref={textareaRef}
+                id="message" 
+                placeholder="Olá! Gostaria de saber mais sobre..." 
+                value={message} 
+                onChange={e => setMessage(e.target.value)} 
+                rows={4} 
+              />
               <p className="text-xs text-muted-foreground">
                 Esta mensagem aparecerá pré-preenchida no WhatsApp
               </p>
