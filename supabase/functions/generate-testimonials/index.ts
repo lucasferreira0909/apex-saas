@@ -11,7 +11,7 @@ serve(async (req) => {
   }
 
   try {
-    const { productName, productDescription, targetAudience, quantity } = await req.json();
+    const { productName, productDescription, targetAudience, quantity, style = 'informal' } = await req.json();
 
     if (!productName || !productDescription) {
       throw new Error('Nome do produto e descrição são obrigatórios');
@@ -22,15 +22,44 @@ serve(async (req) => {
       throw new Error('LOVABLE_API_KEY não configurada');
     }
 
-    console.log('Generating testimonials for:', productName, 'quantity:', quantity);
+    console.log('Generating testimonials for:', productName, 'quantity:', quantity, 'style:', style);
+
+    const styleInstructions: Record<string, string> = {
+      formal: `
+- Use linguagem formal e profissional
+- Evite gírias e expressões coloquiais
+- Foque em resultados e métricas quando possível
+- Tom mais sério e corporativo
+- Estruture bem os argumentos`,
+      informal: `
+- Use linguagem informal e espontânea
+- Inclua gírias e expressões do dia a dia
+- Tom leve e descontraído
+- Pareça uma conversa natural entre amigos
+- Use emojis moderadamente no texto quando apropriado`,
+      emocional: `
+- Foque na transformação pessoal e emocional
+- Descreva sentimentos antes e depois de usar o produto
+- Use palavras que evoquem emoções fortes
+- Inclua histórias pessoais e momentos de superação
+- Tom inspirador e motivacional`,
+      tecnico: `
+- Foque em especificações técnicas e funcionalidades
+- Use termos técnicos apropriados ao nicho
+- Mencione comparações com concorrentes
+- Descreva processos e metodologias
+- Tom analítico e detalhista`
+    };
 
     const systemPrompt = `Você é um especialista em marketing e copywriting. Sua tarefa é gerar depoimentos fictícios, mas realistas e convincentes, de clientes satisfeitos.
 
+ESTILO DO DEPOIMENTO: ${style.toUpperCase()}
+${styleInstructions[style] || styleInstructions.informal}
+
 IMPORTANTE: 
 - Os depoimentos devem parecer autênticos e naturais
-- Use linguagem informal e espontânea
 - Inclua detalhes específicos sobre a experiência
-- Varie o estilo, tom e tamanho de cada depoimento
+- Varie o tamanho de cada depoimento
 - Alguns depoimentos devem ser curtos (1-2 frases), outros mais detalhados
 - Gere nomes brasileiros variados (masculinos e femininos)
 - Inclua profissões ou contextos variados
@@ -45,7 +74,7 @@ Responda APENAS com um array JSON válido no seguinte formato:
   }
 ]`;
 
-    const userPrompt = `Gere ${quantity} depoimentos para:
+    const userPrompt = `Gere ${quantity} depoimentos no estilo ${style.toUpperCase()} para:
 
 Produto/Serviço: ${productName}
 Descrição: ${productDescription}
