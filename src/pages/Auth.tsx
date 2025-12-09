@@ -7,9 +7,11 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { CheckCircle2, XCircle, Eye, EyeOff } from "lucide-react";
 import apexLogo from "@/assets/apex-logo-auth.png";
+
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,6 +23,12 @@ const Auth = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+
+  // Forgot password states
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [resetEmail, setResetEmail] = useState("");
+  const [resetLoading, setResetLoading] = useState(false);
+
   useEffect(() => {
     const checkUser = async () => {
       const {
@@ -47,6 +55,7 @@ const Auth = () => {
       isValid: hasMinLength && hasSpecialChar && passwordsMatch
     };
   }, [password, confirmPassword]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -60,7 +69,6 @@ const Auth = () => {
       if (error) {
         toast.error(error.message);
       } else {
-        // Set flag to show post-login loading screen
         sessionStorage.setItem("apex_fresh_login", "true");
         toast.success("Login realizado com sucesso!");
         navigate("/");
@@ -71,6 +79,7 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!passwordValidation.isValid) {
@@ -96,7 +105,6 @@ const Auth = () => {
       if (error) {
         toast.error(error.message);
       } else {
-        // Set flag to show post-login loading screen for signup too
         sessionStorage.setItem("apex_fresh_login", "true");
         toast.success("Conta criada com sucesso!");
         navigate("/");
@@ -107,6 +115,32 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!resetEmail) {
+      toast.error("Por favor, insira seu email.");
+      return;
+    }
+    setResetLoading(true);
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+      if (error) {
+        toast.error(error.message);
+      } else {
+        toast.success("Email de recuperação enviado! Verifique sua caixa de entrada.");
+        setForgotPasswordOpen(false);
+        setResetEmail("");
+      }
+    } catch (error) {
+      toast.error("Erro inesperado. Tente novamente.");
+    } finally {
+      setResetLoading(false);
+    }
+  };
+
   const resetForm = () => {
     setEmail("");
     setPassword("");
@@ -115,7 +149,9 @@ const Auth = () => {
     setFirstName("");
     setLastName("");
   };
-  return <div className="min-h-screen flex items-center justify-center bg-background p-4 dark">
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background p-4 dark">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-center mb-1">
@@ -153,6 +189,40 @@ const Auth = () => {
                   </div>
                 </div>
 
+                <div className="flex justify-end">
+                  <Dialog open={forgotPasswordOpen} onOpenChange={setForgotPasswordOpen}>
+                    <DialogTrigger asChild>
+                      <Button type="button" variant="link" className="p-0 h-auto text-sm text-muted-foreground hover:text-primary">
+                        Esqueci minha senha
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-md">
+                      <DialogHeader>
+                        <DialogTitle>Recuperar Senha</DialogTitle>
+                        <DialogDescription>
+                          Insira seu email para receber um link de recuperação de senha.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <form onSubmit={handleForgotPassword} className="space-y-4 mt-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="reset-email">Email</Label>
+                          <Input 
+                            id="reset-email" 
+                            type="email" 
+                            placeholder="seu@email.com" 
+                            value={resetEmail} 
+                            onChange={e => setResetEmail(e.target.value)} 
+                            required 
+                          />
+                        </div>
+                        <Button type="submit" className="w-full" disabled={resetLoading}>
+                          {resetLoading ? "Enviando..." : "Enviar Link de Recuperação"}
+                        </Button>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+
                 <Button type="submit" className="w-full" disabled={loading}>
                   {loading ? "Carregando..." : "Entrar"}
                 </Button>
@@ -165,8 +235,6 @@ const Auth = () => {
                   <Label htmlFor="firstName">Nome</Label>
                   <Input id="firstName" type="text" placeholder="Seu nome" value={firstName} onChange={e => setFirstName(e.target.value)} required />
                 </div>
-                
-                
                 
                 <div className="space-y-2">
                   <Label htmlFor="signup-email">Email</Label>
@@ -202,7 +270,8 @@ const Auth = () => {
                 </div>
 
                 {/* Password validation feedback */}
-                {password.length > 0 && <Alert variant={passwordValidation.isValid ? "default" : "destructive"} className="py-3 border-secondary">
+                {password.length > 0 && (
+                  <Alert variant={passwordValidation.isValid ? "default" : "destructive"} className="py-3 border-secondary">
                     <AlertDescription className="space-y-1.5">
                       <div className="flex items-center gap-2">
                         {passwordValidation.hasMinLength ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4" />}
@@ -223,7 +292,8 @@ const Auth = () => {
                         </span>
                       </div>
                     </AlertDescription>
-                  </Alert>}
+                  </Alert>
+                )}
 
                 <Button type="submit" className="w-full" disabled={loading || !passwordValidation.isValid}>
                   {loading ? "Carregando..." : "Criar Conta"}
@@ -233,6 +303,8 @@ const Auth = () => {
           </Tabs>
         </CardContent>
       </Card>
-    </div>;
+    </div>
+  );
 };
+
 export default Auth;
