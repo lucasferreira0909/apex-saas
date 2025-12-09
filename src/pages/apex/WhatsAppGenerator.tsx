@@ -5,47 +5,60 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { ArrowLeft, MessageCircle, Copy, ExternalLink, Smartphone, Send, Bold, Italic, Strikethrough, Code, Layers } from "lucide-react";
+import { ArrowLeft, MessageCircle, Copy, ExternalLink, Smartphone, Send, Bold, Italic, Strikethrough, Code, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
-const messageTemplates = [{
-  id: 1,
-  title: "Atendimento",
-  message: "Olá! Gostaria de mais informações sobre os seus serviços. Poderia me ajudar?"
-}, {
-  id: 2,
-  title: "Orçamento",
-  message: "Olá! Gostaria de solicitar um orçamento para o seguinte serviço: [descreva aqui]. Aguardo retorno!"
-}, {
-  id: 3,
-  title: "Agendamento",
-  message: "Olá! Gostaria de agendar um horário para atendimento. Quais datas e horários estão disponíveis?"
-}, {
-  id: 4,
-  title: "Suporte",
-  message: "Olá! Preciso de suporte técnico. Estou enfrentando o seguinte problema: [descreva o problema]. Podem me ajudar?"
-}, {
-  id: 5,
-  title: "Pedido",
-  message: "Olá! Gostaria de fazer um pedido. Vocês têm disponível: [produto/serviço]? Qual o valor e prazo de entrega?"
-}, {
-  id: 6,
-  title: "Parceria",
-  message: "Olá! Tenho interesse em estabelecer uma parceria comercial. Podemos conversar sobre isso?"
-}];
+
+const messageTemplates = [
+  {
+    id: 1,
+    title: "Atendimento",
+    message: "Olá! Gostaria de mais informações sobre os seus serviços. Poderia me ajudar?"
+  },
+  {
+    id: 2,
+    title: "Orçamento",
+    message: "Olá! Gostaria de solicitar um orçamento para o seguinte serviço: [descreva aqui]. Aguardo retorno!"
+  },
+  {
+    id: 3,
+    title: "Agendamento",
+    message: "Olá! Gostaria de agendar um horário para atendimento. Quais datas e horários estão disponíveis?"
+  },
+  {
+    id: 4,
+    title: "Suporte",
+    message: "Olá! Preciso de suporte técnico. Estou enfrentando o seguinte problema: [descreva o problema]. Podem me ajudar?"
+  },
+  {
+    id: 5,
+    title: "Pedido",
+    message: "Olá! Gostaria de fazer um pedido. Vocês têm disponível: [produto/serviço]? Qual o valor e prazo de entrega?"
+  },
+  {
+    id: 6,
+    title: "Parceria",
+    message: "Olá! Tenho interesse em estabelecer uma parceria comercial. Podemos conversar sobre isso?"
+  }
+];
+
 export default function WhatsAppGenerator() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [message, setMessage] = useState("");
   const [generatedLink, setGeneratedLink] = useState("");
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
   const applyFormatting = (format: string) => {
     const textarea = textareaRef.current;
     if (!textarea) return;
+
     const start = textarea.selectionStart;
     const end = textarea.selectionEnd;
     const selectedText = message.substring(start, end);
+    
     let prefix = "";
     let suffix = "";
+    
     switch (format) {
       case "bold":
         prefix = "*";
@@ -64,9 +77,10 @@ export default function WhatsAppGenerator() {
         suffix = "```";
         break;
     }
+    
     const newText = message.substring(0, start) + prefix + selectedText + suffix + message.substring(end);
     setMessage(newText);
-
+    
     // Restore focus and selection
     setTimeout(() => {
       textarea.focus();
@@ -150,16 +164,40 @@ export default function WhatsAppGenerator() {
               {/* Formatting Toolbar */}
               <div className="flex items-center gap-1 p-1 bg-muted/30 rounded-md border border-border">
                 <ToggleGroup type="multiple" className="gap-0.5">
-                  <ToggleGroupItem value="bold" aria-label="Negrito" size="sm" onClick={() => applyFormatting("bold")} className="h-8 w-8 data-[state=on]:bg-primary/20">
+                  <ToggleGroupItem 
+                    value="bold" 
+                    aria-label="Negrito"
+                    size="sm"
+                    onClick={() => applyFormatting("bold")}
+                    className="h-8 w-8 data-[state=on]:bg-primary/20"
+                  >
                     <Bold className="h-4 w-4" />
                   </ToggleGroupItem>
-                  <ToggleGroupItem value="italic" aria-label="Itálico" size="sm" onClick={() => applyFormatting("italic")} className="h-8 w-8 data-[state=on]:bg-primary/20">
+                  <ToggleGroupItem 
+                    value="italic" 
+                    aria-label="Itálico"
+                    size="sm"
+                    onClick={() => applyFormatting("italic")}
+                    className="h-8 w-8 data-[state=on]:bg-primary/20"
+                  >
                     <Italic className="h-4 w-4" />
                   </ToggleGroupItem>
-                  <ToggleGroupItem value="strikethrough" aria-label="Tachado" size="sm" onClick={() => applyFormatting("strikethrough")} className="h-8 w-8 data-[state=on]:bg-primary/20">
+                  <ToggleGroupItem 
+                    value="strikethrough" 
+                    aria-label="Tachado"
+                    size="sm"
+                    onClick={() => applyFormatting("strikethrough")}
+                    className="h-8 w-8 data-[state=on]:bg-primary/20"
+                  >
                     <Strikethrough className="h-4 w-4" />
                   </ToggleGroupItem>
-                  <ToggleGroupItem value="monospace" aria-label="Monoespaçado" size="sm" onClick={() => applyFormatting("monospace")} className="h-8 w-8 data-[state=on]:bg-primary/20">
+                  <ToggleGroupItem 
+                    value="monospace" 
+                    aria-label="Monoespaçado"
+                    size="sm"
+                    onClick={() => applyFormatting("monospace")}
+                    className="h-8 w-8 data-[state=on]:bg-primary/20"
+                  >
                     <Code className="h-4 w-4" />
                   </ToggleGroupItem>
                 </ToggleGroup>
@@ -168,7 +206,14 @@ export default function WhatsAppGenerator() {
                 </span>
               </div>
               
-              <Textarea ref={textareaRef} id="message" placeholder="Olá! Gostaria de saber mais sobre..." value={message} onChange={e => setMessage(e.target.value)} rows={4} />
+              <Textarea 
+                ref={textareaRef}
+                id="message" 
+                placeholder="Olá! Gostaria de saber mais sobre..." 
+                value={message} 
+                onChange={e => setMessage(e.target.value)} 
+                rows={4} 
+              />
               <p className="text-xs text-muted-foreground">
                 Esta mensagem aparecerá pré-preenchida no WhatsApp
               </p>
@@ -205,10 +250,11 @@ export default function WhatsAppGenerator() {
 
               {/* Chat Area */}
               <div className="p-4 min-h-[200px] flex flex-col justify-end" style={{
-              backgroundColor: "#ECE5DD",
-              backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")"
-            }}>
-                {message ? <div className="flex justify-end">
+                backgroundColor: "#ECE5DD",
+                backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")"
+              }}>
+                {message ? (
+                  <div className="flex justify-end">
                     <div className="bg-[#DCF8C6] rounded-lg rounded-tr-none px-3 py-2 max-w-[85%] shadow-sm">
                       <div className="max-h-[120px] overflow-y-auto">
                         <p className="text-[#303030] text-sm whitespace-pre-wrap break-words">{message}</p>
@@ -216,17 +262,20 @@ export default function WhatsAppGenerator() {
                       <div className="flex items-center justify-end gap-1 mt-1">
                         <span className="text-[10px] text-[#667781]">
                           {new Date().toLocaleTimeString('pt-BR', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
                         </span>
                       </div>
                     </div>
-                  </div> : <div className="flex items-center justify-center h-full">
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full">
                     <p className="text-[#667781] text-sm text-center">
                       Digite uma mensagem personalizada para visualizar a prévia
                     </p>
-                  </div>}
+                  </div>
+                )}
               </div>
 
               {/* Input Area Mockup */}
@@ -241,7 +290,8 @@ export default function WhatsAppGenerator() {
             </div>
 
             {/* Copy Button */}
-            {generatedLink && <div className="space-y-3">
+            {generatedLink && (
+              <div className="space-y-3">
                 <div className="p-3 bg-muted/20 rounded-lg">
                   <p className="text-xs text-muted-foreground mb-1">Link gerado:</p>
                   <p className="text-xs text-foreground break-all font-mono">{generatedLink}</p>
@@ -252,11 +302,14 @@ export default function WhatsAppGenerator() {
                     Copiar Link
                   </Button>
                 </div>
-              </div>}
+              </div>
+            )}
 
-            {!generatedLink && <p className="text-center text-sm text-muted-foreground">
+            {!generatedLink && (
+              <p className="text-center text-sm text-muted-foreground">
                 Preencha os dados e clique em "Gerar Link" para obter seu link
-              </p>}
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
@@ -265,25 +318,35 @@ export default function WhatsAppGenerator() {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Layers className="h-5 w-5 bg-primary text-primary" />
+            <FileText className="h-5 w-5 text-primary" />
             Modelos de Mensagem
           </CardTitle>
           <CardDescription>Escolha um modelo pronto para agilizar sua comunicação</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            {messageTemplates.map(template => <Card key={template.id} className="cursor-pointer hover:border-primary/50 transition-colors group">
+            {messageTemplates.map((template) => (
+              <Card 
+                key={template.id} 
+                className="cursor-pointer hover:border-primary/50 transition-colors group"
+              >
                 <CardContent className="p-4 space-y-3">
                   <p className="text-sm font-medium text-foreground">{template.title}</p>
                   <p className="text-xs text-muted-foreground line-clamp-3">{template.message}</p>
-                  <Button variant="outline" size="sm" className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors" onClick={() => {
-                setMessage(template.message);
-                toast.success("Modelo aplicado!");
-              }}>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                    onClick={() => {
+                      setMessage(template.message);
+                      toast.success("Modelo aplicado!");
+                    }}
+                  >
                     Usar Modelo
                   </Button>
                 </CardContent>
-              </Card>)}
+              </Card>
+            ))}
           </div>
         </CardContent>
       </Card>
