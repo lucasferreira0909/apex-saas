@@ -218,38 +218,6 @@ export default function WhatsAppGenerator() {
                 Esta mensagem aparecerá pré-preenchida no WhatsApp
               </p>
             </div>
-
-            {/* Message Templates */}
-            <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <FileText className="h-4 w-4" />
-                Modelos de Mensagem
-              </Label>
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {messageTemplates.map((template) => (
-                  <Card 
-                    key={template.id} 
-                    className="cursor-pointer hover:border-primary/50 transition-colors group"
-                  >
-                    <CardContent className="p-3 space-y-2">
-                      <p className="text-xs font-medium text-foreground">{template.title}</p>
-                      <p className="text-[10px] text-muted-foreground line-clamp-2">{template.message}</p>
-                      <Button 
-                        variant="outline" 
-                        size="sm" 
-                        className="w-full h-7 text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
-                        onClick={() => {
-                          setMessage(template.message);
-                          toast.success("Modelo aplicado!");
-                        }}
-                      >
-                        Usar Modelo
-                      </Button>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
             
             <Button onClick={generateLink} className="w-full">
               <MessageCircle className="h-4 w-4 mr-2" />
@@ -282,10 +250,11 @@ export default function WhatsAppGenerator() {
 
               {/* Chat Area */}
               <div className="p-4 min-h-[200px] flex flex-col justify-end" style={{
-              backgroundColor: "#ECE5DD",
-              backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")"
-            }}>
-                {message ? <div className="flex justify-end">
+                backgroundColor: "#ECE5DD",
+                backgroundImage: "url(\"data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23000000' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E\")"
+              }}>
+                {message ? (
+                  <div className="flex justify-end">
                     <div className="bg-[#DCF8C6] rounded-lg rounded-tr-none px-3 py-2 max-w-[85%] shadow-sm">
                       <div className="max-h-[120px] overflow-y-auto">
                         <p className="text-[#303030] text-sm whitespace-pre-wrap break-words">{message}</p>
@@ -293,17 +262,20 @@ export default function WhatsAppGenerator() {
                       <div className="flex items-center justify-end gap-1 mt-1">
                         <span className="text-[10px] text-[#667781]">
                           {new Date().toLocaleTimeString('pt-BR', {
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
                         </span>
                       </div>
                     </div>
-                  </div> : <div className="flex items-center justify-center h-full">
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full">
                     <p className="text-[#667781] text-sm text-center">
                       Digite uma mensagem personalizada para visualizar a prévia
                     </p>
-                  </div>}
+                  </div>
+                )}
               </div>
 
               {/* Input Area Mockup */}
@@ -318,7 +290,8 @@ export default function WhatsAppGenerator() {
             </div>
 
             {/* Copy Button */}
-            {generatedLink && <div className="space-y-3">
+            {generatedLink && (
+              <div className="space-y-3">
                 <div className="p-3 bg-muted/20 rounded-lg">
                   <p className="text-xs text-muted-foreground mb-1">Link gerado:</p>
                   <p className="text-xs text-foreground break-all font-mono">{generatedLink}</p>
@@ -328,15 +301,54 @@ export default function WhatsAppGenerator() {
                     <Copy className="h-4 w-4 mr-2" />
                     Copiar Link
                   </Button>
-                  
                 </div>
-              </div>}
+              </div>
+            )}
 
-            {!generatedLink && <p className="text-center text-sm text-muted-foreground">
+            {!generatedLink && (
+              <p className="text-center text-sm text-muted-foreground">
                 Preencha os dados e clique em "Gerar Link" para obter seu link
-              </p>}
+              </p>
+            )}
           </CardContent>
         </Card>
       </div>
+
+      {/* Message Templates Section */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <FileText className="h-5 w-5 text-primary" />
+            Modelos de Mensagem
+          </CardTitle>
+          <CardDescription>Escolha um modelo pronto para agilizar sua comunicação</CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {messageTemplates.map((template) => (
+              <Card 
+                key={template.id} 
+                className="cursor-pointer hover:border-primary/50 transition-colors group"
+              >
+                <CardContent className="p-4 space-y-3">
+                  <p className="text-sm font-medium text-foreground">{template.title}</p>
+                  <p className="text-xs text-muted-foreground line-clamp-3">{template.message}</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                    onClick={() => {
+                      setMessage(template.message);
+                      toast.success("Modelo aplicado!");
+                    }}
+                  >
+                    Usar Modelo
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
     </div>;
 }
