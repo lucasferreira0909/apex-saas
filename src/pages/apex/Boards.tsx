@@ -357,6 +357,8 @@ export default function Boards() {
     getSortedRowModel: getSortedRowModel(),
   });
 
+  const isLeadsBoard = boardData?.board.template_type === 'leads';
+
   if (selectedBoardId && boardData) {
     return (
       <div className="space-y-6">
@@ -370,10 +372,12 @@ export default function Boards() {
               {boardData.board.description && <p className="text-muted-foreground">{boardData.board.description}</p>}
             </div>
           </div>
-          <Button onClick={() => setIsAddColumnSheetOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Nova Coluna
-          </Button>
+          {!isLeadsBoard && (
+            <Button onClick={() => setIsAddColumnSheetOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Coluna
+            </Button>
+          )}
         </div>
 
         {loadingBoard ? (
@@ -394,6 +398,7 @@ export default function Boards() {
             onEditColumn={handleEditColumn}
             onDeleteColumn={handleOpenDeleteColumnDialog}
             onEditCard={handleEditCard}
+            hideColumnActions={isLeadsBoard}
           />
         )}
 
