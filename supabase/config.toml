@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.generate-image]
 verify_jwt = false
+
+[functions.apex-chat]
+verify_jwt = false
+
+[functions.enhance-prompt]
+verify_jwt = false

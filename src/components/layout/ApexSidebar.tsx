@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { HeadphonesIcon, Settings, Zap, LogOut, Wrench, LayoutGrid, MoreHorizontal } from "lucide-react";
+import { HeadphonesIcon, Settings, Zap, LogOut, Wrench, LayoutGrid, MoreHorizontal, MessageSquare } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
@@ -20,6 +20,10 @@ const projectItems = [{
   title: "Ferramentas",
   url: "/tools",
   icon: Wrench
+}, {
+  title: "ApexChat",
+  url: "/apex-chat",
+  icon: MessageSquare
 }];
 const menuItems = [{
   title: "Suporte",
