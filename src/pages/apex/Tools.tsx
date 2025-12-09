@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calculator, MessageSquare, Hash } from "lucide-react";
+import { Calculator, MessageSquare, Hash, MessageSquareQuote } from "lucide-react";
 import { Link } from "react-router-dom";
 interface Tool {
   id: string;
@@ -32,6 +32,13 @@ const tools: Tool[] = [{
   icon: Hash,
   route: "/hashtag-generator",
   features: ["Hashtags inteligentes", "Análise de tendências", "Múltiplas categorias"]
+}, {
+  id: "testimonial-generator",
+  title: "Criador de Depoimentos",
+  description: "Gere depoimentos convincentes para seu produto ou serviço",
+  icon: MessageSquareQuote,
+  route: "/testimonial-generator",
+  features: ["3, 6 ou 9 depoimentos", "Geração por IA", "Copiar e usar"]
 }];
 export default function Tools() {
   return <div className="space-y-6">

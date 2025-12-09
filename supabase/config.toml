@@ -6,5 +6,5 @@ verify_jwt = true
 [functions.send-support-ticket]
 verify_jwt = true
 
-[functions.text-to-speech]
+[functions.generate-testimonials]
 verify_jwt = false

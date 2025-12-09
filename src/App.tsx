@@ -17,6 +17,7 @@ import Tools from "./pages/apex/Tools";
 import ROICalculator from "./pages/apex/ROICalculator";
 import WhatsAppGenerator from "./pages/apex/WhatsAppGenerator";
 import HashtagGenerator from "./pages/apex/HashtagGenerator";
+import TestimonialGenerator from "./pages/apex/TestimonialGenerator";
 
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
@@ -44,6 +45,7 @@ const App = () => (
                   <Route path="/roi-calculator" element={<ROICalculator />} />
                   <Route path="/whatsapp-generator" element={<WhatsAppGenerator />} />
                   <Route path="/hashtag-generator" element={<HashtagGenerator />} />
+                  <Route path="/testimonial-generator" element={<TestimonialGenerator />} />
                   
                   <Route path="/tools" element={<Tools />} />
                   <Route path="*" element={<NotFound />} />
