@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Calculator, MessageSquare, Hash, MessageSquareQuote, Image } from "lucide-react";
+import { Calculator, MessageSquare, Hash, MessageSquareQuote, Image, ShoppingBag } from "lucide-react";
 import { Link } from "react-router-dom";
 interface Tool {
   id: string;
@@ -46,6 +46,13 @@ const tools: Tool[] = [{
   icon: Image,
   route: "/image-generator",
   features: ["Geração por IA", "Múltiplas proporções", "Download direto"]
+}, {
+  id: "product-calculator",
+  title: "Calculador de Produto",
+  description: "Calcule o preço ideal para seus produtos",
+  icon: ShoppingBag,
+  route: "/product-calculator",
+  features: ["Cálculo de margem", "Impostos inclusos", "Custo total"]
 }];
 export default function Tools() {
   return <div className="space-y-6">
