@@ -28,6 +28,7 @@ interface KanbanBoardProps {
   onEditColumn?: (columnId: string, currentName: string) => void;
   onDeleteColumn?: (columnId: string) => void;
   onEditCard?: (card: BoardCard) => void;
+  hideColumnActions?: boolean;
 }
 
 function CardItem({ 
@@ -95,7 +96,8 @@ function Column({
   onDeleteCard,
   onEditColumn,
   onDeleteColumn,
-  onEditCard
+  onEditCard,
+  hideColumnActions
 }: {
   column: BoardColumn;
   cards: BoardCard[];
@@ -105,6 +107,7 @@ function Column({
   onEditColumn?: () => void;
   onDeleteColumn?: () => void;
   onEditCard?: (card: BoardCard) => void;
+  hideColumnActions?: boolean;
 }) {
   return (
     <KanbanColumn value={column.id} className="rounded-md border bg-muted/30 p-2.5 shadow-xs min-w-[300px]">
@@ -113,23 +116,25 @@ function Column({
           <span className="font-semibold text-sm">{column.title}</span>
           <Badge variant="secondary">{cards.length}</Badge>
         </div>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="bg-popover">
-            <DropdownMenuItem onClick={onEditColumn}>
-              <Pencil className="h-4 w-4 mr-2" />
-              Editar coluna
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={onDeleteColumn} className="text-destructive">
-              <Trash2 className="h-4 w-4 mr-2" />
-              Excluir coluna
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        {!hideColumnActions && (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                <MoreVertical className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-popover">
+              <DropdownMenuItem onClick={onEditColumn}>
+                <Pencil className="h-4 w-4 mr-2" />
+                Editar coluna
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={onDeleteColumn} className="text-destructive">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Excluir coluna
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        )}
       </div>
       <KanbanColumnContent value={column.id} className="flex flex-col gap-2.5 p-0.5 min-h-[200px]">
         {cards.map((card) => (
@@ -165,7 +170,8 @@ export function KanbanBoard({
   onDeleteCard,
   onEditColumn,
   onDeleteColumn,
-  onEditCard
+  onEditCard,
+  hideColumnActions
 }: KanbanBoardProps) {
   const [columnOrder, setColumnOrder] = React.useState<string[]>(() => 
     columns.map(c => c.id)
@@ -244,6 +250,7 @@ export function KanbanBoard({
             onEditColumn={() => onEditColumn?.(column.id, column.title)}
             onDeleteColumn={() => onDeleteColumn?.(column.id)}
             onEditCard={onEditCard}
+            hideColumnActions={hideColumnActions}
           />
         ))}
       </KanbanBoardUI>
