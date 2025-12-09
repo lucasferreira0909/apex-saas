@@ -13,6 +13,7 @@ import apexLogo from "@/assets/apex-logo-auth.png";
 const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
   const [phone, setPhone] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
@@ -36,12 +37,14 @@ const Auth = () => {
   const passwordValidation = useMemo(() => {
     const hasMinLength = password.length >= 6;
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>\/\\]/.test(password);
+    const passwordsMatch = password === confirmPassword && confirmPassword.length > 0;
     return {
       hasMinLength,
       hasSpecialChar,
-      isValid: hasMinLength && hasSpecialChar
+      passwordsMatch,
+      isValid: hasMinLength && hasSpecialChar && passwordsMatch
     };
-  }, [password]);
+  }, [password, confirmPassword]);
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -105,6 +108,7 @@ const Auth = () => {
   const resetForm = () => {
     setEmail("");
     setPassword("");
+    setConfirmPassword("");
     setPhone("");
     setFirstName("");
     setLastName("");
@@ -163,6 +167,11 @@ const Auth = () => {
                   <Input id="signup-password" type="password" placeholder="Sua senha" value={password} onChange={e => setPassword(e.target.value)} required />
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password">Confirmar Senha</Label>
+                  <Input id="confirm-password" type="password" placeholder="Confirme sua senha" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required />
+                </div>
+
                 {/* Password validation feedback */}
                 {password.length > 0 && <Alert variant={passwordValidation.isValid ? "default" : "destructive"} className="py-3 border-secondary">
                     <AlertDescription className="space-y-1.5">
@@ -176,6 +185,12 @@ const Auth = () => {
                         {passwordValidation.hasSpecialChar ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4" />}
                         <span className={passwordValidation.hasSpecialChar ? "text-green-500" : ""}>
                           Um caractere especial (como /, @, etc)
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {passwordValidation.passwordsMatch ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4" />}
+                        <span className={passwordValidation.passwordsMatch ? "text-green-500" : ""}>
+                          As senhas coincidem
                         </span>
                       </div>
                     </AlertDescription>
