@@ -22,6 +22,7 @@ export default function TestimonialGenerator() {
   const [productDescription, setProductDescription] = useState("");
   const [targetAudience, setTargetAudience] = useState("");
   const [quantity, setQuantity] = useState("3");
+  const [style, setStyle] = useState("informal");
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
@@ -45,7 +46,8 @@ export default function TestimonialGenerator() {
           productName,
           productDescription,
           targetAudience,
-          quantity: parseInt(quantity)
+          quantity: parseInt(quantity),
+          style
         }
       });
 
@@ -165,6 +167,28 @@ export default function TestimonialGenerator() {
                 placeholder="Ex: Empreendedores iniciantes, mães que trabalham em casa"
                 className="bg-input border-border"
               />
+            </div>
+
+            <div className="space-y-3">
+              <Label>Estilo do Depoimento</Label>
+              <RadioGroup value={style} onValueChange={setStyle} className="grid grid-cols-2 gap-2">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="formal" id="formal" />
+                  <Label htmlFor="formal" className="font-normal cursor-pointer">Formal</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="informal" id="informal" />
+                  <Label htmlFor="informal" className="font-normal cursor-pointer">Informal</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="emocional" id="emocional" />
+                  <Label htmlFor="emocional" className="font-normal cursor-pointer">Emocional</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="tecnico" id="tecnico" />
+                  <Label htmlFor="tecnico" className="font-normal cursor-pointer">Técnico</Label>
+                </div>
+              </RadioGroup>
             </div>
 
             <div className="space-y-3">
