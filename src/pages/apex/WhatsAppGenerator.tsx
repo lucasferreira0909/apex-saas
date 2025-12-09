@@ -5,9 +5,43 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
-import { ArrowLeft, MessageCircle, Copy, ExternalLink, Smartphone, Send, Bold, Italic, Strikethrough, Code } from "lucide-react";
+import { ArrowLeft, MessageCircle, Copy, ExternalLink, Smartphone, Send, Bold, Italic, Strikethrough, Code, FileText } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
+
+const messageTemplates = [
+  {
+    id: 1,
+    title: "Atendimento",
+    message: "Olá! Gostaria de mais informações sobre os seus serviços. Poderia me ajudar?"
+  },
+  {
+    id: 2,
+    title: "Orçamento",
+    message: "Olá! Gostaria de solicitar um orçamento para o seguinte serviço: [descreva aqui]. Aguardo retorno!"
+  },
+  {
+    id: 3,
+    title: "Agendamento",
+    message: "Olá! Gostaria de agendar um horário para atendimento. Quais datas e horários estão disponíveis?"
+  },
+  {
+    id: 4,
+    title: "Suporte",
+    message: "Olá! Preciso de suporte técnico. Estou enfrentando o seguinte problema: [descreva o problema]. Podem me ajudar?"
+  },
+  {
+    id: 5,
+    title: "Pedido",
+    message: "Olá! Gostaria de fazer um pedido. Vocês têm disponível: [produto/serviço]? Qual o valor e prazo de entrega?"
+  },
+  {
+    id: 6,
+    title: "Parceria",
+    message: "Olá! Tenho interesse em estabelecer uma parceria comercial. Podemos conversar sobre isso?"
+  }
+];
+
 export default function WhatsAppGenerator() {
   const [phoneNumber, setPhoneNumber] = useState("");
   const [message, setMessage] = useState("");
@@ -183,6 +217,38 @@ export default function WhatsAppGenerator() {
               <p className="text-xs text-muted-foreground">
                 Esta mensagem aparecerá pré-preenchida no WhatsApp
               </p>
+            </div>
+
+            {/* Message Templates */}
+            <div className="space-y-2">
+              <Label className="flex items-center gap-2">
+                <FileText className="h-4 w-4" />
+                Modelos de Mensagem
+              </Label>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {messageTemplates.map((template) => (
+                  <Card 
+                    key={template.id} 
+                    className="cursor-pointer hover:border-primary/50 transition-colors group"
+                  >
+                    <CardContent className="p-3 space-y-2">
+                      <p className="text-xs font-medium text-foreground">{template.title}</p>
+                      <p className="text-[10px] text-muted-foreground line-clamp-2">{template.message}</p>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="w-full h-7 text-xs group-hover:bg-primary group-hover:text-primary-foreground transition-colors"
+                        onClick={() => {
+                          setMessage(template.message);
+                          toast.success("Modelo aplicado!");
+                        }}
+                      >
+                        Usar Modelo
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
             </div>
             
             <Button onClick={generateLink} className="w-full">
