@@ -1,12 +1,17 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, Paperclip, Sparkles, X, Loader2, MessageSquare } from "lucide-react";
+import { Send, Paperclip, Sparkles, X, Loader2, MessageSquare, Plus, History } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { ChatHistory } from "@/components/apex/ChatHistory";
 
 interface Message {
+  id?: string;
   role: 'user' | 'assistant';
   content: string;
   imageBase64?: string;
@@ -25,11 +30,14 @@ const CHAT_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/apex-chat`;
 const ENHANCE_URL = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/enhance-prompt`;
 
 export default function ApexChat() {
+  const { user } = useAuth();
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isEnhancing, setIsEnhancing] = useState(false);
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
+  const [currentConversationId, setCurrentConversationId] = useState<string | null>(null);
+  const [isHistoryOpen, setIsHistoryOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -38,6 +46,86 @@ export default function ApexChat() {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  const loadConversation = async (conversationId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('apex_messages')
+        .select('*')
+        .eq('conversation_id', conversationId)
+        .order('created_at', { ascending: true });
+
+      if (error) throw error;
+
+      setMessages(data?.map(m => ({
+        id: m.id,
+        role: m.role as 'user' | 'assistant',
+        content: m.content,
+        imageBase64: m.image_url || undefined,
+      })) || []);
+      setCurrentConversationId(conversationId);
+    } catch (error) {
+      console.error('Error loading conversation:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível carregar a conversa.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const createNewConversation = async (firstMessage: string): Promise<string | null> => {
+    if (!user) return null;
+
+    try {
+      const title = firstMessage.slice(0, 50) + (firstMessage.length > 50 ? '...' : '');
+      
+      const { data, error } = await supabase
+        .from('apex_conversations')
+        .insert({
+          user_id: user.id,
+          title,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data.id;
+    } catch (error) {
+      console.error('Error creating conversation:', error);
+      return null;
+    }
+  };
+
+  const saveMessage = async (conversationId: string, message: Message) => {
+    try {
+      const { error } = await supabase
+        .from('apex_messages')
+        .insert({
+          conversation_id: conversationId,
+          role: message.role,
+          content: message.content,
+          image_url: message.imageBase64 || null,
+        });
+
+      if (error) throw error;
+
+      // Update conversation updated_at
+      await supabase
+        .from('apex_conversations')
+        .update({ updated_at: new Date().toISOString() })
+        .eq('id', conversationId);
+    } catch (error) {
+      console.error('Error saving message:', error);
+    }
+  };
+
+  const handleNewChat = () => {
+    setMessages([]);
+    setCurrentConversationId(null);
+    setInput("");
+    setSelectedImage(null);
+  };
 
   const handleImageSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -96,6 +184,14 @@ export default function ApexChat() {
 
   const sendMessage = async (content: string) => {
     if (!content.trim() && !selectedImage) return;
+    if (!user) {
+      toast({
+        title: "Erro",
+        description: "Você precisa estar logado para usar o chat.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     const userMessage: Message = {
       role: 'user',
@@ -107,6 +203,27 @@ export default function ApexChat() {
     setInput("");
     setSelectedImage(null);
     setIsLoading(true);
+
+    let conversationId = currentConversationId;
+    
+    // Create new conversation if needed
+    if (!conversationId) {
+      conversationId = await createNewConversation(content.trim());
+      if (!conversationId) {
+        toast({
+          title: "Erro",
+          description: "Não foi possível criar a conversa.",
+          variant: "destructive",
+        });
+        setMessages(prev => prev.slice(0, -1));
+        setIsLoading(false);
+        return;
+      }
+      setCurrentConversationId(conversationId);
+    }
+
+    // Save user message
+    await saveMessage(conversationId, userMessage);
 
     let assistantContent = "";
 
@@ -157,9 +274,9 @@ export default function ApexChat() {
 
           try {
             const parsed = JSON.parse(jsonStr);
-            const content = parsed.choices?.[0]?.delta?.content;
-            if (content) {
-              assistantContent += content;
+            const deltaContent = parsed.choices?.[0]?.delta?.content;
+            if (deltaContent) {
+              assistantContent += deltaContent;
               setMessages(prev => {
                 const last = prev[prev.length - 1];
                 if (last?.role === 'assistant') {
@@ -176,13 +293,17 @@ export default function ApexChat() {
           }
         }
       }
+
+      // Save assistant message after streaming is complete
+      if (assistantContent && conversationId) {
+        await saveMessage(conversationId, { role: 'assistant', content: assistantContent });
+      }
     } catch (error) {
       toast({
         title: "Erro",
         description: error instanceof Error ? error.message : "Erro ao enviar mensagem",
         variant: "destructive",
       });
-      // Remove the user message if there was an error
       setMessages(prev => prev.slice(0, -1));
     } finally {
       setIsLoading(false);
@@ -200,9 +321,37 @@ export default function ApexChat() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-8rem)]">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">ApexChat</h1>
-        <p className="text-muted-foreground">Seu assistente especializado em vendas e marketing digital</p>
+      <div className="mb-6 flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl font-bold">ApexChat</h1>
+          <p className="text-muted-foreground">Seu assistente especializado em vendas e marketing digital</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={handleNewChat}>
+            <Plus className="h-4 w-4 mr-2" />
+            Nova conversa
+          </Button>
+          <Sheet open={isHistoryOpen} onOpenChange={setIsHistoryOpen}>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="sm">
+                <History className="h-4 w-4 mr-2" />
+                Histórico
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-80">
+              <SheetHeader>
+                <SheetTitle>Histórico de Conversas</SheetTitle>
+              </SheetHeader>
+              <div className="mt-4 h-[calc(100vh-8rem)]">
+                <ChatHistory
+                  onSelectConversation={loadConversation}
+                  currentConversationId={currentConversationId}
+                  onClose={() => setIsHistoryOpen(false)}
+                />
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
 
       <Card className="flex-1 flex flex-col overflow-hidden">
