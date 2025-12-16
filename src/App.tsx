@@ -23,6 +23,9 @@ import ProductCalculator from "./pages/apex/ProductCalculator";
 import CopyGenerator from "./pages/apex/CopyGenerator";
 import HeadlineGenerator from "./pages/apex/HeadlineGenerator";
 import OfferGenerator from "./pages/apex/OfferGenerator";
+import EmailGenerator from "./pages/apex/EmailGenerator";
+import ScriptGenerator from "./pages/apex/ScriptGenerator";
+import PersonaGenerator from "./pages/apex/PersonaGenerator";
 
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
@@ -56,6 +59,9 @@ const App = () => (
                   <Route path="/copy-generator" element={<CopyGenerator />} />
                   <Route path="/headline-generator" element={<HeadlineGenerator />} />
                   <Route path="/offer-generator" element={<OfferGenerator />} />
+                  <Route path="/email-generator" element={<EmailGenerator />} />
+                  <Route path="/script-generator" element={<ScriptGenerator />} />
+                  <Route path="/persona-generator" element={<PersonaGenerator />} />
                   
                   <Route path="/tools" element={<Tools />} />
                   <Route path="*" element={<NotFound />} />
