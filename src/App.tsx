@@ -20,6 +20,9 @@ import HashtagGenerator from "./pages/apex/HashtagGenerator";
 import TestimonialGenerator from "./pages/apex/TestimonialGenerator";
 import ImageGenerator from "./pages/apex/ImageGenerator";
 import ProductCalculator from "./pages/apex/ProductCalculator";
+import CopyGenerator from "./pages/apex/CopyGenerator";
+import HeadlineGenerator from "./pages/apex/HeadlineGenerator";
+import OfferGenerator from "./pages/apex/OfferGenerator";
 
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
@@ -50,6 +53,9 @@ const App = () => (
                   <Route path="/testimonial-generator" element={<TestimonialGenerator />} />
                   <Route path="/image-generator" element={<ImageGenerator />} />
                   <Route path="/product-calculator" element={<ProductCalculator />} />
+                  <Route path="/copy-generator" element={<CopyGenerator />} />
+                  <Route path="/headline-generator" element={<HeadlineGenerator />} />
+                  <Route path="/offer-generator" element={<OfferGenerator />} />
                   
                   <Route path="/tools" element={<Tools />} />
                   <Route path="*" element={<NotFound />} />
