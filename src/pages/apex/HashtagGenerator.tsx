@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Hash, Copy, TrendingUp, Users, Zap, ArrowLeft } from "lucide-react";
+import { Hash, Copy, Users, Zap, ArrowLeft } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 export default function HashtagGenerator() {
@@ -86,7 +86,7 @@ export default function HashtagGenerator() {
           </Link>
           <div>
             <h1 className="text-3xl font-bold text-foreground flex items-center">
-              <Hash className="h-8 w-8 mr-3 text-primary" />
+              <Hash className="h-8 w-8 mr-3 text-[#e8e8e8]" />
               Gerador de Hashtags
             </h1>
             <p className="text-muted-foreground">Crie hashtags inteligentes para suas publicações</p>
@@ -157,7 +157,7 @@ export default function HashtagGenerator() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-card-foreground flex items-center">
-                  <TrendingUp className="h-5 w-5 mr-2 text-primary" />
+                  
                   Hashtags Geradas
                 </CardTitle>
                 <CardDescription>
