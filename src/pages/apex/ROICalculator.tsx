@@ -5,24 +5,24 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, Calculator, TrendingUp, Calendar, DollarSign, Percent } from "lucide-react";
 import { Link } from "react-router-dom";
-
 export default function ROICalculator() {
   const [investment, setInvestment] = useState("");
   const [monthlyRevenue, setMonthlyRevenue] = useState("");
   const [monthlyCosts, setMonthlyCosts] = useState("");
-  
   const calculateROI = () => {
     const inv = parseFloat(investment) || 0;
     const revenue = parseFloat(monthlyRevenue) || 0;
     const costs = parseFloat(monthlyCosts) || 0;
-    
-    if (inv === 0) return { roi: 0, profit: 0, payback: 0, margin: 0 };
-    
+    if (inv === 0) return {
+      roi: 0,
+      profit: 0,
+      payback: 0,
+      margin: 0
+    };
     const monthlyProfit = revenue - costs;
-    const roi = ((monthlyProfit * 12 - inv) / inv) * 100;
+    const roi = (monthlyProfit * 12 - inv) / inv * 100;
     const paybackMonths = monthlyProfit > 0 ? inv / monthlyProfit : 0;
-    const margin = revenue > 0 ? (monthlyProfit / revenue) * 100 : 0;
-    
+    const margin = revenue > 0 ? monthlyProfit / revenue * 100 : 0;
     return {
       roi: roi,
       profit: monthlyProfit,
@@ -30,11 +30,8 @@ export default function ROICalculator() {
       margin: margin
     };
   };
-  
   const results = calculateROI();
-  
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center space-x-4">
         <Link to="/tools">
@@ -44,7 +41,7 @@ export default function ROICalculator() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center">
-            <Calculator className="h-6 w-6 text-primary mr-2" />
+            <Calculator className="h-6 w-6 mr-2 text-[#e8e8e8]" />
             Calculadora de ROI
           </h1>
           <p className="text-muted-foreground">Calculate o retorno do investimento dos seus projetos</p>
@@ -61,35 +58,17 @@ export default function ROICalculator() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="investment">Investimento Inicial (R$)</Label>
-              <Input
-                id="investment"
-                type="number"
-                placeholder="Ex: 10000"
-                value={investment}
-                onChange={(e) => setInvestment(e.target.value)}
-              />
+              <Input id="investment" type="number" placeholder="Ex: 10000" value={investment} onChange={e => setInvestment(e.target.value)} />
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="revenue">Receita Mensal (R$)</Label>
-              <Input
-                id="revenue"
-                type="number"
-                placeholder="Ex: 5000"
-                value={monthlyRevenue}
-                onChange={(e) => setMonthlyRevenue(e.target.value)}
-              />
+              <Input id="revenue" type="number" placeholder="Ex: 5000" value={monthlyRevenue} onChange={e => setMonthlyRevenue(e.target.value)} />
             </div>
             
             <div className="space-y-2">
               <Label htmlFor="costs">Custos Mensais (R$)</Label>
-              <Input
-                id="costs"
-                type="number"
-                placeholder="Ex: 2000"
-                value={monthlyCosts}
-                onChange={(e) => setMonthlyCosts(e.target.value)}
-              />
+              <Input id="costs" type="number" placeholder="Ex: 2000" value={monthlyCosts} onChange={e => setMonthlyCosts(e.target.value)} />
             </div>
           </CardContent>
         </Card>
@@ -154,6 +133,5 @@ export default function ROICalculator() {
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 }
