@@ -40,27 +40,25 @@ serve(async (req) => {
       'racional': 'com argumentos lógicos e benefícios práticos'
     };
 
-    const prompt = `Você é um copywriter expert em persuasão e vendas. Crie 3 variações de copy persuasiva para o seguinte produto/serviço:
+    const prompt = `Você é um copywriter expert em persuasão e vendas. Crie UMA copy persuasiva para o seguinte produto/serviço:
 
 Produto/Serviço: ${productName}
 Descrição: ${productDescription}
 Objetivo: ${objectiveMap[objective] || 'gerar vendas'}
 Tom: ${toneMap[tone] || 'persuasivo'}
 
-Para cada copy, crie:
+Crie:
 1. Um título/headline chamativo
 2. O corpo da copy (2-3 parágrafos)
 3. Uma chamada para ação (CTA) irresistível
 
 Responda APENAS com um JSON válido no seguinte formato, sem nenhum texto adicional:
 {
-  "copies": [
-    {
-      "headline": "título chamativo aqui",
-      "body": "corpo da copy aqui com parágrafos separados por \\n\\n",
-      "cta": "chamada para ação aqui"
-    }
-  ]
+  "copy": {
+    "headline": "título chamativo aqui",
+    "body": "corpo da copy aqui com parágrafos separados por \\n\\n",
+    "cta": "chamada para ação aqui"
+  }
 }`;
 
     console.log('Generating copies for:', productName);
@@ -113,7 +111,7 @@ Responda APENAS com um JSON válido no seguinte formato, sem nenhum texto adicio
     }
 
     const parsedContent = JSON.parse(jsonMatch[0]);
-    console.log('Successfully generated', parsedContent.copies?.length, 'copies');
+    console.log('Successfully generated copy');
 
     return new Response(
       JSON.stringify(parsedContent),
