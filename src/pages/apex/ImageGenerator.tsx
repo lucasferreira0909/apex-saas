@@ -94,7 +94,7 @@ export default function ImageGenerator() {
           </Link>
           <div>
             <h1 className="text-3xl font-bold text-foreground flex items-center">
-              <Image className="h-8 w-8 mr-3 text-primary" />
+              <Image className="h-8 w-8 mr-3 text-[#e8e8e8]" />
               Gerador de Imagens
             </h1>
             <p className="text-muted-foreground">Crie imagens incríveis com inteligência artificial</p>
