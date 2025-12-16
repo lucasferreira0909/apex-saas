@@ -5,32 +5,31 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ArrowLeft, ShoppingBag, DollarSign, Percent, TrendingUp, Tag } from "lucide-react";
 import { Link } from "react-router-dom";
-
 export default function ProductCalculator() {
   const [costPrice, setCostPrice] = useState("");
   const [desiredMargin, setDesiredMargin] = useState("");
   const [taxes, setTaxes] = useState("");
   const [shippingCost, setShippingCost] = useState("");
   const [otherCosts, setOtherCosts] = useState("");
-
   const calculatePrice = () => {
     const cost = parseFloat(costPrice) || 0;
     const margin = parseFloat(desiredMargin) || 0;
     const tax = parseFloat(taxes) || 0;
     const shipping = parseFloat(shippingCost) || 0;
     const other = parseFloat(otherCosts) || 0;
-
-    if (cost === 0) return { salePrice: 0, profit: 0, totalCost: 0, realMargin: 0 };
-
+    if (cost === 0) return {
+      salePrice: 0,
+      profit: 0,
+      totalCost: 0,
+      realMargin: 0
+    };
     const totalCost = cost + shipping + other;
-    const taxMultiplier = 1 + (tax / 100);
-    const marginMultiplier = 1 + (margin / 100);
-    
+    const taxMultiplier = 1 + tax / 100;
+    const marginMultiplier = 1 + margin / 100;
     const priceBeforeTax = totalCost * marginMultiplier;
     const salePrice = priceBeforeTax * taxMultiplier;
-    const profit = salePrice - totalCost - (salePrice * (tax / 100));
-    const realMargin = totalCost > 0 ? ((profit / totalCost) * 100) : 0;
-
+    const profit = salePrice - totalCost - salePrice * (tax / 100);
+    const realMargin = totalCost > 0 ? profit / totalCost * 100 : 0;
     return {
       salePrice: salePrice,
       profit: profit,
@@ -38,11 +37,8 @@ export default function ProductCalculator() {
       realMargin: realMargin
     };
   };
-
   const results = calculatePrice();
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center space-x-4">
         <Link to="/tools">
@@ -52,7 +48,7 @@ export default function ProductCalculator() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center">
-            <ShoppingBag className="h-6 w-6 text-primary mr-2" />
+            <ShoppingBag className="h-6 w-6 mr-2 text-[#e8e8e8]" />
             Calculador de Produto
           </h1>
           <p className="text-muted-foreground">Calcule o preço ideal para seus produtos</p>
@@ -69,57 +65,27 @@ export default function ProductCalculator() {
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="costPrice">Custo do Produto (R$)</Label>
-              <Input
-                id="costPrice"
-                type="number"
-                placeholder="Ex: 50"
-                value={costPrice}
-                onChange={(e) => setCostPrice(e.target.value)}
-              />
+              <Input id="costPrice" type="number" placeholder="Ex: 50" value={costPrice} onChange={e => setCostPrice(e.target.value)} />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="desiredMargin">Margem Desejada (%)</Label>
-              <Input
-                id="desiredMargin"
-                type="number"
-                placeholder="Ex: 30"
-                value={desiredMargin}
-                onChange={(e) => setDesiredMargin(e.target.value)}
-              />
+              <Input id="desiredMargin" type="number" placeholder="Ex: 30" value={desiredMargin} onChange={e => setDesiredMargin(e.target.value)} />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="taxes">Impostos (%)</Label>
-              <Input
-                id="taxes"
-                type="number"
-                placeholder="Ex: 10"
-                value={taxes}
-                onChange={(e) => setTaxes(e.target.value)}
-              />
+              <Input id="taxes" type="number" placeholder="Ex: 10" value={taxes} onChange={e => setTaxes(e.target.value)} />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="shippingCost">Custo de Frete (R$)</Label>
-              <Input
-                id="shippingCost"
-                type="number"
-                placeholder="Ex: 15"
-                value={shippingCost}
-                onChange={(e) => setShippingCost(e.target.value)}
-              />
+              <Input id="shippingCost" type="number" placeholder="Ex: 15" value={shippingCost} onChange={e => setShippingCost(e.target.value)} />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="otherCosts">Outros Custos (R$)</Label>
-              <Input
-                id="otherCosts"
-                type="number"
-                placeholder="Ex: 5"
-                value={otherCosts}
-                onChange={(e) => setOtherCosts(e.target.value)}
-              />
+              <Input id="otherCosts" type="number" placeholder="Ex: 5" value={otherCosts} onChange={e => setOtherCosts(e.target.value)} />
             </div>
           </CardContent>
         </Card>
@@ -184,6 +150,5 @@ export default function ProductCalculator() {
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 }
