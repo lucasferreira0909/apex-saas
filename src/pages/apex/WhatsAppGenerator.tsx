@@ -123,7 +123,7 @@ export default function WhatsAppGenerator() {
         </Link>
         <div>
           <h1 className="text-2xl font-bold text-foreground flex items-center">
-            <MessageCircle className="h-6 w-6 text-primary mr-2" />
+            <MessageCircle className="h-6 w-6 mr-2 text-[#e8e8e8]" />
             Gerador de Link WhatsApp
           </h1>
           <p className="text-muted-foreground">Crie links diretos para conversar no WhatsApp</p>
