@@ -104,7 +104,7 @@ export default function TestimonialGenerator() {
           </Link>
           <div>
             <h1 className="text-3xl font-bold text-foreground flex items-center">
-              <MessageSquareQuote className="h-8 w-8 mr-3 text-primary" />
+              <MessageSquareQuote className="h-8 w-8 mr-3 text-[#e8e8e8]" />
               Criador de Depoimentos
             </h1>
             <p className="text-muted-foreground">Gere depoimentos convincentes para seu produto ou serviço</p>
@@ -196,7 +196,7 @@ export default function TestimonialGenerator() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-card-foreground flex items-center">
-                  <User className="h-5 w-5 mr-2 text-primary" />
+                  
                   Depoimentos Gerados
                 </CardTitle>
                 <CardDescription>
