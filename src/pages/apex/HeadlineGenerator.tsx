@@ -194,7 +194,7 @@ export default function HeadlineGenerator() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-card-foreground flex items-center">
-                  <Type className="h-5 w-5 mr-2 text-primary" />
+                  
                   Headlines Geradas
                 </CardTitle>
                 <CardDescription>
