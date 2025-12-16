@@ -9,22 +9,23 @@ import { FileText, Copy, ArrowLeft, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+
 interface CopyResult {
   headline: string;
   body: string;
   cta: string;
 }
+
 export default function CopyGenerator() {
   const [productName, setProductName] = useState("");
   const [productDescription, setProductDescription] = useState("");
   const [objective, setObjective] = useState("venda");
   const [tone, setTone] = useState("urgente");
-  const [copies, setCopies] = useState<CopyResult[]>([]);
+  const [copy, setCopy] = useState<CopyResult | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const {
-    toast
-  } = useToast();
-  const generateCopies = async () => {
+  const { toast } = useToast();
+
+  const generateCopy = async () => {
     if (!productName.trim() || !productDescription.trim()) {
       toast({
         title: "Erro",
@@ -33,13 +34,12 @@ export default function CopyGenerator() {
       });
       return;
     }
+
     setIsGenerating(true);
-    setCopies([]);
+    setCopy(null);
+
     try {
-      const {
-        data,
-        error
-      } = await supabase.functions.invoke('generate-copy', {
+      const { data, error } = await supabase.functions.invoke('generate-copy', {
         body: {
           productName,
           productDescription,
@@ -47,17 +47,19 @@ export default function CopyGenerator() {
           tone
         }
       });
+
       if (error) throw new Error(error.message);
       if (data.error) throw new Error(data.error);
-      setCopies(data.copies);
+
+      setCopy(data.copy);
       toast({
-        title: "Copies geradas!",
-        description: `${data.copies.length} variações de copy foram criadas.`
+        title: "Copy gerada!",
+        description: "Sua copy persuasiva foi criada com sucesso."
       });
     } catch (error) {
-      console.error('Error generating copies:', error);
+      console.error('Error generating copy:', error);
       toast({
-        title: "Erro ao gerar copies",
+        title: "Erro ao gerar copy",
         description: error instanceof Error ? error.message : "Ocorreu um erro. Tente novamente.",
         variant: "destructive"
       });
@@ -65,7 +67,9 @@ export default function CopyGenerator() {
       setIsGenerating(false);
     }
   };
-  const copySingleCopy = (copy: CopyResult) => {
+
+  const copyCopyToClipboard = () => {
+    if (!copy) return;
     const text = `${copy.headline}\n\n${copy.body}\n\n${copy.cta}`;
     navigator.clipboard.writeText(text);
     toast({
@@ -73,15 +77,9 @@ export default function CopyGenerator() {
       description: "Copy copiada para a área de transferência."
     });
   };
-  const copyAllCopies = () => {
-    const text = copies.map((c, i) => `--- COPY ${i + 1} ---\n\n${c.headline}\n\n${c.body}\n\n${c.cta}`).join("\n\n");
-    navigator.clipboard.writeText(text);
-    toast({
-      title: "Copiado!",
-      description: "Todas as copies foram copiadas."
-    });
-  };
-  return <div className="space-y-6">
+
+  return (
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -105,17 +103,29 @@ export default function CopyGenerator() {
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-card-foreground">Configurações</CardTitle>
-            <CardDescription>Defina os parâmetros para gerar suas copies</CardDescription>
+            <CardDescription>Defina os parâmetros para gerar sua copy</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="productName">Nome do Produto/Serviço *</Label>
-              <Input id="productName" value={productName} onChange={e => setProductName(e.target.value)} placeholder="Ex: Curso de Marketing Digital" className="bg-input border-border" />
+              <Input
+                id="productName"
+                value={productName}
+                onChange={e => setProductName(e.target.value)}
+                placeholder="Ex: Curso de Marketing Digital"
+                className="bg-input border-border"
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="productDescription">Descrição *</Label>
-              <Textarea id="productDescription" value={productDescription} onChange={e => setProductDescription(e.target.value)} placeholder="Descreva seu produto, benefícios e diferenciais..." className="bg-input border-border min-h-[100px]" />
+              <Textarea
+                id="productDescription"
+                value={productDescription}
+                onChange={e => setProductDescription(e.target.value)}
+                placeholder="Descreva seu produto, benefícios e diferenciais..."
+                className="bg-input border-border min-h-[100px]"
+              />
             </div>
 
             <div className="space-y-3">
@@ -162,14 +172,22 @@ export default function CopyGenerator() {
               </RadioGroup>
             </div>
 
-            <Button onClick={generateCopies} disabled={isGenerating || !productName.trim() || !productDescription.trim()} className="w-full">
-              {isGenerating ? <>
+            <Button
+              onClick={generateCopy}
+              disabled={isGenerating || !productName.trim() || !productDescription.trim()}
+              className="w-full"
+            >
+              {isGenerating ? (
+                <>
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent mr-2" />
-                  Gerando Copies...
-                </> : <>
+                  Gerando Copy...
+                </>
+              ) : (
+                <>
                   <Sparkles className="h-4 w-4 mr-2" />
-                  Gerar Copies
-                </>}
+                  Gerar Copy
+                </>
+              )}
             </Button>
           </CardContent>
         </Card>
@@ -180,58 +198,56 @@ export default function CopyGenerator() {
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-card-foreground flex items-center">
-                  
-                  Copies Geradas
+                  Copy Gerada
                 </CardTitle>
                 <CardDescription>
-                  {copies.length > 0 ? `${copies.length} variações criadas` : "Aguardando geração"}
+                  {copy ? "Sua copy está pronta!" : "Aguardando geração"}
                 </CardDescription>
               </div>
-              {copies.length > 0 && <Button variant="outline" size="sm" onClick={copyAllCopies}>
+              {copy && (
+                <Button variant="outline" size="sm" onClick={copyCopyToClipboard}>
                   <Copy className="h-4 w-4 mr-2" />
-                  Copiar Todas
-                </Button>}
+                  Copiar
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent>
-            {copies.length === 0 ? <div className="text-center py-12">
+            {!copy ? (
+              <div className="text-center py-12">
                 <FileText className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium text-card-foreground mb-2">Nenhuma copy gerada</h3>
-                <p className="text-muted-foreground">Preencha o formulário e clique em "Gerar Copies"</p>
-              </div> : <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
-                {copies.map((copy, index) => <div key={index} className="p-4 bg-muted/30 rounded-lg border border-border hover:bg-muted/50 transition-colors">
-                    <div className="flex items-start justify-between mb-3">
-                      <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-1 rounded">
-                        Copy {index + 1}
-                      </span>
-                      <Button variant="ghost" size="icon" onClick={() => copySingleCopy(copy)}>
-                        <Copy className="h-4 w-4" />
-                      </Button>
-                    </div>
-                    <h4 className="font-bold text-card-foreground mb-2">{copy.headline}</h4>
-                    <p className="text-muted-foreground text-sm whitespace-pre-line mb-3">{copy.body}</p>
-                    <div className="p-2 bg-primary/10 rounded text-sm font-medium text-primary">
-                      {copy.cta}
-                    </div>
-                  </div>)}
-              </div>}
+                <p className="text-muted-foreground">Preencha o formulário e clique em "Gerar Copy"</p>
+              </div>
+            ) : (
+              <div className="p-4 bg-muted/30 rounded-lg border border-border">
+                <h4 className="font-bold text-card-foreground mb-3 text-lg">{copy.headline}</h4>
+                <p className="text-muted-foreground text-sm whitespace-pre-line mb-4">{copy.body}</p>
+                <div className="p-3 bg-primary/10 rounded text-sm font-medium text-primary">
+                  {copy.cta}
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
 
       {/* Tips */}
-      {copies.length > 0 && <Card className="bg-card border-border">
+      {copy && (
+        <Card className="bg-card border-border">
           <CardContent className="pt-6">
             <div className="p-4 bg-muted/50 rounded-lg">
               <h4 className="font-medium text-card-foreground mb-2">💡 Dicas de Uso:</h4>
               <ul className="text-sm text-muted-foreground space-y-1">
-                <li>• Teste diferentes variações para encontrar a que melhor converte</li>
                 <li>• Adapte o tom da copy para cada canal (email, redes sociais, landing page)</li>
                 <li>• Use a copy como base e personalize com dados específicos do seu público</li>
-                <li>• Combine elementos de diferentes copies para criar versões híbridas</li>
+                <li>• Teste diferentes variações gerando novamente com parâmetros diferentes</li>
+                <li>• Combine elementos da copy com seu próprio estilo de comunicação</li>
               </ul>
             </div>
           </CardContent>
-        </Card>}
-    </div>;
+        </Card>
+      )}
+    </div>
+  );
 }

@@ -54,7 +54,7 @@ serve(async (req) => {
       'numero': 'Use números, listas e dados específicos para credibilidade'
     };
 
-    const prompt = `Você é um especialista em criação de headlines virais para redes sociais. Crie 8 headlines para o seguinte tema:
+    const prompt = `Você é um especialista em criação de headlines virais para redes sociais. Crie 5 headlines para o seguinte tema:
 
 Tema/Assunto: ${topic}
 Plataforma: ${platform}

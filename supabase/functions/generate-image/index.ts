@@ -6,6 +6,8 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+const DAILY_LIMIT = 3;
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
@@ -18,9 +20,65 @@ serve(async (req) => {
       throw new Error('Prompt é obrigatório');
     }
 
+    // Get authorization header to identify user
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      throw new Error('Usuário não autenticado');
+    }
+
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
+    const SUPABASE_URL = Deno.env.get('SUPABASE_URL');
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY');
+
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY não configurada');
+    }
+
+    if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+      throw new Error('Configuração do Supabase não encontrada');
+    }
+
+    // Create Supabase client with user's token to get user_id
+    const supabaseUser = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    
+    // Get user from token
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: userError } = await supabaseUser.auth.getUser(token);
+    
+    if (userError || !user) {
+      throw new Error('Usuário não autenticado');
+    }
+
+    const userId = user.id;
+    console.log('User ID:', userId);
+
+    // Check daily usage limit
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    
+    const { count, error: countError } = await supabaseUser
+      .from('generated_images')
+      .select('*', { count: 'exact', head: true })
+      .eq('user_id', userId)
+      .gte('created_at', today.toISOString());
+
+    if (countError) {
+      console.error('Error checking usage:', countError);
+      throw new Error('Erro ao verificar limite de uso');
+    }
+
+    const usageCount = count || 0;
+    console.log('Daily usage count:', usageCount);
+
+    if (usageCount >= DAILY_LIMIT) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'Limite diário atingido. Você pode gerar até 3 imagens por dia.',
+          limitReached: true,
+          remaining: 0
+        }),
+        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     console.log('Generating image with prompt:', prompt, 'aspect ratio:', aspectRatio);
@@ -71,12 +129,58 @@ serve(async (req) => {
       throw new Error('Nenhuma imagem foi gerada. Tente novamente com um prompt diferente.');
     }
 
-    console.log('Successfully generated image');
+    // Extract base64 data and upload to storage
+    const base64Data = imageData.split(',')[1] || imageData;
+    const binaryData = Uint8Array.from(atob(base64Data), c => c.charCodeAt(0));
+    
+    const timestamp = Date.now();
+    const storagePath = `${userId}/${timestamp}.png`;
+    
+    const { error: uploadError } = await supabaseUser.storage
+      .from('generated-images')
+      .upload(storagePath, binaryData, {
+        contentType: 'image/png',
+        upsert: false
+      });
+
+    if (uploadError) {
+      console.error('Upload error:', uploadError);
+      throw new Error('Erro ao salvar imagem');
+    }
+
+    // Get public URL
+    const { data: urlData } = supabaseUser.storage
+      .from('generated-images')
+      .getPublicUrl(storagePath);
+
+    const publicUrl = urlData.publicUrl;
+    console.log('Image uploaded to:', publicUrl);
+
+    // Save to database
+    const { error: insertError } = await supabaseUser
+      .from('generated_images')
+      .insert({
+        user_id: userId,
+        prompt: prompt,
+        aspect_ratio: aspectRatio,
+        image_url: publicUrl,
+        storage_path: storagePath,
+        description: textContent
+      });
+
+    if (insertError) {
+      console.error('Database insert error:', insertError);
+      // Don't throw, the image was still generated successfully
+    }
+
+    const remaining = DAILY_LIMIT - usageCount - 1;
+    console.log('Successfully generated image. Remaining today:', remaining);
 
     return new Response(
       JSON.stringify({ 
-        imageUrl: imageData,
-        description: textContent 
+        imageUrl: publicUrl,
+        description: textContent,
+        remaining: remaining
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
