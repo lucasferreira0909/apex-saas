@@ -8,7 +8,6 @@ import { Tag, Copy, ArrowLeft, Sparkles, Check, Clock, Shield } from "lucide-rea
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-
 interface OfferResult {
   headline: string;
   subheadline: string;
@@ -19,7 +18,6 @@ interface OfferResult {
   guarantee: string;
   priceAnchor: string;
 }
-
 export default function OfferGenerator() {
   const [productName, setProductName] = useState("");
   const [originalPrice, setOriginalPrice] = useState("");
@@ -29,8 +27,9 @@ export default function OfferGenerator() {
   const [targetPain, setTargetPain] = useState("");
   const [offer, setOffer] = useState<OfferResult | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   const generateOffer = async () => {
     if (!productName.trim() || !originalPrice || !offerPrice || !targetPain.trim()) {
       toast({
@@ -40,25 +39,24 @@ export default function OfferGenerator() {
       });
       return;
     }
-
     setIsGenerating(true);
     setOffer(null);
-
     try {
-      const { data, error } = await supabase.functions.invoke('generate-offer', {
-        body: { 
-          productName, 
-          originalPrice: parseFloat(originalPrice), 
-          offerPrice: parseFloat(offerPrice), 
-          deadline, 
-          bonuses, 
-          targetPain 
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('generate-offer', {
+        body: {
+          productName,
+          originalPrice: parseFloat(originalPrice),
+          offerPrice: parseFloat(offerPrice),
+          deadline,
+          bonuses,
+          targetPain
         }
       });
-
       if (error) throw new Error(error.message);
       if (data.error) throw new Error(data.error);
-
       setOffer(data.offer);
       toast({
         title: "Oferta gerada!",
@@ -75,10 +73,8 @@ export default function OfferGenerator() {
       setIsGenerating(false);
     }
   };
-
   const copyFullOffer = () => {
     if (!offer) return;
-    
     const text = `🔥 ${offer.headline}
 
 ${offer.subheadline}
@@ -96,16 +92,13 @@ ${offer.bonuses.map(b => `• ${b}`).join('\n')}
 🛡️ ${offer.guarantee}
 
 👉 ${offer.cta}`;
-
     navigator.clipboard.writeText(text);
     toast({
       title: "Copiado!",
       description: "Oferta completa copiada para a área de transferência."
     });
   };
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-4">
@@ -116,7 +109,7 @@ ${offer.bonuses.map(b => `• ${b}`).join('\n')}
           </Link>
           <div>
             <h1 className="text-3xl font-bold text-foreground flex items-center">
-              <Tag className="h-8 w-8 mr-3 text-primary" />
+              <Tag className="h-8 w-8 mr-3 text-[#e8e8e8]" />
               Gerador de Oferta Persuasiva
             </h1>
             <p className="text-muted-foreground">Crie ofertas irresistíveis que convertem</p>
@@ -134,89 +127,43 @@ ${offer.bonuses.map(b => `• ${b}`).join('\n')}
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="productName">Nome do Produto/Serviço *</Label>
-              <Input
-                id="productName"
-                value={productName}
-                onChange={e => setProductName(e.target.value)}
-                placeholder="Ex: Mentoria de Marketing Digital"
-                className="bg-input border-border"
-              />
+              <Input id="productName" value={productName} onChange={e => setProductName(e.target.value)} placeholder="Ex: Mentoria de Marketing Digital" className="bg-input border-border" />
             </div>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="originalPrice">Preço Original (R$) *</Label>
-                <Input
-                  id="originalPrice"
-                  type="number"
-                  value={originalPrice}
-                  onChange={e => setOriginalPrice(e.target.value)}
-                  placeholder="997"
-                  className="bg-input border-border"
-                />
+                <Input id="originalPrice" type="number" value={originalPrice} onChange={e => setOriginalPrice(e.target.value)} placeholder="997" className="bg-input border-border" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="offerPrice">Preço Promocional (R$) *</Label>
-                <Input
-                  id="offerPrice"
-                  type="number"
-                  value={offerPrice}
-                  onChange={e => setOfferPrice(e.target.value)}
-                  placeholder="497"
-                  className="bg-input border-border"
-                />
+                <Input id="offerPrice" type="number" value={offerPrice} onChange={e => setOfferPrice(e.target.value)} placeholder="497" className="bg-input border-border" />
               </div>
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="deadline">Prazo da Oferta (opcional)</Label>
-              <Input
-                id="deadline"
-                value={deadline}
-                onChange={e => setDeadline(e.target.value)}
-                placeholder="Ex: Válido até sexta-feira"
-                className="bg-input border-border"
-              />
+              <Input id="deadline" value={deadline} onChange={e => setDeadline(e.target.value)} placeholder="Ex: Válido até sexta-feira" className="bg-input border-border" />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="bonuses">Bônus Inclusos (opcional)</Label>
-              <Textarea
-                id="bonuses"
-                value={bonuses}
-                onChange={e => setBonuses(e.target.value)}
-                placeholder="Liste os bônus que serão inclusos na oferta..."
-                className="bg-input border-border min-h-[80px]"
-              />
+              <Textarea id="bonuses" value={bonuses} onChange={e => setBonuses(e.target.value)} placeholder="Liste os bônus que serão inclusos na oferta..." className="bg-input border-border min-h-[80px]" />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="targetPain">Principal Dor do Público *</Label>
-              <Textarea
-                id="targetPain"
-                value={targetPain}
-                onChange={e => setTargetPain(e.target.value)}
-                placeholder="Descreva o principal problema que seu produto resolve..."
-                className="bg-input border-border min-h-[80px]"
-              />
+              <Textarea id="targetPain" value={targetPain} onChange={e => setTargetPain(e.target.value)} placeholder="Descreva o principal problema que seu produto resolve..." className="bg-input border-border min-h-[80px]" />
             </div>
 
-            <Button
-              onClick={generateOffer}
-              disabled={isGenerating || !productName.trim() || !originalPrice || !offerPrice || !targetPain.trim()}
-              className="w-full"
-            >
-              {isGenerating ? (
-                <>
+            <Button onClick={generateOffer} disabled={isGenerating || !productName.trim() || !originalPrice || !offerPrice || !targetPain.trim()} className="w-full">
+              {isGenerating ? <>
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent mr-2" />
                   Gerando Oferta...
-                </>
-              ) : (
-                <>
+                </> : <>
                   <Sparkles className="h-4 w-4 mr-2" />
                   Gerar Oferta
-                </>
-              )}
+                </>}
             </Button>
           </CardContent>
         </Card>
@@ -227,30 +174,25 @@ ${offer.bonuses.map(b => `• ${b}`).join('\n')}
             <div className="flex items-center justify-between">
               <div>
                 <CardTitle className="text-card-foreground flex items-center">
-                  <Tag className="h-5 w-5 mr-2 text-primary" />
+                  
                   Oferta Gerada
                 </CardTitle>
                 <CardDescription>
                   {offer ? "Oferta pronta para uso" : "Aguardando geração"}
                 </CardDescription>
               </div>
-              {offer && (
-                <Button variant="outline" size="sm" onClick={copyFullOffer}>
+              {offer && <Button variant="outline" size="sm" onClick={copyFullOffer}>
                   <Copy className="h-4 w-4 mr-2" />
                   Copiar Tudo
-                </Button>
-              )}
+                </Button>}
             </div>
           </CardHeader>
           <CardContent>
-            {!offer ? (
-              <div className="text-center py-12">
+            {!offer ? <div className="text-center py-12">
                 <Tag className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium text-card-foreground mb-2">Nenhuma oferta gerada</h3>
                 <p className="text-muted-foreground">Preencha o formulário e clique em "Gerar Oferta"</p>
-              </div>
-            ) : (
-              <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
+              </div> : <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2">
                 {/* Headline */}
                 <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
                   <h3 className="font-bold text-lg text-card-foreground">{offer.headline}</h3>
@@ -264,26 +206,20 @@ ${offer.bonuses.map(b => `• ${b}`).join('\n')}
                     Benefícios
                   </h4>
                   <ul className="space-y-2">
-                    {offer.benefits.map((benefit, index) => (
-                      <li key={index} className="flex items-start text-sm text-muted-foreground">
+                    {offer.benefits.map((benefit, index) => <li key={index} className="flex items-start text-sm text-muted-foreground">
                         <Check className="h-4 w-4 mr-2 text-green-500 shrink-0 mt-0.5" />
                         {benefit}
-                      </li>
-                    ))}
+                      </li>)}
                   </ul>
                 </div>
 
                 {/* Bonuses */}
-                {offer.bonuses.length > 0 && (
-                  <div className="p-4 bg-muted/30 rounded-lg border border-border">
+                {offer.bonuses.length > 0 && <div className="p-4 bg-muted/30 rounded-lg border border-border">
                     <h4 className="font-medium text-card-foreground mb-3">🎁 Bônus Exclusivos</h4>
                     <ul className="space-y-2">
-                      {offer.bonuses.map((bonus, index) => (
-                        <li key={index} className="text-sm text-muted-foreground">• {bonus}</li>
-                      ))}
+                      {offer.bonuses.map((bonus, index) => <li key={index} className="text-sm text-muted-foreground">• {bonus}</li>)}
                     </ul>
-                  </div>
-                )}
+                  </div>}
 
                 {/* Price Anchor */}
                 <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20 text-center">
@@ -310,15 +246,13 @@ ${offer.bonuses.map(b => `• ${b}`).join('\n')}
                 <div className="p-4 bg-primary rounded-lg text-center">
                   <p className="font-bold text-primary-foreground">{offer.cta}</p>
                 </div>
-              </div>
-            )}
+              </div>}
           </CardContent>
         </Card>
       </div>
 
       {/* Tips */}
-      {offer && (
-        <Card className="bg-card border-border">
+      {offer && <Card className="bg-card border-border">
           <CardContent className="pt-6">
             <div className="p-4 bg-muted/50 rounded-lg">
               <h4 className="font-medium text-card-foreground mb-2">💡 Dicas de Uso:</h4>
@@ -330,8 +264,6 @@ ${offer.bonuses.map(b => `• ${b}`).join('\n')}
               </ul>
             </div>
           </CardContent>
-        </Card>
-      )}
-    </div>
-  );
+        </Card>}
+    </div>;
 }
