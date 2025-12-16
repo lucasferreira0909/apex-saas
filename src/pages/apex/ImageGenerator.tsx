@@ -4,13 +4,12 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Image, Download, ArrowLeft, Trash2, X, Clock } from "lucide-react";
+import { Image, Download, ArrowLeft, Trash2, Clock, Pencil } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { ScrollArea } from "@/components/ui/scroll-area";
 
 interface GeneratedImage {
   id: string;
@@ -34,10 +33,16 @@ export default function ImageGenerator() {
   const [history, setHistory] = useState<GeneratedImage[]>([]);
   const [selectedImage, setSelectedImage] = useState<GeneratedImage | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  
+  // Edit mode states
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editPrompt, setEditPrompt] = useState("");
+  const [isEditing, setIsEditing] = useState(false);
+  const [editedImageUrl, setEditedImageUrl] = useState<string | null>(null);
+  
   const { toast } = useToast();
   const { user } = useAuth();
 
-  // Fetch usage and history on mount
   useEffect(() => {
     if (user) {
       fetchHistory();
@@ -55,7 +60,8 @@ export default function ImageGenerator() {
       .from('generated_images')
       .select('*', { count: 'exact', head: true })
       .eq('user_id', user.id)
-      .gte('created_at', today.toISOString());
+      .gte('created_at', today.toISOString())
+      .not('prompt', 'like', '[EDITADO]%');
 
     if (!error && count !== null) {
       setRemaining(Math.max(0, DAILY_LIMIT - count));
@@ -105,14 +111,9 @@ export default function ImageGenerator() {
         body: { prompt, aspectRatio }
       });
 
-      if (error) {
-        throw new Error(error.message);
-      }
-
+      if (error) throw new Error(error.message);
       if (data.error) {
-        if (data.limitReached) {
-          setRemaining(0);
-        }
+        if (data.limitReached) setRemaining(0);
         throw new Error(data.error);
       }
 
@@ -123,7 +124,6 @@ export default function ImageGenerator() {
         setRemaining(data.remaining);
       }
 
-      // Refresh history
       await fetchHistory();
 
       toast({
@@ -159,16 +159,12 @@ export default function ImageGenerator() {
   const deleteImage = async (image: GeneratedImage) => {
     setIsDeleting(true);
     try {
-      // Delete from storage
       const { error: storageError } = await supabase.storage
         .from('generated-images')
         .remove([image.storage_path]);
 
-      if (storageError) {
-        console.error('Storage delete error:', storageError);
-      }
+      if (storageError) console.error('Storage delete error:', storageError);
 
-      // Delete from database
       const { error: dbError } = await supabase
         .from('generated_images')
         .delete()
@@ -176,7 +172,6 @@ export default function ImageGenerator() {
 
       if (dbError) throw dbError;
 
-      // Update local state
       setHistory(prev => prev.filter(img => img.id !== image.id));
       setSelectedImage(null);
 
@@ -194,6 +189,55 @@ export default function ImageGenerator() {
     } finally {
       setIsDeleting(false);
     }
+  };
+
+  const editImage = async () => {
+    if (!selectedImage || !editPrompt.trim()) {
+      toast({
+        title: "Erro",
+        description: "Por favor, descreva a edição que deseja fazer.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsEditing(true);
+    setEditedImageUrl(null);
+
+    try {
+      const { data, error } = await supabase.functions.invoke('edit-image', {
+        body: { 
+          imageUrl: selectedImage.image_url, 
+          editPrompt 
+        }
+      });
+
+      if (error) throw new Error(error.message);
+      if (data.error) throw new Error(data.error);
+
+      setEditedImageUrl(data.imageUrl);
+      await fetchHistory();
+
+      toast({
+        title: "Imagem editada!",
+        description: "Sua edição foi aplicada com sucesso."
+      });
+    } catch (error) {
+      console.error('Error editing image:', error);
+      toast({
+        title: "Erro ao editar",
+        description: error instanceof Error ? error.message : "Ocorreu um erro. Tente novamente.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsEditing(false);
+    }
+  };
+
+  const closeEditMode = () => {
+    setIsEditMode(false);
+    setEditPrompt("");
+    setEditedImageUrl(null);
   };
 
   const formatDate = (dateString: string) => {
@@ -218,10 +262,10 @@ export default function ImageGenerator() {
           </Link>
           <div>
             <h1 className="text-3xl font-bold text-foreground flex items-center">
-              <Image className="h-8 w-8 mr-3 text-[#e8e8e8]" />
+              <Image className="h-8 w-8 mr-3 text-primary" />
               Gerador de Imagens
             </h1>
-            <p className="text-muted-foreground">Crie imagens incríveis com inteligência artificial</p>
+            <p className="text-muted-foreground">Crie e edite imagens com inteligência artificial</p>
           </div>
         </div>
         <div className="flex items-center gap-2 px-4 py-2 bg-muted/50 rounded-lg">
@@ -236,9 +280,7 @@ export default function ImageGenerator() {
         {/* Form */}
         <Card className="bg-card border-border">
           <CardHeader>
-            <CardTitle className="text-card-foreground flex items-center">
-              Configurações
-            </CardTitle>
+            <CardTitle className="text-card-foreground">Configurações</CardTitle>
             <CardDescription>Descreva a imagem que deseja criar</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -310,9 +352,7 @@ export default function ImageGenerator() {
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-card-foreground flex items-center">
-                  Imagem Gerada
-                </CardTitle>
+                <CardTitle className="text-card-foreground">Imagem Gerada</CardTitle>
                 <CardDescription>
                   {generatedImage ? "Sua imagem está pronta!" : "Aguardando geração"}
                 </CardDescription>
@@ -349,7 +389,7 @@ export default function ImageGenerator() {
         <Card className="bg-card border-border">
           <CardHeader>
             <CardTitle className="text-card-foreground">Histórico de Imagens</CardTitle>
-            <CardDescription>Suas últimas {history.length} imagens geradas</CardDescription>
+            <CardDescription>Suas últimas {history.length} imagens geradas • Clique para ver, editar ou excluir</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -367,6 +407,11 @@ export default function ImageGenerator() {
                   <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                     <span className="text-white text-xs text-center px-2 line-clamp-3">{img.prompt}</span>
                   </div>
+                  {img.prompt.startsWith('[EDITADO]') && (
+                    <div className="absolute top-1 right-1 bg-primary/90 text-primary-foreground text-[10px] px-1.5 py-0.5 rounded">
+                      Editada
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -384,14 +429,14 @@ export default function ImageGenerator() {
               <li>• Mencione o estilo artístico desejado (realista, cartoon, aquarela, etc.)</li>
               <li>• Inclua detalhes sobre o ambiente e atmosfera</li>
               <li>• Use termos como "alta qualidade", "detalhado", "profissional"</li>
-              <li>• Evite instruções negativas (o que NÃO quer ver)</li>
+              <li>• Edite imagens existentes clicando nelas no histórico</li>
             </ul>
           </div>
         </CardContent>
       </Card>
 
       {/* Image Detail Modal */}
-      <Dialog open={!!selectedImage} onOpenChange={() => setSelectedImage(null)}>
+      <Dialog open={!!selectedImage && !isEditMode} onOpenChange={() => setSelectedImage(null)}>
         <DialogContent className="max-w-3xl">
           <DialogHeader>
             <DialogTitle>Detalhes da Imagem</DialogTitle>
@@ -407,7 +452,7 @@ export default function ImageGenerator() {
               </div>
               <div className="space-y-2">
                 <p className="text-sm text-muted-foreground">
-                  <span className="font-medium text-foreground">Prompt:</span> {selectedImage.prompt}
+                  <span className="font-medium text-foreground">Prompt:</span> {selectedImage.prompt.replace('[EDITADO] ', '')}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   <span className="font-medium text-foreground">Proporção:</span> {selectedImage.aspect_ratio}
@@ -421,6 +466,18 @@ export default function ImageGenerator() {
                   <Download className="h-4 w-4 mr-2" />
                   Baixar
                 </Button>
+                <Button 
+                  variant="secondary" 
+                  onClick={() => {
+                    setIsEditMode(true);
+                    setEditPrompt("");
+                    setEditedImageUrl(null);
+                  }}
+                  className="flex-1"
+                >
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Editar
+                </Button>
                 <Button
                   variant="destructive"
                   onClick={() => deleteImage(selectedImage)}
@@ -432,6 +489,95 @@ export default function ImageGenerator() {
                     <Trash2 className="h-4 w-4" />
                   )}
                 </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Image Modal */}
+      <Dialog open={isEditMode && !!selectedImage} onOpenChange={closeEditMode}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Editar Imagem com IA</DialogTitle>
+          </DialogHeader>
+          {selectedImage && (
+            <div className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Original */}
+                <div className="space-y-2">
+                  <Label className="text-sm text-muted-foreground">Original</Label>
+                  <div className="rounded-lg overflow-hidden border border-border">
+                    <img
+                      src={selectedImage.image_url}
+                      alt="Original"
+                      className="w-full h-auto max-h-[300px] object-contain"
+                    />
+                  </div>
+                </div>
+                
+                {/* Edited */}
+                <div className="space-y-2">
+                  <Label className="text-sm text-muted-foreground">Resultado</Label>
+                  <div className="rounded-lg overflow-hidden border border-border bg-muted/30 min-h-[200px] flex items-center justify-center">
+                    {editedImageUrl ? (
+                      <img
+                        src={editedImageUrl}
+                        alt="Editada"
+                        className="w-full h-auto max-h-[300px] object-contain"
+                      />
+                    ) : isEditing ? (
+                      <div className="text-center p-4">
+                        <div className="animate-spin rounded-full h-8 w-8 border-2 border-primary border-t-transparent mx-auto mb-2" />
+                        <p className="text-sm text-muted-foreground">Aplicando edição...</p>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">A imagem editada aparecerá aqui</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="editPrompt">Instrução de Edição</Label>
+                <Textarea
+                  id="editPrompt"
+                  value={editPrompt}
+                  onChange={e => setEditPrompt(e.target.value)}
+                  placeholder="Ex: Remova o fundo, Adicione um céu azul, Mude as cores para tons de azul..."
+                  className="bg-input border-border min-h-[80px]"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Descreva claramente o que você quer alterar na imagem.
+                </p>
+              </div>
+
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={closeEditMode} className="flex-1">
+                  Cancelar
+                </Button>
+                <Button 
+                  onClick={editImage} 
+                  disabled={isEditing || !editPrompt.trim()} 
+                  className="flex-1"
+                >
+                  {isEditing ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent mr-2" />
+                      Editando...
+                    </>
+                  ) : (
+                    <>
+                      <Pencil className="h-4 w-4 mr-2" />
+                      Aplicar Edição
+                    </>
+                  )}
+                </Button>
+                {editedImageUrl && (
+                  <Button variant="secondary" onClick={() => downloadImage(editedImageUrl, 'imagem-editada.png')}>
+                    <Download className="h-4 w-4" />
+                  </Button>
+                )}
               </div>
             </div>
           )}

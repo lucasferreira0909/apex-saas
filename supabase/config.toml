@@ -10,7 +10,7 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.generate-image]
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-copy]
 verify_jwt = false
@@ -19,4 +19,16 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.generate-offer]
+verify_jwt = false
+
+[functions.edit-image]
+verify_jwt = true
+
+[functions.generate-email]
+verify_jwt = false
+
+[functions.generate-script]
+verify_jwt = false
+
+[functions.generate-persona]
 verify_jwt = false
