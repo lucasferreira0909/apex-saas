@@ -8,7 +8,7 @@ import { Sheet, SheetBody, SheetClose, SheetContent, SheetDescription, SheetFoot
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { BoardTemplates } from '@/components/apex/BoardTemplates';
+
 import { KanbanBoard } from '@/components/apex/KanbanBoard';
 import { DataGrid, DataGridContainer } from '@/components/ui/data-grid';
 import { DataGridTable } from '@/components/ui/data-grid-table';
@@ -17,7 +17,7 @@ import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useBoards, useBoard, useCreateBoard, useDeleteBoard } from '@/hooks/useBoards';
 import { useCreateCard, useUpdateCard, useDeleteCard } from '@/hooks/useBoardCards';
 import { useCreateColumn, useUpdateMultipleColumnsOrder, useUpdateColumnTitle, useDeleteColumn } from '@/hooks/useBoardColumns';
-import { BoardTemplate, Board, BoardCard } from '@/types/board';
+import { Board, BoardCard, BoardTemplate } from '@/types/board';
 import { Plus, ArrowLeft, Trash2, Search, MoreHorizontal, Edit } from 'lucide-react';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 import { toast } from 'sonner';
@@ -35,7 +35,7 @@ import {
 export default function Boards() {
   const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false);
   const [isAddCardSheetOpen, setIsAddCardSheetOpen] = useState(false);
-  const [selectedTemplate, setSelectedTemplate] = useState<BoardTemplate | null>(null);
+  
   const [selectedBoardId, setSelectedBoardId] = useState<string | null>(null);
   const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null);
   const [customColumns, setCustomColumns] = useState<string[]>(['']);
@@ -87,21 +87,23 @@ export default function Boards() {
   const deleteColumn = useDeleteColumn();
   const createColumn = useCreateColumn();
 
-  const handleTemplateSelect = (template: BoardTemplate) => {
-    setSelectedTemplate(template);
-    if (template.id === 'leads') {
-      setCustomColumns(template.defaultColumns || []);
-    } else {
-      setCustomColumns(['']);
-    }
+  // Pre-select free template (only template available)
+  const freeTemplate: BoardTemplate = {
+    id: 'free',
+    title: 'Quadro Livre',
+    description: 'Crie seu próprio quadro personalizado com colunas customizáveis',
+    icon: null as any,
+    color: 'text-purple-600',
+    features: ['Colunas personalizadas', 'Flexibilidade total', 'Adaptável a qualquer processo'],
+    defaultColumns: []
   };
 
   const handleCreateBoard = async () => {
-    if (!boardName.trim() || !selectedTemplate) {
+    if (!boardName.trim()) {
       toast.error('Preencha o nome do quadro');
       return;
     }
-    const columns = selectedTemplate.id === 'leads' ? selectedTemplate.defaultColumns || [] : customColumns.filter(col => col.trim());
+    const columns = customColumns.filter(col => col.trim());
     if (columns.length === 0) {
       toast.error('Adicione pelo menos uma coluna');
       return;
@@ -109,12 +111,11 @@ export default function Boards() {
     const result = await createBoard.mutateAsync({
       name: boardName,
       description: boardDescription || undefined,
-      template_type: selectedTemplate.id,
+      template_type: 'free',
       columns
     });
     if (result) {
       setIsCreateSheetOpen(false);
-      setSelectedTemplate(null);
       setBoardName('');
       setBoardDescription('');
       setCustomColumns(['']);
@@ -285,10 +286,8 @@ export default function Boards() {
     {
       accessorKey: 'template_type',
       header: 'Tipo',
-      cell: (info) => (
-        <Badge variant="secondary" className="capitalize">
-          {(info.getValue() as string) === 'leads' ? 'Leads' : 'Livre'}
-        </Badge>
+      cell: () => (
+        <Badge variant="secondary">Livre</Badge>
       ),
       size: 120,
     },
@@ -357,7 +356,7 @@ export default function Boards() {
     getSortedRowModel: getSortedRowModel(),
   });
 
-  const isLeadsBoard = boardData?.board.template_type === 'leads';
+  const isLeadsBoard = false; // Leads template removed - all boards are free boards
 
   if (selectedBoardId && boardData) {
     return (
@@ -630,7 +629,6 @@ export default function Boards() {
       <Sheet open={isCreateSheetOpen} onOpenChange={open => {
         setIsCreateSheetOpen(open);
         if (!open) {
-          setSelectedTemplate(null);
           setBoardName('');
           setBoardDescription('');
           setCustomColumns(['']);
@@ -638,77 +636,50 @@ export default function Boards() {
       }}>
         <SheetContent className="sm:max-w-xl md:max-w-2xl">
           <SheetHeader>
-            <SheetTitle>
-              {!selectedTemplate ? 'Escolha um Modelo' : 'Configurar Quadro'}
-            </SheetTitle>
-            <SheetDescription>
-              {!selectedTemplate ? 'Selecione o tipo de quadro que deseja criar' : 'Preencha as informações do seu quadro'}
-            </SheetDescription>
+            <SheetTitle>Novo Quadro</SheetTitle>
+            <SheetDescription>Preencha as informações do seu quadro</SheetDescription>
           </SheetHeader>
           <SheetBody>
-            {!selectedTemplate ? (
-              <BoardTemplates onSelectTemplate={handleTemplateSelect} />
-            ) : (
-              <div className="grid gap-5">
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="board-name">Nome do Quadro *</Label>
-                  <Input id="board-name" placeholder="Digite o nome do quadro" value={boardName} onChange={e => setBoardName(e.target.value)} />
-                </div>
-                
-                {selectedTemplate.id === 'free' && (
-                  <div className="flex flex-col gap-2">
-                    <Label>Colunas</Label>
-                    {customColumns.map((col, index) => (
-                      <div key={index} className="flex gap-2">
-                        <Input 
-                          placeholder={`Coluna ${index + 1}`} 
-                          value={col} 
-                          onChange={e => {
-                            const newCols = [...customColumns];
-                            newCols[index] = e.target.value;
-                            setCustomColumns(newCols);
-                          }} 
-                        />
-                        {customColumns.length > 1 && (
-                          <Button variant="outline" size="sm" onClick={() => {
-                            setCustomColumns(customColumns.filter((_, i) => i !== index));
-                          }}>
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        )}
-                      </div>
-                    ))}
-                    <Button variant="outline" size="sm" onClick={() => setCustomColumns([...customColumns, ''])}>
-                      <Plus className="h-4 w-4 mr-2" />
-                      Adicionar Coluna
-                    </Button>
-                  </div>
-                )}
-                {selectedTemplate.id === 'leads' && (
-                  <div className="flex flex-col gap-2">
-                    <Label>Colunas (Pré-definidas)</Label>
-                    <ul className="space-y-1 text-sm text-muted-foreground">
-                      {selectedTemplate.defaultColumns?.map((col, index) => (
-                        <li key={index} className="flex items-center">
-                          <div className="w-1 h-1 bg-primary rounded-full mr-2"></div>
-                          {col}
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
+            <div className="grid gap-5">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="board-name">Nome do Quadro *</Label>
+                <Input id="board-name" placeholder="Digite o nome do quadro" value={boardName} onChange={e => setBoardName(e.target.value)} />
               </div>
-            )}
+              
+              <div className="flex flex-col gap-2">
+                <Label>Colunas</Label>
+                {customColumns.map((col, index) => (
+                  <div key={index} className="flex gap-2">
+                    <Input 
+                      placeholder={`Coluna ${index + 1}`} 
+                      value={col} 
+                      onChange={e => {
+                        const newCols = [...customColumns];
+                        newCols[index] = e.target.value;
+                        setCustomColumns(newCols);
+                      }} 
+                    />
+                    {customColumns.length > 1 && (
+                      <Button variant="outline" size="icon" onClick={() => {
+                        setCustomColumns(customColumns.filter((_, i) => i !== index));
+                      }}>
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    )}
+                  </div>
+                ))}
+                <Button variant="outline" size="sm" onClick={() => setCustomColumns([...customColumns, ''])}>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Adicionar Coluna
+                </Button>
+              </div>
+            </div>
           </SheetBody>
           <SheetFooter>
-            {selectedTemplate && (
-              <>
-                <Button variant="outline" onClick={() => setSelectedTemplate(null)}>
-                  Voltar
-                </Button>
-                <Button onClick={handleCreateBoard}>Criar Quadro</Button>
-              </>
-            )}
+            <SheetClose asChild>
+              <Button variant="outline">Cancelar</Button>
+            </SheetClose>
+            <Button onClick={handleCreateBoard}>Criar Quadro</Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>
