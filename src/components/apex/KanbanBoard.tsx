@@ -91,7 +91,6 @@ function CardItem({
 function Column({ 
   column, 
   cards, 
-  isOverlay,
   onAddCard,
   onDeleteCard,
   onEditColumn,
@@ -101,7 +100,6 @@ function Column({
 }: {
   column: BoardColumn;
   cards: BoardCard[];
-  isOverlay?: boolean;
   onAddCard: () => void;
   onDeleteCard: (cardId: string) => void;
   onEditColumn?: () => void;
@@ -116,25 +114,35 @@ function Column({
           <span className="font-semibold text-sm">{column.title}</span>
           <Badge variant="secondary">{cards.length}</Badge>
         </div>
-        {!hideColumnActions && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="bg-popover">
-              <DropdownMenuItem onClick={onEditColumn}>
-                <Pencil className="h-4 w-4 mr-2" />
-                Editar coluna
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={onDeleteColumn} className="text-destructive">
-                <Trash2 className="h-4 w-4 mr-2" />
-                Excluir coluna
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
+        <div className="flex items-center gap-1">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="h-7 w-7 p-0"
+            onClick={onAddCard}
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+          {!hideColumnActions && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-popover">
+                <DropdownMenuItem onClick={onEditColumn}>
+                  <Pencil className="h-4 w-4 mr-2" />
+                  Editar coluna
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onDeleteColumn} className="text-destructive">
+                  <Trash2 className="h-4 w-4 mr-2" />
+                  Excluir coluna
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
+        </div>
       </div>
       <KanbanColumnContent value={column.id} className="flex flex-col gap-2.5 p-0.5 min-h-[200px]">
         {cards.map((card) => (
@@ -145,17 +153,6 @@ function Column({
             onEdit={() => onEditCard?.(card)}
           />
         ))}
-        {!isOverlay && (
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            className="w-full justify-start text-muted-foreground"
-            onClick={onAddCard}
-          >
-            <Plus className="h-4 w-4 mr-2" />
-            Adicionar card
-          </Button>
-        )}
       </KanbanColumnContent>
     </KanbanColumn>
   );
