@@ -441,18 +441,10 @@ export default function Boards() {
                   <Label htmlFor="card-description">Descrição</Label>
                   <Textarea id="card-description" placeholder="Adicione uma descrição (opcional)" rows={4} value={cardDescription} onChange={e => setCardDescription(e.target.value)} />
                 </div>
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="card-priority">Prioridade</Label>
-                  <Select value={cardPriority} onValueChange={(value: 'low' | 'medium' | 'high') => setCardPriority(value)}>
-                    <SelectTrigger id="card-priority">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Baixa</SelectItem>
-                      <SelectItem value="medium">Média</SelectItem>
-                      <SelectItem value="high">Alta</SelectItem>
-                    </SelectContent>
-                  </Select>
+                <div className="flex flex-col gap-2 p-3 rounded-md bg-muted/50 border border-dashed">
+                  <p className="text-sm text-muted-foreground">
+                    Anexos podem ser adicionados após a criação do card, clicando nele para editar.
+                  </p>
                 </div>
               </div>
             </SheetBody>
