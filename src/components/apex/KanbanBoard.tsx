@@ -104,7 +104,7 @@ function Column({
   onEditCard?: (card: BoardCard) => void;
   hideColumnActions?: boolean;
 }) {
-  return <KanbanColumn value={column.id} className="rounded-md border bg-muted/30 p-2.5 shadow-xs min-w-[300px]">
+  return <KanbanColumn value={column.id} className="rounded-md border bg-muted/30 p-2.5 shadow-xs w-[300px] min-w-[300px] max-w-[300px] flex-shrink-0">
       <div className="flex items-center justify-between mb-2.5">
         <div className="flex items-center gap-2">
           <ColumnIcon iconName={column.icon} />
