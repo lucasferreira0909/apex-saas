@@ -2,7 +2,7 @@ import React, { useState, useMemo } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Calculator, MessageSquare, Hash, MessageSquareQuote, Image, ShoppingBag, FileText, Type, Tag, Mail, Video, Users, Search } from "lucide-react";
+import { Calculator, MessageSquare, Hash, MessageSquareQuote, Image, ShoppingBag, FileText, Type, Tag, Mail, Video, Users, Search, UserCircle, Receipt, Globe } from "lucide-react";
 import { Link } from "react-router-dom";
 
 type Category = 'all' | 'calculadoras' | 'conteudo' | 'visual' | 'marketing';
@@ -115,6 +115,33 @@ const tools: Tool[] = [
     icon: Hash,
     route: "/hashtag-generator",
     features: ["Hashtags inteligentes", "Análise de tendências", "Múltiplas categorias"],
+    category: "marketing"
+  },
+  {
+    id: "profile-structure-generator",
+    title: "Estrutura de Perfil",
+    description: "Crie a estrutura ideal para o perfil do seu negócio",
+    icon: UserCircle,
+    route: "/profile-structure-generator",
+    features: ["Bio otimizada", "Pilares de conteúdo", "CTA estratégico"],
+    category: "marketing"
+  },
+  {
+    id: "orderbump-generator",
+    title: "Gerador de OrderBumps",
+    description: "Crie OrderBumps persuasivos que aumentam seu ticket médio",
+    icon: Receipt,
+    route: "/orderbump-generator",
+    features: ["Headlines chamativas", "Benefícios estruturados", "Texto de checkbox"],
+    category: "marketing"
+  },
+  {
+    id: "useful-sites",
+    title: "Sites Úteis",
+    description: "Coleção curada de ferramentas e sites essenciais",
+    icon: Globe,
+    route: "/useful-sites",
+    features: ["Design e Marketing", "IA e Produtividade", "Pagamentos e E-commerce"],
     category: "marketing"
   },
   {
