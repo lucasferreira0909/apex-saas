@@ -1,4 +1,5 @@
-import { useState, useMemo, useRef } from 'react';
+import { useState, useMemo, useRef, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -44,10 +45,22 @@ import {
 } from '@tanstack/react-table';
 
 export default function Boards() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const navigate = useNavigate();
+  
   const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false);
   const [isAddCardSheetOpen, setIsAddCardSheetOpen] = useState(false);
   
-  const [selectedBoardId, setSelectedBoardId] = useState<string | null>(null);
+  // Read board ID from URL params
+  const selectedBoardId = searchParams.get('board');
+  
+  const setSelectedBoardId = (id: string | null) => {
+    if (id) {
+      setSearchParams({ board: id });
+    } else {
+      setSearchParams({});
+    }
+  };
   const [selectedColumnId, setSelectedColumnId] = useState<string | null>(null);
   const [customColumns, setCustomColumns] = useState<string[]>(['']);
   const [boardName, setBoardName] = useState('');
