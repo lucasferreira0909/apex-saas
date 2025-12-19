@@ -520,11 +520,11 @@ function SortableFolderItem({
   return (
     <SidebarMenuItem ref={setNodeRef} style={style}>
       <Collapsible open={isExpanded} onOpenChange={onToggle}>
-        <div className="flex items-center group">
+        <div className="flex items-center group/folder">
           <div
             {...attributes}
             {...listeners}
-            className="p-1 cursor-grab opacity-0 group-hover:opacity-100 transition-opacity"
+            className="p-1 cursor-grab opacity-0 group-hover/folder:opacity-100 transition-opacity"
           >
             <GripVertical className="h-3 w-3 text-muted-foreground" />
           </div>
@@ -542,7 +542,7 @@ function SortableFolderItem({
               <Button
                 variant="ghost"
                 size="icon"
-                className="h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                className="h-7 w-7 opacity-0 group-hover/folder:opacity-100 transition-opacity"
               >
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
