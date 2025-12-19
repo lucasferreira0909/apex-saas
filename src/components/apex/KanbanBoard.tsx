@@ -2,9 +2,10 @@ import * as React from 'react';
 import { Button } from '@/components/ui/button';
 import { Kanban, KanbanBoard as KanbanBoardUI, KanbanColumn, KanbanColumnContent, KanbanItem, KanbanOverlay } from '@/components/ui/kanban';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Pencil, Plus, Trash2, Link2 } from 'lucide-react';
 import { icons } from 'lucide-react';
 import { BoardCard, BoardColumn } from '@/types/board';
+import { useCardAttachments } from '@/hooks/useCardAttachments';
 interface KanbanBoardProps {
   columns: BoardColumn[];
   cards: BoardCard[];
@@ -26,10 +27,13 @@ function CardItem({
   onDelete: () => void;
   onEdit?: () => void;
 }) {
+  const { data: attachments } = useCardAttachments(card.id);
+  const attachmentCount = attachments?.length || 0;
+
   return <KanbanItem value={card.id}>
       <div className="rounded-md border bg-card p-3 shadow-xs group cursor-grab active:cursor-grabbing hover:border-primary/50 transition-colors" onClick={e => {
       // Only trigger edit if not dragging
-      if (!(e.target as HTMLElement).closest('button')) {
+      if (!(e.target as HTMLElement).closest('button') && !(e.target as HTMLElement).closest('a')) {
         onEdit?.();
       }
     }}>
@@ -38,6 +42,30 @@ function CardItem({
             <span className="line-clamp-2 font-medium text-sm">{card.title}</span>
           </div>
           {card.description && <p className="text-xs text-muted-foreground line-clamp-2">{card.description}</p>}
+          
+          {attachmentCount > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {attachments?.slice(0, 3).map(attachment => (
+                <a
+                  key={attachment.id}
+                  href={attachment.file_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-1 text-xs text-muted-foreground hover:text-primary transition-colors bg-muted/50 px-1.5 py-0.5 rounded"
+                  onClick={e => e.stopPropagation()}
+                >
+                  <Link2 className="h-3 w-3" />
+                  <span className="truncate max-w-[80px]">{attachment.file_name}</span>
+                </a>
+              ))}
+              {attachmentCount > 3 && (
+                <span className="text-xs text-muted-foreground bg-muted/50 px-1.5 py-0.5 rounded">
+                  +{attachmentCount - 3}
+                </span>
+              )}
+            </div>
+          )}
+          
           <div className="flex items-center justify-end">
             <Button variant="ghost" size="sm" onClick={e => {
             e.stopPropagation();
