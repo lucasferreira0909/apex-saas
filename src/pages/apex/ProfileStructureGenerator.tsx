@@ -5,61 +5,73 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { UserCircle, ArrowLeft, Copy, Check, AtSign, Target, Lightbulb, MessageSquare, Hash } from "lucide-react";
+import { UserCircle, ArrowLeft, Copy, Check, Grid3X3, Heart, MessageCircle, Send, Bookmark, MoreHorizontal, Settings, ChevronDown, Sparkles, Image, Film, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 
-interface GeneratedProfile {
+interface GeneratedBio {
   bio: string;
   highlights: string[];
-  contentPillars: string[];
   cta: string;
-  keywords: string[];
-  tips: string[];
 }
 
 export default function ProfileStructureGenerator() {
-  const [businessName, setBusinessName] = useState("");
+  const [username, setUsername] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const [niche, setNiche] = useState("");
-  const [platform, setPlatform] = useState("");
   const [valueProposition, setValueProposition] = useState("");
   const [tone, setTone] = useState("");
-  const [generatedProfile, setGeneratedProfile] = useState<GeneratedProfile | null>(null);
+  const [generatedBio, setGeneratedBio] = useState<GeneratedBio | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
 
-  const generateProfile = async () => {
-    if (!businessName.trim() || !niche.trim() || !platform) {
+  // Mock data for the Instagram preview
+  const postsCount = "127";
+  const followersCount = "12.5K";
+  const followingCount = "892";
+
+  const generateBio = async () => {
+    if (!displayName.trim() || !niche.trim()) {
       toast({
         title: "Erro",
-        description: "Por favor, preencha o nome do negócio, nicho e plataforma.",
+        description: "Por favor, preencha o nome e nicho.",
         variant: "destructive"
       });
       return;
     }
 
     setIsGenerating(true);
-    setGeneratedProfile(null);
 
     try {
       const { data, error } = await supabase.functions.invoke('generate-profile-structure', {
-        body: { businessName, niche, platform, valueProposition, tone }
+        body: { 
+          businessName: displayName, 
+          niche, 
+          platform: "instagram", 
+          valueProposition, 
+          tone 
+        }
       });
 
       if (error) throw new Error(error.message);
       if (data.error) throw new Error(data.error);
 
-      setGeneratedProfile(data);
+      setGeneratedBio({
+        bio: data.bio,
+        highlights: data.highlights || [],
+        cta: data.cta || ""
+      });
+      
       toast({
-        title: "Estrutura gerada!",
-        description: "A estrutura do seu perfil está pronta."
+        title: "Bio gerada!",
+        description: "Sua bio está pronta. Veja o preview atualizado."
       });
     } catch (error) {
-      console.error('Error generating profile structure:', error);
+      console.error('Error generating bio:', error);
       toast({
-        title: "Erro ao gerar estrutura",
+        title: "Erro ao gerar bio",
         description: error instanceof Error ? error.message : "Ocorreu um erro. Tente novamente.",
         variant: "destructive"
       });
@@ -68,36 +80,25 @@ export default function ProfileStructureGenerator() {
     }
   };
 
-  const copyProfile = async () => {
-    if (!generatedProfile) return;
-    const profileText = `ESTRUTURA DE PERFIL - ${platform.toUpperCase()}
+  const copyBio = async () => {
+    if (!generatedBio) return;
+    
+    const bioText = `${generatedBio.bio}
 
-BIO
-${generatedProfile.bio}
+${generatedBio.cta}`;
 
-DESTAQUES/SEÇÕES
-${generatedProfile.highlights.map((h, i) => `${i + 1}. ${h}`).join('\n')}
-
-PILARES DE CONTEÚDO
-${generatedProfile.contentPillars.map(p => `• ${p}`).join('\n')}
-
-CALL-TO-ACTION
-${generatedProfile.cta}
-
-PALAVRAS-CHAVE
-${generatedProfile.keywords.join(', ')}
-
-DICAS
-${generatedProfile.tips.map(t => `• ${t}`).join('\n')}`;
-
-    await navigator.clipboard.writeText(profileText);
+    await navigator.clipboard.writeText(bioText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
     toast({
       title: "Copiado!",
-      description: "Estrutura copiada para a área de transferência."
+      description: "Bio copiada para a área de transferência."
     });
   };
+
+  // Display bio - use generated or show placeholder
+  const displayBio = generatedBio?.bio || (niche ? `${niche} • Transformando ideias em resultados` : "Sua bio aparecerá aqui...");
+  const displayCta = generatedBio?.cta || (valueProposition ? "👇 Saiba mais" : "");
 
   return (
     <div className="space-y-6">
@@ -109,31 +110,43 @@ ${generatedProfile.tips.map(t => `• ${t}`).join('\n')}`;
           </Button>
         </Link>
         <div>
-          <h1 className="text-3xl font-bold text-foreground flex items-center">
-            <UserCircle className="h-8 w-8 mr-3 text-primary" />
+          <h1 className="text-2xl font-bold text-foreground flex items-center">
+            <UserCircle className="h-6 w-6 mr-2 text-[#e8e8e8]" />
             Estrutura de Perfil
           </h1>
-          <p className="text-muted-foreground">Crie a estrutura ideal para o perfil do seu negócio</p>
+          <p className="text-muted-foreground">Crie a estrutura ideal para o perfil do Instagram</p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Form */}
-        <Card className="bg-card border-border">
+        <Card>
           <CardHeader>
-            <CardTitle className="text-card-foreground">Configurações</CardTitle>
-            <CardDescription>Informe sobre seu negócio e plataforma</CardDescription>
+            <CardTitle>Configurar Perfil</CardTitle>
+            <CardDescription>Preencha os dados para gerar sua bio</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="businessName">Nome do Negócio/Marca *</Label>
-              <Input
-                id="businessName"
-                value={businessName}
-                onChange={e => setBusinessName(e.target.value)}
-                placeholder="Ex: Studio Criativo Design"
-                className="bg-input border-border"
-              />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="username">@ Username</Label>
+                <Input
+                  id="username"
+                  value={username}
+                  onChange={e => setUsername(e.target.value.replace(/\s/g, '').toLowerCase())}
+                  placeholder="seunome"
+                  className="bg-input border-border"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="displayName">Nome de Exibição *</Label>
+                <Input
+                  id="displayName"
+                  value={displayName}
+                  onChange={e => setDisplayName(e.target.value)}
+                  placeholder="Seu Nome ou Marca"
+                  className="bg-input border-border"
+                />
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -142,25 +155,9 @@ ${generatedProfile.tips.map(t => `• ${t}`).join('\n')}`;
                 id="niche"
                 value={niche}
                 onChange={e => setNiche(e.target.value)}
-                placeholder="Ex: Design gráfico para pequenas empresas"
+                placeholder="Ex: Marketing Digital, Fitness, Gastronomia..."
                 className="bg-input border-border"
               />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="platform">Plataforma *</Label>
-              <Select value={platform} onValueChange={setPlatform}>
-                <SelectTrigger className="bg-input border-border">
-                  <SelectValue placeholder="Selecione a plataforma" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="instagram">Instagram</SelectItem>
-                  <SelectItem value="tiktok">TikTok</SelectItem>
-                  <SelectItem value="youtube">YouTube</SelectItem>
-                  <SelectItem value="linkedin">LinkedIn</SelectItem>
-                  <SelectItem value="twitter">Twitter/X</SelectItem>
-                </SelectContent>
-              </Select>
             </div>
 
             <div className="space-y-2">
@@ -169,7 +166,7 @@ ${generatedProfile.tips.map(t => `• ${t}`).join('\n')}`;
                 id="valueProposition"
                 value={valueProposition}
                 onChange={e => setValueProposition(e.target.value)}
-                placeholder="O que torna seu negócio único? Qual transformação você oferece?"
+                placeholder="O que torna você/seu negócio único? Qual transformação você oferece?"
                 className="bg-input border-border min-h-[80px]"
               />
             </div>
@@ -190,122 +187,193 @@ ${generatedProfile.tips.map(t => `• ${t}`).join('\n')}`;
               </Select>
             </div>
 
-            <Button onClick={generateProfile} disabled={isGenerating || !businessName.trim() || !niche.trim() || !platform} className="w-full">
+            <Button 
+              onClick={generateBio} 
+              disabled={isGenerating || !displayName.trim() || !niche.trim()} 
+              className="w-full"
+            >
               {isGenerating ? (
                 <>
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent mr-2" />
-                  Gerando Estrutura...
+                  Gerando Bio...
                 </>
               ) : (
                 <>
-                  <UserCircle className="h-4 w-4 mr-2" />
-                  Gerar Estrutura
+                  <Sparkles className="h-4 w-4 mr-2" />
+                  Gerar Bio com IA
                 </>
               )}
             </Button>
           </CardContent>
         </Card>
 
-        {/* Result */}
-        <Card className="bg-card border-border">
+        {/* Instagram Mockup Preview */}
+        <Card>
           <CardHeader>
             <div className="flex items-center justify-between">
               <div>
-                <CardTitle className="text-card-foreground">Estrutura Gerada</CardTitle>
-                <CardDescription>{generatedProfile ? "Sua estrutura está pronta!" : "Aguardando geração"}</CardDescription>
+                <CardTitle>Prévia do Perfil</CardTitle>
+                <CardDescription>Visualize como ficará seu perfil no Instagram</CardDescription>
               </div>
-              {generatedProfile && (
-                <Button variant="outline" size="sm" onClick={copyProfile}>
+              {generatedBio && (
+                <Button variant="outline" size="sm" onClick={copyBio}>
                   {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
-                  Copiar
+                  Copiar Bio
                 </Button>
               )}
             </div>
           </CardHeader>
           <CardContent>
-            {!generatedProfile ? (
-              <div className="text-center py-12">
-                <UserCircle className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-                <h3 className="text-lg font-medium text-card-foreground mb-2">Nenhuma estrutura gerada</h3>
-                <p className="text-muted-foreground">Configure e clique em "Gerar Estrutura"</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
-                {/* Bio */}
-                <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
-                  <div className="flex items-center gap-2 mb-2">
-                    <AtSign className="h-4 w-4 text-primary" />
-                    <Label className="text-xs text-primary font-medium">BIO</Label>
+            {/* Instagram Profile Mockup */}
+            <div className="rounded-xl overflow-hidden border border-border bg-black max-w-[320px] mx-auto">
+              {/* Status Bar */}
+              <div className="bg-black px-4 py-2 flex items-center justify-between text-white text-xs">
+                <span>9:41</span>
+                <div className="flex items-center gap-1">
+                  <div className="w-4 h-2 border border-white rounded-sm">
+                    <div className="w-3/4 h-full bg-white rounded-sm" />
                   </div>
-                  <p className="text-foreground whitespace-pre-line">{generatedProfile.bio}</p>
+                </div>
+              </div>
+
+              {/* Instagram Header */}
+              <div className="bg-black px-4 py-2 flex items-center justify-between">
+                <div className="flex items-center gap-1">
+                  <span className="text-white font-semibold text-sm">
+                    {username || "username"}
+                  </span>
+                  <ChevronDown className="h-4 w-4 text-white" />
+                </div>
+                <div className="flex items-center gap-4">
+                  <div className="w-5 h-5 border-2 border-white rounded-md" />
+                  <MoreHorizontal className="h-5 w-5 text-white" />
+                </div>
+              </div>
+
+              {/* Profile Section */}
+              <div className="bg-black px-4 py-4">
+                {/* Profile Picture and Stats */}
+                <div className="flex items-center gap-6 mb-4">
+                  {/* Profile Picture */}
+                  <div className="w-20 h-20 rounded-full bg-gradient-to-tr from-yellow-400 via-pink-500 to-purple-600 p-0.5 flex-shrink-0">
+                    <div className="w-full h-full rounded-full bg-black flex items-center justify-center">
+                      <User className="h-10 w-10 text-gray-400" />
+                    </div>
+                  </div>
+
+                  {/* Stats */}
+                  <div className="flex-1 flex justify-around">
+                    <div className="text-center">
+                      <p className="text-white font-semibold text-lg">{postsCount}</p>
+                      <p className="text-gray-400 text-xs">posts</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-white font-semibold text-lg">{followersCount}</p>
+                      <p className="text-gray-400 text-xs">seguidores</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-white font-semibold text-lg">{followingCount}</p>
+                      <p className="text-gray-400 text-xs">seguindo</p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Name and Bio */}
+                <div className="mb-4">
+                  <p className="text-white font-semibold text-sm mb-1">
+                    {displayName || "Seu Nome"}
+                  </p>
+                  <p className="text-gray-300 text-sm whitespace-pre-line leading-relaxed">
+                    {displayBio}
+                  </p>
+                  {displayCta && (
+                    <p className="text-blue-400 text-sm mt-1">{displayCta}</p>
+                  )}
                 </div>
 
                 {/* Highlights */}
-                <div className="p-4 bg-amber-500/10 rounded-lg border border-amber-500/20">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Target className="h-4 w-4 text-amber-500" />
-                    <Label className="text-xs text-amber-600 font-medium">DESTAQUES/SEÇÕES</Label>
-                  </div>
-                  <ul className="space-y-2">
-                    {generatedProfile.highlights.map((highlight, i) => (
-                      <li key={i} className="text-sm text-foreground flex items-start gap-2">
-                        <span className="font-bold text-amber-500">{i + 1}.</span>{highlight}
-                      </li>
+                {generatedBio?.highlights && generatedBio.highlights.length > 0 && (
+                  <div className="flex gap-4 overflow-x-auto pb-2 mb-4">
+                    {generatedBio.highlights.slice(0, 5).map((highlight, i) => (
+                      <div key={i} className="flex flex-col items-center gap-1 flex-shrink-0">
+                        <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-gray-700 to-gray-600 p-0.5">
+                          <div className="w-full h-full rounded-full bg-gray-800 flex items-center justify-center">
+                            <span className="text-2xl">
+                              {['📌', '💡', '🎯', '⭐', '🚀'][i]}
+                            </span>
+                          </div>
+                        </div>
+                        <span className="text-white text-[10px] text-center max-w-[64px] truncate">
+                          {highlight.split(' ').slice(0, 2).join(' ')}
+                        </span>
+                      </div>
                     ))}
-                  </ul>
+                    <div className="flex flex-col items-center gap-1 flex-shrink-0">
+                      <div className="w-16 h-16 rounded-full border border-dashed border-gray-600 flex items-center justify-center">
+                        <span className="text-gray-500 text-2xl">+</span>
+                      </div>
+                      <span className="text-gray-500 text-[10px]">Novo</span>
+                    </div>
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex gap-2 mb-4">
+                  <button className="flex-1 bg-blue-500 text-white text-sm font-semibold py-1.5 rounded-lg">
+                    Seguir
+                  </button>
+                  <button className="flex-1 bg-gray-800 text-white text-sm font-semibold py-1.5 rounded-lg">
+                    Mensagem
+                  </button>
+                  <button className="bg-gray-800 text-white px-3 py-1.5 rounded-lg">
+                    <ChevronDown className="h-4 w-4" />
+                  </button>
                 </div>
 
-                {/* Content Pillars */}
-                <div className="p-4 bg-green-500/10 rounded-lg border border-green-500/20">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Lightbulb className="h-4 w-4 text-green-500" />
-                    <Label className="text-xs text-green-600 font-medium">PILARES DE CONTEÚDO</Label>
-                  </div>
-                  <ul className="space-y-1">
-                    {generatedProfile.contentPillars.map((pillar, i) => (
-                      <li key={i} className="text-sm text-foreground flex items-start gap-2">
-                        <span className="text-green-500">•</span>{pillar}
-                      </li>
-                    ))}
-                  </ul>
+                {/* Tabs */}
+                <div className="flex border-t border-gray-800">
+                  <button className="flex-1 py-3 flex justify-center border-b border-white">
+                    <Grid3X3 className="h-5 w-5 text-white" />
+                  </button>
+                  <button className="flex-1 py-3 flex justify-center">
+                    <Film className="h-5 w-5 text-gray-500" />
+                  </button>
+                  <button className="flex-1 py-3 flex justify-center">
+                    <User className="h-5 w-5 text-gray-500" />
+                  </button>
                 </div>
 
-                {/* CTA */}
-                <div className="p-4 bg-blue-500/10 rounded-lg border border-blue-500/20">
-                  <div className="flex items-center gap-2 mb-2">
-                    <MessageSquare className="h-4 w-4 text-blue-500" />
-                    <Label className="text-xs text-blue-600 font-medium">CALL-TO-ACTION</Label>
-                  </div>
-                  <p className="text-foreground font-medium">{generatedProfile.cta}</p>
+                {/* Grid Preview */}
+                <div className="grid grid-cols-3 gap-0.5">
+                  {[...Array(6)].map((_, i) => (
+                    <div key={i} className="aspect-square bg-gray-800 flex items-center justify-center">
+                      <Image className="h-6 w-6 text-gray-600" />
+                    </div>
+                  ))}
                 </div>
+              </div>
 
-                {/* Keywords */}
-                <div className="p-4 bg-purple-500/10 rounded-lg border border-purple-500/20">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Hash className="h-4 w-4 text-purple-500" />
-                    <Label className="text-xs text-purple-600 font-medium">PALAVRAS-CHAVE</Label>
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    {generatedProfile.keywords.map((keyword, i) => (
-                      <span key={i} className="px-2 py-1 bg-purple-500/20 rounded text-xs text-purple-700">{keyword}</span>
-                    ))}
-                  </div>
-                </div>
+              {/* Bottom Navigation */}
+              <div className="bg-black border-t border-gray-800 px-6 py-3 flex justify-between">
+                <div className="w-6 h-6 border-2 border-white" />
+                <div className="w-6 h-6 text-gray-500">🔍</div>
+                <div className="w-6 h-6 border border-gray-500 rounded" />
+                <Heart className="h-6 w-6 text-gray-500" />
+                <div className="w-6 h-6 rounded-full bg-gray-600" />
+              </div>
+            </div>
 
-                {/* Tips */}
-                <div className="p-4 bg-muted/50 rounded-lg">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Lightbulb className="h-4 w-4 text-muted-foreground" />
-                    <Label className="text-xs text-muted-foreground">DICAS</Label>
-                  </div>
-                  <ul className="space-y-1">
-                    {generatedProfile.tips.map((tip, i) => (
-                      <li key={i} className="text-sm text-muted-foreground flex items-start gap-2">
-                        <span>💡</span>{tip}
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+            {/* Tips */}
+            {generatedBio && (
+              <div className="mt-4 p-4 bg-muted/50 rounded-lg">
+                <h4 className="text-sm font-medium text-foreground mb-2">💡 Destaques Sugeridos</h4>
+                <ul className="space-y-1 text-sm text-muted-foreground">
+                  {generatedBio.highlights.map((highlight, i) => (
+                    <li key={i} className="flex items-start gap-2">
+                      <span className="text-primary">•</span>{highlight}
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
           </CardContent>
