@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { HeadphonesIcon, Settings, Zap, LogOut, Wrench, LayoutGrid } from "lucide-react";
+import { HeadphonesIcon, Settings, Workflow, LogOut, Wrench, LayoutGrid } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
@@ -12,7 +12,7 @@ import apexLogoFull from "@/assets/apex-logo-full.png";
 const projectItems = [{
   title: "Funis",
   url: "/funnels",
-  icon: Zap
+  icon: Workflow
 }, {
   title: "Quadros",
   url: "/tasks",
