@@ -38,13 +38,15 @@ export default function ApexSettings() {
     const hasMinLength = passwordData.newPassword.length >= 6;
     const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>\/\\]/.test(passwordData.newPassword);
     const passwordsMatch = passwordData.newPassword === passwordData.confirmPassword && passwordData.confirmPassword.length > 0;
+    const isDifferentFromCurrent = passwordData.currentPassword.length > 0 && passwordData.newPassword !== passwordData.currentPassword;
     return {
       hasMinLength,
       hasSpecialChar,
       passwordsMatch,
-      isValid: hasMinLength && hasSpecialChar && passwordsMatch
+      isDifferentFromCurrent,
+      isValid: hasMinLength && hasSpecialChar && passwordsMatch && isDifferentFromCurrent
     };
-  }, [passwordData.newPassword, passwordData.confirmPassword]);
+  }, [passwordData.newPassword, passwordData.confirmPassword, passwordData.currentPassword]);
   const tabs = [{
     id: "profile",
     label: "Perfil",
@@ -315,6 +317,12 @@ export default function ApexSettings() {
                             {passwordValidation.passwordsMatch ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4" />}
                             <span className={passwordValidation.passwordsMatch ? "text-green-500" : ""}>
                               As senhas coincidem
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {passwordValidation.isDifferentFromCurrent ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4" />}
+                            <span className={passwordValidation.isDifferentFromCurrent ? "text-green-500" : ""}>
+                              A senha deve ser diferente da anterior
                             </span>
                           </div>
                         </AlertDescription>
