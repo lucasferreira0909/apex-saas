@@ -474,6 +474,65 @@ export type Database = {
         }
         Relationships: []
       }
+      sidebar_folder_items: {
+        Row: {
+          created_at: string
+          folder_id: string
+          id: string
+          item_id: string
+          item_type: string
+          order_index: number
+        }
+        Insert: {
+          created_at?: string
+          folder_id: string
+          id?: string
+          item_id: string
+          item_type: string
+          order_index?: number
+        }
+        Update: {
+          created_at?: string
+          folder_id?: string
+          id?: string
+          item_id?: string
+          item_type?: string
+          order_index?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sidebar_folder_items_folder_id_fkey"
+            columns: ["folder_id"]
+            isOneToOne: false
+            referencedRelation: "sidebar_folders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sidebar_folders: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          order_index: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          order_index?: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          order_index?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
