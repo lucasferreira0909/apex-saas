@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -17,9 +17,10 @@ import { DataGridPagination } from '@/components/ui/data-grid-pagination';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useBoards, useBoard, useCreateBoard, useDeleteBoard } from '@/hooks/useBoards';
 import { useCreateCard, useUpdateCard, useDeleteCard } from '@/hooks/useBoardCards';
+import { useUploadAttachment } from '@/hooks/useCardAttachments';
 import { useCreateColumn, useUpdateMultipleColumnsOrder, useUpdateColumnTitle, useDeleteColumn, useUpdateColumnIcon } from '@/hooks/useBoardColumns';
 import { Board, BoardCard, BoardTemplate } from '@/types/board';
-import { Plus, ArrowLeft, Trash2, Search, MoreHorizontal, Edit } from 'lucide-react';
+import { Plus, ArrowLeft, Trash2, Search, MoreHorizontal, Edit, Upload, X, FileText, Image, File, Loader2 } from 'lucide-react';
 import { icons } from 'lucide-react';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 import { IconPickerDialog } from '@/components/apex/IconPickerDialog';
@@ -88,6 +89,12 @@ export default function Boards() {
 
   // Icon picker states
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
+  
+  // Pending attachments for new card
+  const [pendingFiles, setPendingFiles] = useState<File[]>([]);
+  const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
+  const addCardFileInputRef = useRef<HTMLInputElement>(null);
+  
   const { data: boards, isLoading: loadingBoards } = useBoards();
   const { data: boardData, isLoading: loadingBoard } = useBoard(selectedBoardId);
   const createBoard = useCreateBoard();
@@ -95,6 +102,7 @@ export default function Boards() {
   const createCard = useCreateCard();
   const updateCard = useUpdateCard();
   const deleteCard = useDeleteCard();
+  const uploadAttachment = useUploadAttachment();
   const updateColumnsOrder = useUpdateMultipleColumnsOrder();
   const updateColumnTitle = useUpdateColumnTitle();
   const updateColumnIcon = useUpdateColumnIcon();
@@ -144,7 +152,8 @@ export default function Boards() {
     }
     const columnCards = boardData?.cards.filter(c => c.column_id === selectedColumnId) || [];
     const maxOrderIndex = columnCards.length > 0 ? Math.max(...columnCards.map(c => c.order_index)) : -1;
-    await createCard.mutateAsync({
+    
+    const newCard = await createCard.mutateAsync({
       board_id: selectedBoardId,
       column_id: selectedColumnId,
       title: cardTitle,
@@ -152,11 +161,45 @@ export default function Boards() {
       priority: cardPriority,
       order_index: maxOrderIndex + 1
     });
+    
+    // Upload pending attachments
+    if (pendingFiles.length > 0 && newCard) {
+      setIsUploadingAttachments(true);
+      try {
+        for (const file of pendingFiles) {
+          await uploadAttachment.mutateAsync({ cardId: newCard.id, file });
+        }
+      } catch (error) {
+        console.error('Error uploading attachments:', error);
+      }
+      setIsUploadingAttachments(false);
+    }
+    
     setIsAddCardSheetOpen(false);
     setCardTitle('');
     setCardDescription('');
     setCardPriority('medium');
+    setPendingFiles([]);
     setSelectedColumnId(null);
+  };
+  
+  const handleAddPendingFile = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setPendingFiles(prev => [...prev, ...Array.from(files)]);
+    if (addCardFileInputRef.current) {
+      addCardFileInputRef.current.value = '';
+    }
+  };
+  
+  const handleRemovePendingFile = (index: number) => {
+    setPendingFiles(prev => prev.filter((_, i) => i !== index));
+  };
+  
+  const getFileIcon = (fileType: string) => {
+    if (fileType.startsWith('image/')) return Image;
+    if (fileType.includes('pdf') || fileType.includes('document') || fileType.includes('text')) return FileText;
+    return File;
   };
 
   const handleCardMove = (cardId: string, newColumnId: string, newOrderIndex: number) => {
@@ -441,10 +484,55 @@ export default function Boards() {
                   <Label htmlFor="card-description">Descrição</Label>
                   <Textarea id="card-description" placeholder="Adicione uma descrição (opcional)" rows={4} value={cardDescription} onChange={e => setCardDescription(e.target.value)} />
                 </div>
-                <div className="flex flex-col gap-2 p-3 rounded-md bg-muted/50 border border-dashed">
-                  <p className="text-sm text-muted-foreground">
-                    Anexos podem ser adicionados após a criação do card, clicando nele para editar.
-                  </p>
+                <div className="flex flex-col gap-2">
+                  <Label>Anexos</Label>
+                  <div className="flex flex-col gap-2">
+                    <Button 
+                      type="button"
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => addCardFileInputRef.current?.click()}
+                      className="w-fit"
+                    >
+                      <Upload className="h-4 w-4 mr-1" />
+                      Anexar arquivo
+                    </Button>
+                    <input
+                      ref={addCardFileInputRef}
+                      type="file"
+                      multiple
+                      className="hidden"
+                      onChange={handleAddPendingFile}
+                      accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
+                    />
+                    {pendingFiles.length > 0 && (
+                      <div className="flex flex-col gap-1.5 mt-1">
+                        {pendingFiles.map((file, index) => {
+                          const FileIcon = getFileIcon(file.type);
+                          return (
+                            <div 
+                              key={index}
+                              className="flex items-center gap-2 p-2 rounded-md border bg-muted/30 group"
+                            >
+                              <div className="h-8 w-8 flex items-center justify-center bg-muted rounded">
+                                <FileIcon className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                              <span className="flex-1 text-sm truncate">{file.name}</span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0"
+                                onClick={() => handleRemovePendingFile(index)}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </SheetBody>
@@ -452,7 +540,10 @@ export default function Boards() {
               <SheetClose asChild>
                 <Button variant="outline">Cancelar</Button>
               </SheetClose>
-              <Button onClick={handleAddCard}>Adicionar</Button>
+              <Button onClick={handleAddCard} disabled={isUploadingAttachments || createCard.isPending}>
+                {(isUploadingAttachments || createCard.isPending) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Adicionar
+              </Button>
             </SheetFooter>
           </SheetContent>
         </Sheet>
