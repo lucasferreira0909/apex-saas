@@ -125,6 +125,38 @@ export function ApexSidebar() {
         </SidebarGroup>
 
         <SidebarProjectsSection />
+
+        <SidebarGroup className="mt-auto">
+          <SidebarGroupLabel className="text-sidebar-foreground/60">Menu</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              {menuItems.map(item => (
+                <SidebarMenuItem key={item.title}>
+                  <SidebarMenuButton asChild>
+                    <NavLink 
+                      to={item.url} 
+                      className={`flex items-center gap-3 rounded-lg px-3 py-2 transition-all duration-200 ${isActive(item.url) ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" : "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"}`}
+                    >
+                      <item.icon className="h-4 w-4 flex-shrink-0" />
+                      <span>{item.title}</span>
+                    </NavLink>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <button 
+                    onClick={handleSignOut}
+                    className="flex items-center gap-3 rounded-lg px-3 py-2 w-full text-left text-destructive hover:bg-destructive/10 transition-all duration-200"
+                  >
+                    <LogOut className="h-4 w-4 flex-shrink-0" />
+                    <span>Sair</span>
+                  </button>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
       </SidebarContent>
     </Sidebar>;
 }
