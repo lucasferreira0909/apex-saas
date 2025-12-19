@@ -1,12 +1,13 @@
 import { useState } from "react";
-import { HeadphonesIcon, Settings, Zap, LogOut, Wrench, LayoutGrid, MoreHorizontal } from "lucide-react";
+import { HeadphonesIcon, Settings, Zap, LogOut, Wrench, LayoutGrid } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
-import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarFooter } from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { SidebarProjectsSection } from "@/components/apex/SidebarProjectsSection";
 import apexLogoFull from "@/assets/apex-logo-full.png";
 const projectItems = [{
   title: "Funis",
@@ -122,8 +123,8 @@ export function ApexSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
-      </SidebarContent>
 
-      
+        <SidebarProjectsSection />
+      </SidebarContent>
     </Sidebar>;
 }
