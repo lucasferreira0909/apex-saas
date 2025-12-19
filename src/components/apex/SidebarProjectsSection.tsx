@@ -534,7 +534,6 @@ function SortableFolderItem({
                 "h-4 w-4 transition-transform",
                 isExpanded && "rotate-90"
               )} />
-              <Folder className="h-4 w-4 text-amber-500" />
               <span className="truncate">{folder.name}</span>
             </SidebarMenuButton>
           </CollapsibleTrigger>
@@ -634,9 +633,9 @@ function SortableProjectItem({ item, onItemClick, onRemoveItem }: SortableProjec
         onClick={() => onItemClick(item)}
       >
         {item.item_type === 'funnel' ? (
-          <Zap className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+          <Zap className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#e8e8e8' }} />
         ) : (
-          <LayoutGrid className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
+          <LayoutGrid className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#e8e8e8' }} />
         )}
         <span className="truncate">{item.item_name || 'Sem nome'}</span>
       </button>
