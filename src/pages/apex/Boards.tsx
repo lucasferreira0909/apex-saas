@@ -10,6 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 import { KanbanBoard } from '@/components/apex/KanbanBoard';
+import { CardAttachments } from '@/components/apex/CardAttachments';
 import { DataGrid, DataGridContainer } from '@/components/ui/data-grid';
 import { DataGridTable } from '@/components/ui/data-grid-table';
 import { DataGridPagination } from '@/components/ui/data-grid-pagination';
@@ -19,9 +20,17 @@ import { useCreateCard, useUpdateCard, useDeleteCard } from '@/hooks/useBoardCar
 import { useCreateColumn, useUpdateMultipleColumnsOrder, useUpdateColumnTitle, useDeleteColumn, useUpdateColumnIcon } from '@/hooks/useBoardColumns';
 import { Board, BoardCard, BoardTemplate } from '@/types/board';
 import { Plus, ArrowLeft, Trash2, Search, MoreHorizontal, Edit } from 'lucide-react';
+import { icons } from 'lucide-react';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 import { IconPickerDialog } from '@/components/apex/IconPickerDialog';
 import { toast } from 'sonner';
+
+// Helper component to preview column icon
+function ColumnIconPreview({ iconName }: { iconName: string }) {
+  const LucideIcon = icons[iconName as keyof typeof icons];
+  if (!LucideIcon) return null;
+  return <LucideIcon className="h-5 w-5" />;
+}
 import {
   ColumnDef,
   getCoreRowModel,
@@ -58,6 +67,7 @@ export default function Boards() {
   const [isEditColumnSheetOpen, setIsEditColumnSheetOpen] = useState(false);
   const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
   const [editingColumnName, setEditingColumnName] = useState('');
+  const [editingColumnIcon, setEditingColumnIcon] = useState<string | null>(null);
   const [columnDeleteDialogOpen, setColumnDeleteDialogOpen] = useState(false);
   const [columnToDelete, setColumnToDelete] = useState<string | null>(null);
   
@@ -78,7 +88,6 @@ export default function Boards() {
 
   // Icon picker states
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
-  const [iconPickerColumnId, setIconPickerColumnId] = useState<string | null>(null);
   const { data: boards, isLoading: loadingBoards } = useBoards();
   const { data: boardData, isLoading: loadingBoard } = useBoard(selectedBoardId);
   const createBoard = useCreateBoard();
@@ -245,21 +254,26 @@ export default function Boards() {
   };
 
   // Column handlers
-  const handleEditColumn = (columnId: string, currentName: string) => {
+  const handleEditColumn = (columnId: string, currentName: string, currentIcon: string | null) => {
     setEditingColumnId(columnId);
     setEditingColumnName(currentName);
+    setEditingColumnIcon(currentIcon);
     setIsEditColumnSheetOpen(true);
   };
 
-  const handleSaveColumnName = async () => {
+  const handleSaveColumn = async () => {
     if (!editingColumnId || !editingColumnName.trim()) {
       toast.error('Digite um nome para a coluna');
       return;
     }
     await updateColumnTitle.mutateAsync({ columnId: editingColumnId, title: editingColumnName });
+    if (editingColumnIcon !== boardData?.columns.find(c => c.id === editingColumnId)?.icon) {
+      await updateColumnIcon.mutateAsync({ columnId: editingColumnId, icon: editingColumnIcon });
+    }
     setIsEditColumnSheetOpen(false);
     setEditingColumnId(null);
     setEditingColumnName('');
+    setEditingColumnIcon(null);
   };
 
   const handleOpenDeleteColumnDialog = (columnId: string) => {
@@ -274,16 +288,9 @@ export default function Boards() {
     setColumnToDelete(null);
   };
 
-  // Icon picker handlers
-  const handleEditColumnIcon = (columnId: string) => {
-    setIconPickerColumnId(columnId);
-    setIsIconPickerOpen(true);
-  };
-
-  const handleSelectIcon = async (iconName: string | null) => {
-    if (!iconPickerColumnId) return;
-    await updateColumnIcon.mutateAsync({ columnId: iconPickerColumnId, icon: iconName });
-    setIconPickerColumnId(null);
+  const handleSelectIcon = (iconName: string | null) => {
+    setEditingColumnIcon(iconName);
+    setIsIconPickerOpen(false);
   };
 
   // Filter boards based on search
@@ -414,7 +421,6 @@ export default function Boards() {
             onEditColumn={handleEditColumn}
             onDeleteColumn={handleOpenDeleteColumnDialog}
             onEditCard={handleEditCard}
-            onEditColumnIcon={handleEditColumnIcon}
             hideColumnActions={isLeadsBoard}
           />
         )}
@@ -464,24 +470,44 @@ export default function Boards() {
           <SheetContent>
             <SheetHeader>
               <SheetTitle>Editar Coluna</SheetTitle>
-              <SheetDescription>Altere o nome da coluna</SheetDescription>
+              <SheetDescription>Altere as configurações da coluna</SheetDescription>
             </SheetHeader>
             <SheetBody>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="column-name">Nome da Coluna *</Label>
-                <Input 
-                  id="column-name" 
-                  placeholder="Digite o nome da coluna" 
-                  value={editingColumnName} 
-                  onChange={e => setEditingColumnName(e.target.value)} 
-                />
+              <div className="grid gap-5">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="column-name">Nome da Coluna *</Label>
+                  <Input 
+                    id="column-name" 
+                    placeholder="Digite o nome da coluna" 
+                    value={editingColumnName} 
+                    onChange={e => setEditingColumnName(e.target.value)} 
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Ícone da Coluna</Label>
+                  <div className="flex items-center gap-2">
+                    {editingColumnIcon ? (
+                      <ColumnIconPreview iconName={editingColumnIcon} />
+                    ) : (
+                      <span className="text-sm text-muted-foreground">Nenhum ícone selecionado</span>
+                    )}
+                    <Button variant="outline" size="sm" onClick={() => setIsIconPickerOpen(true)}>
+                      {editingColumnIcon ? 'Alterar' : 'Adicionar'}
+                    </Button>
+                    {editingColumnIcon && (
+                      <Button variant="ghost" size="sm" onClick={() => setEditingColumnIcon(null)}>
+                        Remover
+                      </Button>
+                    )}
+                  </div>
+                </div>
               </div>
             </SheetBody>
             <SheetFooter>
               <SheetClose asChild>
                 <Button variant="outline">Cancelar</Button>
               </SheetClose>
-              <Button onClick={handleSaveColumnName}>Salvar</Button>
+              <Button onClick={handleSaveColumn}>Salvar</Button>
             </SheetFooter>
           </SheetContent>
         </Sheet>
@@ -559,19 +585,9 @@ export default function Boards() {
                     onChange={e => setEditCardDescription(e.target.value)} 
                   />
                 </div>
-                <div className="flex flex-col gap-2">
-                  <Label htmlFor="edit-card-priority">Prioridade</Label>
-                  <Select value={editCardPriority} onValueChange={(value: 'low' | 'medium' | 'high') => setEditCardPriority(value)}>
-                    <SelectTrigger id="edit-card-priority">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="low">Baixa</SelectItem>
-                      <SelectItem value="medium">Média</SelectItem>
-                      <SelectItem value="high">Alta</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                {editingCard && (
+                  <CardAttachments cardId={editingCard.id} />
+                )}
               </div>
             </SheetBody>
             <SheetFooter>
@@ -588,7 +604,7 @@ export default function Boards() {
           open={isIconPickerOpen}
           onOpenChange={setIsIconPickerOpen}
           onSelect={handleSelectIcon}
-          currentIcon={iconPickerColumnId ? boardData.columns.find(c => c.id === iconPickerColumnId)?.icon : null}
+          currentIcon={editingColumnIcon}
         />
       </div>
     );
