@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronRight, Folder, Zap, LayoutGrid, MoreHorizontal, Trash2, Plus, X, Settings, GripVertical } from "lucide-react";
+import { ChevronRight, Folder, Workflow, LayoutGrid, MoreHorizontal, Trash2, Plus, X, Settings, GripVertical } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSidebarFolders, SidebarFolder, SidebarFolderItem } from "@/hooks/useSidebarFolders";
 import { useFunnels } from "@/hooks/useFunnels";
@@ -317,7 +317,7 @@ export function SidebarProjectsSection() {
                   {activeItem && activeItem.type === 'item' && (
                     <div className="bg-sidebar rounded-md border border-border shadow-lg p-2 flex items-center gap-2">
                       {(activeItem.data as SidebarFolderItem).item_type === 'funnel' ? (
-                        <Zap className="h-3.5 w-3.5 text-primary" />
+                        <Workflow className="h-3.5 w-3.5 text-primary" />
                       ) : (
                         <LayoutGrid className="h-3.5 w-3.5 text-blue-500" />
                       )}
@@ -641,7 +641,7 @@ function SortableProjectItem({ item, onItemClick, onRemoveItem }: SortableProjec
           onClick={() => onItemClick(item)}
         >
           {item.item_type === 'funnel' ? (
-            <Zap className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#e8e8e8' }} />
+            <Workflow className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#e8e8e8' }} />
           ) : (
             <LayoutGrid className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#e8e8e8' }} />
           )}

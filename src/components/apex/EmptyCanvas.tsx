@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Plus, Zap } from "lucide-react";
+import { Plus, Workflow } from "lucide-react";
 interface EmptyCanvasProps {
   onAddElement: () => void;
 }
@@ -8,7 +8,7 @@ export function EmptyCanvas({
 }: EmptyCanvasProps) {
   return <div className="flex flex-col items-center justify-center h-full min-h-[400px] text-center space-y-6">
       <div className="flex items-center justify-center w-20 h-20 rounded-full bg-primary/10">
-        <Zap className="h-10 w-10 text-primary" />
+        <Workflow className="h-10 w-10 text-primary" />
       </div>
       
       <div className="space-y-2">

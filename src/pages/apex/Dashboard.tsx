@@ -1,5 +1,5 @@
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Zap, Video, MessageSquare, TrendingUp, Users, Clock, BarChart3, DollarSign, Settings } from "lucide-react";
+import { Workflow, Video, MessageSquare, TrendingUp, Users, Clock, BarChart3, DollarSign, Settings } from "lucide-react";
 import { useProjects } from "@/hooks/useProjects";
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,7 @@ export default function Dashboard() {
     title: "Funis Ativos",
     value: projectStats.byStatus.active.toString(),
     description: `${projectStats.byType.funnel} funis total`,
-    icon: Zap,
+    icon: Workflow,
     trend: projectStats.byStatus.active > 0 ? "+100%" : "0%"
   }];
   const recentProjects = projects.slice(-3).reverse();
@@ -28,7 +28,7 @@ export default function Dashboard() {
     {
       title: "Criar Novo Funil",
       description: "Monte um funil de vendas completo",
-      icon: Zap,
+      icon: Workflow,
       href: "/funnels",
       color: "text-blue-600"
     },
