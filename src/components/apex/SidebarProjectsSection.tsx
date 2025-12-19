@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronRight, FolderPlus, Folder, Zap, LayoutGrid, MoreHorizontal, Trash2, Edit2, Plus, X } from "lucide-react";
+import { ChevronRight, Folder, Zap, LayoutGrid, MoreHorizontal, Trash2, Plus, X, Settings } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSidebarFolders, SidebarFolder, SidebarFolderItem } from "@/hooks/useSidebarFolders";
 import { useFunnels } from "@/hooks/useFunnels";
@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 
 export function SidebarProjectsSection() {
@@ -22,11 +24,11 @@ export function SidebarProjectsSection() {
 
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
-  const [renameFolderOpen, setRenameFolderOpen] = useState(false);
-  const [folderToRename, setFolderToRename] = useState<SidebarFolder | null>(null);
-  const [renameValue, setRenameValue] = useState("");
-  const [addProjectOpen, setAddProjectOpen] = useState(false);
+  const [manageFolderOpen, setManageFolderOpen] = useState(false);
   const [selectedFolder, setSelectedFolder] = useState<SidebarFolder | null>(null);
+  const [folderName, setFolderName] = useState("");
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [folderToDelete, setFolderToDelete] = useState<SidebarFolder | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
 
   const handleCreateFolder = async () => {
@@ -37,22 +39,26 @@ export function SidebarProjectsSection() {
   };
 
   const handleRenameFolder = async () => {
-    if (!folderToRename || !renameValue.trim()) return;
-    await renameFolder(folderToRename.id, renameValue.trim());
-    setFolderToRename(null);
-    setRenameValue("");
-    setRenameFolderOpen(false);
+    if (!selectedFolder || !folderName.trim()) return;
+    await renameFolder(selectedFolder.id, folderName.trim());
   };
 
-  const openRenameDialog = (folder: SidebarFolder) => {
-    setFolderToRename(folder);
-    setRenameValue(folder.name);
-    setRenameFolderOpen(true);
-  };
-
-  const openAddProjectDialog = (folder: SidebarFolder) => {
+  const openManageDialog = (folder: SidebarFolder) => {
     setSelectedFolder(folder);
-    setAddProjectOpen(true);
+    setFolderName(folder.name);
+    setManageFolderOpen(true);
+  };
+
+  const confirmDelete = (folder: SidebarFolder) => {
+    setFolderToDelete(folder);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!folderToDelete) return;
+    await deleteFolder(folderToDelete.id);
+    setFolderToDelete(null);
+    setDeleteConfirmOpen(false);
   };
 
   const toggleFolder = (folderId: string) => {
@@ -116,7 +122,7 @@ export function SidebarProjectsSection() {
             className="h-6 w-6"
             onClick={() => setCreateFolderOpen(true)}
           >
-            <FolderPlus className="h-4 w-4" />
+            <Plus className="h-4 w-4" />
           </Button>
         </div>
         <SidebarGroupContent>
@@ -133,9 +139,8 @@ export function SidebarProjectsSection() {
                   isExpanded={expandedFolders.has(folder.id)}
                   onToggle={() => toggleFolder(folder.id)}
                   onItemClick={handleItemClick}
-                  onRename={() => openRenameDialog(folder)}
-                  onDelete={() => deleteFolder(folder.id)}
-                  onAddProject={() => openAddProjectDialog(folder)}
+                  onManage={() => openManageDialog(folder)}
+                  onDelete={() => confirmDelete(folder)}
                   onRemoveItem={removeItemFromFolder}
                 />
               ))
@@ -173,82 +178,94 @@ export function SidebarProjectsSection() {
         </DialogContent>
       </Dialog>
 
-      {/* Rename Folder Dialog */}
-      <Dialog open={renameFolderOpen} onOpenChange={setRenameFolderOpen}>
-        <DialogContent className="sm:max-w-[400px]">
+      {/* Manage Folder Dialog (Rename + Add Projects) */}
+      <Dialog open={manageFolderOpen} onOpenChange={setManageFolderOpen}>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
-            <DialogTitle>Renomear Pasta</DialogTitle>
+            <DialogTitle>Gerenciar Pasta</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="rename-folder">Novo nome</Label>
-              <Input
-                id="rename-folder"
-                value={renameValue}
-                onChange={(e) => setRenameValue(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && handleRenameFolder()}
-              />
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setRenameFolderOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleRenameFolder} disabled={!renameValue.trim()}>
-              Salvar
-            </Button>
-          </DialogFooter>
+          <Tabs defaultValue="projects" className="mt-4">
+            <TabsList className="w-full">
+              <TabsTrigger value="projects" className="flex-1">Projetos</TabsTrigger>
+              <TabsTrigger value="settings" className="flex-1">Configurações</TabsTrigger>
+            </TabsList>
+            <TabsContent value="projects" className="mt-4">
+              {availableFunnels.length === 0 && availableBoards.length === 0 ? (
+                <div className="text-center text-muted-foreground py-8">
+                  Nenhum projeto disponível para adicionar
+                </div>
+              ) : (
+                <ScrollArea className="h-[300px] pr-4">
+                  {availableFunnels.length > 0 && (
+                    <div className="space-y-2 mb-4">
+                      <Label className="text-muted-foreground text-xs uppercase tracking-wider">Funis</Label>
+                      {availableFunnels.map((funnel) => (
+                        <button
+                          key={funnel.id}
+                          className="flex items-center gap-3 w-full rounded-lg px-3 py-2 text-left hover:bg-accent transition-colors"
+                          onClick={() => handleAddProject('funnel', funnel.id)}
+                        >
+                          <Zap className="h-4 w-4 text-primary" />
+                          <span className="truncate">{funnel.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                  {availableBoards.length > 0 && (
+                    <div className="space-y-2">
+                      <Label className="text-muted-foreground text-xs uppercase tracking-wider">Quadros</Label>
+                      {availableBoards.map((board) => (
+                        <button
+                          key={board.id}
+                          className="flex items-center gap-3 w-full rounded-lg px-3 py-2 text-left hover:bg-accent transition-colors"
+                          onClick={() => handleAddProject('board', board.id)}
+                        >
+                          <LayoutGrid className="h-4 w-4 text-blue-500" />
+                          <span className="truncate">{board.name}</span>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </ScrollArea>
+              )}
+            </TabsContent>
+            <TabsContent value="settings" className="mt-4 space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="rename-folder">Nome da pasta</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="rename-folder"
+                    value={folderName}
+                    onChange={(e) => setFolderName(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleRenameFolder()}
+                  />
+                  <Button onClick={handleRenameFolder} disabled={!folderName.trim()}>
+                    Salvar
+                  </Button>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
 
-      {/* Add Project Dialog */}
-      <Dialog open={addProjectOpen} onOpenChange={setAddProjectOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Adicionar Projeto à Pasta</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
-            {availableFunnels.length === 0 && availableBoards.length === 0 ? (
-              <div className="text-center text-muted-foreground py-8">
-                Nenhum projeto disponível para adicionar
-              </div>
-            ) : (
-              <ScrollArea className="h-[300px] pr-4">
-                {availableFunnels.length > 0 && (
-                  <div className="space-y-2 mb-4">
-                    <Label className="text-muted-foreground text-xs uppercase tracking-wider">Funis</Label>
-                    {availableFunnels.map((funnel) => (
-                      <button
-                        key={funnel.id}
-                        className="flex items-center gap-3 w-full rounded-lg px-3 py-2 text-left hover:bg-accent transition-colors"
-                        onClick={() => handleAddProject('funnel', funnel.id)}
-                      >
-                        <Zap className="h-4 w-4 text-primary" />
-                        <span className="truncate">{funnel.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-                {availableBoards.length > 0 && (
-                  <div className="space-y-2">
-                    <Label className="text-muted-foreground text-xs uppercase tracking-wider">Quadros</Label>
-                    {availableBoards.map((board) => (
-                      <button
-                        key={board.id}
-                        className="flex items-center gap-3 w-full rounded-lg px-3 py-2 text-left hover:bg-accent transition-colors"
-                        onClick={() => handleAddProject('board', board.id)}
-                      >
-                        <LayoutGrid className="h-4 w-4 text-blue-500" />
-                        <span className="truncate">{board.name}</span>
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </ScrollArea>
-            )}
-          </div>
-        </DialogContent>
-      </Dialog>
+      {/* Delete Confirmation Dialog */}
+      <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir pasta</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir a pasta "{folderToDelete?.name}"? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDelete} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
@@ -258,9 +275,8 @@ interface FolderItemProps {
   isExpanded: boolean;
   onToggle: () => void;
   onItemClick: (item: SidebarFolderItem) => void;
-  onRename: () => void;
+  onManage: () => void;
   onDelete: () => void;
-  onAddProject: () => void;
   onRemoveItem: (itemId: string) => void;
 }
 
@@ -269,9 +285,8 @@ function FolderItem({
   isExpanded, 
   onToggle, 
   onItemClick, 
-  onRename, 
-  onDelete, 
-  onAddProject,
+  onManage, 
+  onDelete,
   onRemoveItem 
 }: FolderItemProps) {
   const [menuOpen, setMenuOpen] = useState(false);
@@ -303,17 +318,10 @@ function FolderItem({
             <PopoverContent align="end" className="w-40 p-1">
               <button
                 className="flex items-center gap-2 w-full rounded px-2 py-1.5 text-sm hover:bg-accent"
-                onClick={() => { onAddProject(); setMenuOpen(false); }}
+                onClick={() => { onManage(); setMenuOpen(false); }}
               >
-                <Plus className="h-4 w-4" />
-                Adicionar
-              </button>
-              <button
-                className="flex items-center gap-2 w-full rounded px-2 py-1.5 text-sm hover:bg-accent"
-                onClick={() => { onRename(); setMenuOpen(false); }}
-              >
-                <Edit2 className="h-4 w-4" />
-                Renomear
+                <Settings className="h-4 w-4" />
+                Gerenciar
               </button>
               <button
                 className="flex items-center gap-2 w-full rounded px-2 py-1.5 text-sm text-destructive hover:bg-destructive/10"
