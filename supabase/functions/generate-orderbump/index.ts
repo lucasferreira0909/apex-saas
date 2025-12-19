@@ -11,11 +11,11 @@ serve(async (req) => {
   }
 
   try {
-    const { mainProductName, mainProductPrice, orderBumpName, orderBumpPrice, mainBenefit, tone } = await req.json();
+    const { productName, productPrice, productDescription, targetAudience } = await req.json();
 
-    if (!mainProductName || !mainProductPrice || !orderBumpName || !orderBumpPrice) {
+    if (!productName || !productPrice) {
       return new Response(
-        JSON.stringify({ error: "Main product name, price, order bump name and price are required" }),
+        JSON.stringify({ error: "Nome e preço do produto são obrigatórios" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
@@ -25,40 +25,31 @@ serve(async (req) => {
       throw new Error("LOVABLE_API_KEY is not configured");
     }
 
-    const toneInstructions: Record<string, string> = {
-      urgente: "Use gatilhos de urgência e escassez. Destaque que a oferta é limitada.",
-      exclusivo: "Enfatize a exclusividade e o acesso especial. Faça o cliente se sentir privilegiado.",
-      complementar: "Mostre como o OrderBump complementa e potencializa o produto principal.",
-      economico: "Destaque a economia e o custo-benefício. Compare com o valor real.",
-      premium: "Use linguagem sofisticada e enfatize a qualidade superior.",
-    };
-
-    const toneInstruction = tone ? toneInstructions[tone] || "" : "";
-
-    const systemPrompt = `Você é um especialista em copywriting e otimização de conversão.
-Sua especialidade é criar OrderBumps persuasivos que aumentam o ticket médio.
-Você conhece todas as técnicas de persuasão e gatilhos mentais.
+    const systemPrompt = `Você é um especialista em estratégias de vendas e OrderBumps.
+Sua especialidade é criar OrderBumps complementares que aumentam o ticket médio.
+Você conhece todas as técnicas de upsell e cross-sell.
+Sempre crie OrderBumps que façam sentido com o produto principal.
 Sempre escreva em português brasileiro.
 Sempre retorne o resultado usando a função fornecida.`;
 
-    const userPrompt = `Crie um OrderBump persuasivo:
+    const userPrompt = `Com base no produto principal abaixo, crie 3 sugestões de OrderBumps DIFERENTES e COMPLEMENTARES:
 
-PRODUTO PRINCIPAL: ${mainProductName}
-PREÇO PRINCIPAL: R$ ${mainProductPrice}
+PRODUTO PRINCIPAL: ${productName}
+PREÇO: R$ ${productPrice}
+${productDescription ? `DESCRIÇÃO: ${productDescription}` : ""}
+${targetAudience ? `PÚBLICO-ALVO: ${targetAudience}` : ""}
 
-ORDERBUMP: ${orderBumpName}
-PREÇO ORDERBUMP: R$ ${orderBumpPrice}
-${mainBenefit ? `BENEFÍCIO PRINCIPAL: ${mainBenefit}` : ""}
-${toneInstruction ? `TOM: ${toneInstruction}` : ""}
+Para cada OrderBump, defina:
+1. Um nome criativo e atrativo
+2. Um preço sugerido (geralmente entre 10-20% do valor do produto principal)
+3. O que exatamente será entregue (3-4 itens específicos)
+4. Uma headline persuasiva curta
+5. Um texto para o checkbox de seleção
 
-O OrderBump deve:
-- Ter uma headline chamativa (máximo 10 palavras)
-- Ter uma descrição persuasiva e curta (máximo 2 frases)
-- Listar 3-4 benefícios específicos
-- Ter um texto de checkbox irresistível
-- Ter um argumento forte de economia/valor`;
+Os OrderBumps devem ser complementares ao produto principal e agregar valor real ao cliente.
+Varie os tipos: pode ser material de apoio, acesso a comunidade, templates, ferramentas, mentoria express, etc.`;
 
-    console.log("Generating order bump for:", orderBumpName);
+    console.log("Generating order bumps for:", productName);
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -76,40 +67,51 @@ O OrderBump deve:
           {
             type: "function",
             function: {
-              name: "create_orderbump",
-              description: "Cria um OrderBump persuasivo completo",
+              name: "create_orderbumps",
+              description: "Cria 3 sugestões de OrderBumps complementares ao produto principal",
               parameters: {
                 type: "object",
                 properties: {
-                  headline: { 
-                    type: "string", 
-                    description: "Headline chamativa e curta (máximo 10 palavras)" 
-                  },
-                  description: { 
-                    type: "string", 
-                    description: "Descrição persuasiva e curta (máximo 2 frases)" 
-                  },
-                  benefits: { 
-                    type: "array", 
-                    items: { type: "string" },
-                    description: "3-4 benefícios específicos e concretos" 
-                  },
-                  checkboxText: { 
-                    type: "string", 
-                    description: "Texto que aparece no checkbox para adicionar o OrderBump" 
-                  },
-                  savingsArgument: { 
-                    type: "string", 
-                    description: "Argumento de economia ou valor que justifica a compra" 
+                  orderBumps: {
+                    type: "array",
+                    items: {
+                      type: "object",
+                      properties: {
+                        name: { 
+                          type: "string", 
+                          description: "Nome criativo do OrderBump" 
+                        },
+                        suggestedPrice: { 
+                          type: "string", 
+                          description: "Preço sugerido (apenas números, ex: 47)" 
+                        },
+                        deliverables: { 
+                          type: "array", 
+                          items: { type: "string" },
+                          description: "3-4 itens específicos do que será entregue" 
+                        },
+                        headline: { 
+                          type: "string", 
+                          description: "Headline persuasiva curta" 
+                        },
+                        checkboxText: { 
+                          type: "string", 
+                          description: "Texto que aparece no checkbox para adicionar o OrderBump" 
+                        }
+                      },
+                      required: ["name", "suggestedPrice", "deliverables", "headline", "checkboxText"],
+                      additionalProperties: false
+                    },
+                    description: "Array com 3 sugestões de OrderBumps"
                   }
                 },
-                required: ["headline", "description", "benefits", "checkboxText", "savingsArgument"],
+                required: ["orderBumps"],
                 additionalProperties: false
               }
             }
           }
         ],
-        tool_choice: { type: "function", function: { name: "create_orderbump" } }
+        tool_choice: { type: "function", function: { name: "create_orderbumps" } }
       }),
     });
 
@@ -141,16 +143,16 @@ O OrderBump deve:
       throw new Error("Invalid response from AI");
     }
 
-    const orderBump = JSON.parse(toolCall.function.arguments);
-    console.log("Order bump generated successfully");
+    const result = JSON.parse(toolCall.function.arguments);
+    console.log("Order bumps generated successfully:", result.orderBumps?.length);
 
     return new Response(
-      JSON.stringify(orderBump),
+      JSON.stringify(result),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
 
   } catch (error) {
-    console.error("Generate order bump error:", error);
+    console.error("Generate order bumps error:", error);
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : "Unknown error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
