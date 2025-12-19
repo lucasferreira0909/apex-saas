@@ -1,9 +1,9 @@
 import * as React from 'react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Kanban, KanbanBoard as KanbanBoardUI, KanbanColumn, KanbanColumnContent, KanbanItem, KanbanOverlay } from '@/components/ui/kanban';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
-import { MoreHorizontal, Pencil, Plus, Trash2 } from 'lucide-react';
+import { MoreHorizontal, Pencil, Plus, Trash2, Smile } from 'lucide-react';
+import { icons } from 'lucide-react';
 import { BoardCard, BoardColumn } from '@/types/board';
 interface KanbanBoardProps {
   columns: BoardColumn[];
@@ -15,6 +15,7 @@ interface KanbanBoardProps {
   onEditColumn?: (columnId: string, currentName: string) => void;
   onDeleteColumn?: (columnId: string) => void;
   onEditCard?: (card: BoardCard) => void;
+  onEditColumnIcon?: (columnId: string) => void;
   hideColumnActions?: boolean;
 }
 function CardItem({
@@ -33,18 +34,12 @@ function CardItem({
         onEdit?.();
       }
     }}>
-        <div className="flex flex-col gap-2.5">
+        <div className="flex flex-col gap-2">
           <div className="flex items-center justify-between gap-2">
-            <span className="line-clamp-1 font-medium text-sm">{card.title}</span>
-            {card.priority && <Badge variant={card.priority === 'high' ? 'destructive' : card.priority === 'medium' ? 'default' : 'secondary'} className="pointer-events-none h-5 rounded-sm px-1.5 text-[11px] capitalize shrink-0">
-                {card.priority === 'high' ? 'Alta' : card.priority === 'medium' ? 'Média' : 'Baixa'}
-              </Badge>}
+            <span className="line-clamp-2 font-medium text-sm">{card.title}</span>
           </div>
           {card.description && <p className="text-xs text-muted-foreground line-clamp-2">{card.description}</p>}
-          <div className="flex items-center justify-between">
-            <span className="text-[10px] text-muted-foreground">
-              {new Date(card.created_at).toLocaleDateString('pt-BR')}
-            </span>
+          <div className="flex items-center justify-end">
             <Button variant="ghost" size="sm" onClick={e => {
             e.stopPropagation();
             onDelete();
@@ -56,6 +51,13 @@ function CardItem({
       </div>
     </KanbanItem>;
 }
+function ColumnIcon({ iconName }: { iconName: string | null }) {
+  if (!iconName) return null;
+  const LucideIcon = icons[iconName as keyof typeof icons];
+  if (!LucideIcon) return null;
+  return <LucideIcon className="h-4 w-4 text-muted-foreground" />;
+}
+
 function Column({
   column,
   cards,
@@ -64,6 +66,7 @@ function Column({
   onEditColumn,
   onDeleteColumn,
   onEditCard,
+  onEditColumnIcon,
   hideColumnActions
 }: {
   column: BoardColumn;
@@ -73,13 +76,14 @@ function Column({
   onEditColumn?: () => void;
   onDeleteColumn?: () => void;
   onEditCard?: (card: BoardCard) => void;
+  onEditColumnIcon?: () => void;
   hideColumnActions?: boolean;
 }) {
   return <KanbanColumn value={column.id} className="rounded-md border bg-muted/30 p-2.5 shadow-xs min-w-[300px]">
       <div className="flex items-center justify-between mb-2.5">
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-2">
+          <ColumnIcon iconName={column.icon} />
           <span className="font-semibold text-sm">{column.title}</span>
-          
         </div>
         <div className="flex items-center gap-1">
           <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onAddCard}>
@@ -95,6 +99,10 @@ function Column({
                 <DropdownMenuItem onClick={onEditColumn}>
                   <Pencil className="h-4 w-4 mr-2" />
                   Editar coluna
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onEditColumnIcon}>
+                  <Smile className="h-4 w-4 mr-2" />
+                  Adicionar ícone
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={onDeleteColumn} className="text-destructive">
                   <Trash2 className="h-4 w-4 mr-2" />
@@ -119,6 +127,7 @@ export function KanbanBoard({
   onEditColumn,
   onDeleteColumn,
   onEditCard,
+  onEditColumnIcon,
   hideColumnActions
 }: KanbanBoardProps) {
   const [columnOrder, setColumnOrder] = React.useState<string[]>(() => columns.map(c => c.id));
@@ -166,7 +175,7 @@ export function KanbanBoard({
   }, [columnOrder, columns]);
   return <Kanban value={columnsState} onValueChange={handleValueChange} getItemValue={item => item.id} columnOrder={columnOrder} onColumnOrderChange={handleColumnOrderChange}>
       <KanbanBoardUI className="flex gap-4 overflow-x-auto pb-4" columnOrder={columnOrder}>
-        {sortedColumns.map(column => <Column key={column.id} column={column} cards={columnsState[column.id] || []} onAddCard={() => onAddCard(column.id)} onDeleteCard={onDeleteCard} onEditColumn={() => onEditColumn?.(column.id, column.title)} onDeleteColumn={() => onDeleteColumn?.(column.id)} onEditCard={onEditCard} hideColumnActions={hideColumnActions} />)}
+        {sortedColumns.map(column => <Column key={column.id} column={column} cards={columnsState[column.id] || []} onAddCard={() => onAddCard(column.id)} onDeleteCard={onDeleteCard} onEditColumn={() => onEditColumn?.(column.id, column.title)} onDeleteColumn={() => onDeleteColumn?.(column.id)} onEditCard={onEditCard} onEditColumnIcon={() => onEditColumnIcon?.(column.id)} hideColumnActions={hideColumnActions} />)}
       </KanbanBoardUI>
       <KanbanOverlay>
         <div className="rounded-md bg-muted/60 size-full" />

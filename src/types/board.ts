@@ -12,6 +12,7 @@ export interface BoardColumn {
   id: string;
   board_id: string;
   title: string;
+  icon: string | null;
   order_index: number;
   created_at: string;
 }

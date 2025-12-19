@@ -103,6 +103,28 @@ export function useUpdateColumnTitle() {
   });
 }
 
+export function useUpdateColumnIcon() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: async ({ columnId, icon }: { columnId: string; icon: string | null }) => {
+      const { error } = await supabase
+        .from('board_columns')
+        .update({ icon })
+        .eq('id', columnId);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['board'] });
+      toast.success('Ícone atualizado');
+    },
+    onError: () => {
+      toast.error('Erro ao atualizar ícone');
+    }
+  });
+}
+
 export function useDeleteColumn() {
   const queryClient = useQueryClient();
 

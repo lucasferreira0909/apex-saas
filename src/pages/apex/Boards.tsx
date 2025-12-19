@@ -16,10 +16,11 @@ import { DataGridPagination } from '@/components/ui/data-grid-pagination';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useBoards, useBoard, useCreateBoard, useDeleteBoard } from '@/hooks/useBoards';
 import { useCreateCard, useUpdateCard, useDeleteCard } from '@/hooks/useBoardCards';
-import { useCreateColumn, useUpdateMultipleColumnsOrder, useUpdateColumnTitle, useDeleteColumn } from '@/hooks/useBoardColumns';
+import { useCreateColumn, useUpdateMultipleColumnsOrder, useUpdateColumnTitle, useDeleteColumn, useUpdateColumnIcon } from '@/hooks/useBoardColumns';
 import { Board, BoardCard, BoardTemplate } from '@/types/board';
 import { Plus, ArrowLeft, Trash2, Search, MoreHorizontal, Edit } from 'lucide-react';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
+import { IconPickerDialog } from '@/components/apex/IconPickerDialog';
 import { toast } from 'sonner';
 import {
   ColumnDef,
@@ -75,6 +76,9 @@ export default function Boards() {
   const [editCardDescription, setEditCardDescription] = useState('');
   const [editCardPriority, setEditCardPriority] = useState<'low' | 'medium' | 'high'>('medium');
 
+  // Icon picker states
+  const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
+  const [iconPickerColumnId, setIconPickerColumnId] = useState<string | null>(null);
   const { data: boards, isLoading: loadingBoards } = useBoards();
   const { data: boardData, isLoading: loadingBoard } = useBoard(selectedBoardId);
   const createBoard = useCreateBoard();
@@ -84,6 +88,7 @@ export default function Boards() {
   const deleteCard = useDeleteCard();
   const updateColumnsOrder = useUpdateMultipleColumnsOrder();
   const updateColumnTitle = useUpdateColumnTitle();
+  const updateColumnIcon = useUpdateColumnIcon();
   const deleteColumn = useDeleteColumn();
   const createColumn = useCreateColumn();
 
@@ -269,6 +274,18 @@ export default function Boards() {
     setColumnToDelete(null);
   };
 
+  // Icon picker handlers
+  const handleEditColumnIcon = (columnId: string) => {
+    setIconPickerColumnId(columnId);
+    setIsIconPickerOpen(true);
+  };
+
+  const handleSelectIcon = async (iconName: string | null) => {
+    if (!iconPickerColumnId) return;
+    await updateColumnIcon.mutateAsync({ columnId: iconPickerColumnId, icon: iconName });
+    setIconPickerColumnId(null);
+  };
+
   // Filter boards based on search
   const filteredBoards = useMemo(() => {
     return boards?.filter(board => 
@@ -397,6 +414,7 @@ export default function Boards() {
             onEditColumn={handleEditColumn}
             onDeleteColumn={handleOpenDeleteColumnDialog}
             onEditCard={handleEditCard}
+            onEditColumnIcon={handleEditColumnIcon}
             hideColumnActions={isLeadsBoard}
           />
         )}
@@ -564,6 +582,14 @@ export default function Boards() {
             </SheetFooter>
           </SheetContent>
         </Sheet>
+
+        {/* Icon Picker Dialog */}
+        <IconPickerDialog
+          open={isIconPickerOpen}
+          onOpenChange={setIsIconPickerOpen}
+          onSelect={handleSelectIcon}
+          currentIcon={iconPickerColumnId ? boardData.columns.find(c => c.id === iconPickerColumnId)?.icon : null}
+        />
       </div>
     );
   }
