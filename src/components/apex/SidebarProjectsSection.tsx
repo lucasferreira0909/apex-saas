@@ -6,7 +6,7 @@ import { useFunnels } from "@/hooks/useFunnels";
 import { useBoards } from "@/hooks/useBoards";
 import { SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -312,13 +312,13 @@ export function SidebarProjectsSection() {
         </SidebarGroupContent>
       </SidebarGroup>
 
-      {/* Create Folder Dialog */}
-      <Dialog open={createFolderOpen} onOpenChange={setCreateFolderOpen}>
-        <DialogContent className="sm:max-w-[400px]">
-          <DialogHeader>
-            <DialogTitle>Nova Pasta</DialogTitle>
-          </DialogHeader>
-          <div className="space-y-4 py-4">
+      {/* Create Folder Sheet */}
+      <Sheet open={createFolderOpen} onOpenChange={setCreateFolderOpen}>
+        <SheetContent side="right" className="w-[400px] sm:w-[450px]">
+          <SheetHeader>
+            <SheetTitle>Nova Pasta</SheetTitle>
+          </SheetHeader>
+          <div className="space-y-4 py-6">
             <div className="space-y-2">
               <Label htmlFor="folder-name">Nome da pasta</Label>
               <Input
@@ -330,24 +330,24 @@ export function SidebarProjectsSection() {
               />
             </div>
           </div>
-          <DialogFooter>
+          <SheetFooter className="flex gap-2">
             <Button variant="outline" onClick={() => setCreateFolderOpen(false)}>
               Cancelar
             </Button>
             <Button onClick={handleCreateFolder} disabled={!newFolderName.trim()}>
               Criar
             </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
 
-      {/* Manage Folder Dialog */}
-      <Dialog open={manageFolderOpen} onOpenChange={setManageFolderOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Gerenciar Pasta</DialogTitle>
-          </DialogHeader>
-          <Tabs defaultValue="projects" className="mt-4">
+      {/* Manage Folder Sheet */}
+      <Sheet open={manageFolderOpen} onOpenChange={setManageFolderOpen}>
+        <SheetContent side="right" className="w-[400px] sm:w-[450px]">
+          <SheetHeader>
+            <SheetTitle>Gerenciar Pasta</SheetTitle>
+          </SheetHeader>
+          <Tabs defaultValue="projects" className="mt-6">
             <TabsList className="w-full">
               <TabsTrigger value="projects" className="flex-1">Projetos</TabsTrigger>
               <TabsTrigger value="settings" className="flex-1">Configurações</TabsTrigger>
@@ -358,7 +358,7 @@ export function SidebarProjectsSection() {
                   Nenhum projeto disponível para adicionar
                 </div>
               ) : (
-                <ScrollArea className="h-[300px] pr-4">
+                <ScrollArea className="h-[400px] pr-4">
                   {availableFunnels.length > 0 && (
                     <div className="space-y-2 mb-4">
                       <Label className="text-muted-foreground text-xs uppercase tracking-wider">Funis</Label>
@@ -409,8 +409,8 @@ export function SidebarProjectsSection() {
               </div>
             </TabsContent>
           </Tabs>
-        </DialogContent>
-      </Dialog>
+        </SheetContent>
+      </Sheet>
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
