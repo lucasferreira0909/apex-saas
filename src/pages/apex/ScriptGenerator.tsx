@@ -8,7 +8,6 @@ import { Video, ArrowLeft, Copy, Check, Lightbulb, Music, Sparkles } from "lucid
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-
 interface GeneratedScript {
   hook: string;
   development: string[];
@@ -16,7 +15,6 @@ interface GeneratedScript {
   audioSuggestion: string;
   tips: string[];
 }
-
 export default function ScriptGenerator() {
   const [platform, setPlatform] = useState("reels");
   const [topic, setTopic] = useState("");
@@ -26,8 +24,9 @@ export default function ScriptGenerator() {
   const [generatedScript, setGeneratedScript] = useState<GeneratedScript | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
-  const { toast } = useToast();
-
+  const {
+    toast
+  } = useToast();
   const generateScript = async () => {
     if (!topic.trim()) {
       toast({
@@ -37,18 +36,23 @@ export default function ScriptGenerator() {
       });
       return;
     }
-
     setIsGenerating(true);
     setGeneratedScript(null);
-
     try {
-      const { data, error } = await supabase.functions.invoke('generate-script', {
-        body: { platform, topic, duration, style, audience }
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('generate-script', {
+        body: {
+          platform,
+          topic,
+          duration,
+          style,
+          audience
+        }
       });
-
       if (error) throw new Error(error.message);
       if (data.error) throw new Error(data.error);
-
       setGeneratedScript(data);
       toast({
         title: "Roteiro gerado!",
@@ -65,7 +69,6 @@ export default function ScriptGenerator() {
       setIsGenerating(false);
     }
   };
-
   const copyFullScript = async () => {
     if (!generatedScript) return;
     const fullScript = `🎬 GANCHO (0-3s)
@@ -82,7 +85,6 @@ ${generatedScript.audioSuggestion}
 
 💡 Dicas de Produção
 ${generatedScript.tips.map(tip => `• ${tip}`).join('\n')}`;
-
     await navigator.clipboard.writeText(fullScript);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -91,9 +93,7 @@ ${generatedScript.tips.map(tip => `• ${tip}`).join('\n')}`;
       description: "Roteiro copiado para a área de transferência."
     });
   };
-
-  return (
-    <div className="space-y-6">
+  return <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center space-x-4">
         <Link to="/tools">
@@ -103,7 +103,7 @@ ${generatedScript.tips.map(tip => `• ${tip}`).join('\n')}`;
         </Link>
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center">
-            <Video className="h-8 w-8 mr-3 text-primary" />
+            <Video className="h-8 w-8 mr-3 text-white" />
             Gerador de Roteiros
           </h1>
           <p className="text-muted-foreground">Crie roteiros virais para Reels e TikTok</p>
@@ -134,13 +134,7 @@ ${generatedScript.tips.map(tip => `• ${tip}`).join('\n')}`;
 
             <div className="space-y-2">
               <Label htmlFor="topic">Tema do Vídeo *</Label>
-              <Input
-                id="topic"
-                value={topic}
-                onChange={e => setTopic(e.target.value)}
-                placeholder="Ex: Como aumentar vendas no Instagram"
-                className="bg-input border-border"
-              />
+              <Input id="topic" value={topic} onChange={e => setTopic(e.target.value)} placeholder="Ex: Como aumentar vendas no Instagram" className="bg-input border-border" />
             </div>
 
             <div className="space-y-3">
@@ -185,27 +179,17 @@ ${generatedScript.tips.map(tip => `• ${tip}`).join('\n')}`;
 
             <div className="space-y-2">
               <Label htmlFor="audience">Público-alvo (opcional)</Label>
-              <Input
-                id="audience"
-                value={audience}
-                onChange={e => setAudience(e.target.value)}
-                placeholder="Ex: Empreendedores iniciantes"
-                className="bg-input border-border"
-              />
+              <Input id="audience" value={audience} onChange={e => setAudience(e.target.value)} placeholder="Ex: Empreendedores iniciantes" className="bg-input border-border" />
             </div>
 
             <Button onClick={generateScript} disabled={isGenerating || !topic.trim()} className="w-full">
-              {isGenerating ? (
-                <>
+              {isGenerating ? <>
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent mr-2" />
                   Gerando Roteiro...
-                </>
-              ) : (
-                <>
+                </> : <>
                   <Video className="h-4 w-4 mr-2" />
                   Gerar Roteiro
-                </>
-              )}
+                </>}
             </Button>
           </CardContent>
         </Card>
@@ -218,23 +202,18 @@ ${generatedScript.tips.map(tip => `• ${tip}`).join('\n')}`;
                 <CardTitle className="text-card-foreground">Roteiro Gerado</CardTitle>
                 <CardDescription>{generatedScript ? "Seu roteiro está pronto!" : "Aguardando geração"}</CardDescription>
               </div>
-              {generatedScript && (
-                <Button variant="outline" size="sm" onClick={copyFullScript}>
+              {generatedScript && <Button variant="outline" size="sm" onClick={copyFullScript}>
                   {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
                   Copiar Tudo
-                </Button>
-              )}
+                </Button>}
             </div>
           </CardHeader>
           <CardContent>
-            {!generatedScript ? (
-              <div className="text-center py-12">
+            {!generatedScript ? <div className="text-center py-12">
                 <Video className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium text-card-foreground mb-2">Nenhum roteiro gerado</h3>
                 <p className="text-muted-foreground">Configure e clique em "Gerar Roteiro"</p>
-              </div>
-            ) : (
-              <div className="space-y-4">
+              </div> : <div className="space-y-4">
                 <div className="p-4 bg-primary/10 rounded-lg border border-primary/20">
                   <div className="flex items-center gap-2 mb-2">
                     <Sparkles className="h-4 w-4 text-primary" />
@@ -246,12 +225,10 @@ ${generatedScript.tips.map(tip => `• ${tip}`).join('\n')}`;
                 <div className="p-4 bg-muted/50 rounded-lg">
                   <Label className="text-xs text-muted-foreground mb-2 block">📖 DESENVOLVIMENTO</Label>
                   <ul className="space-y-2">
-                    {generatedScript.development.map((point, index) => (
-                      <li key={index} className="flex items-start gap-2">
+                    {generatedScript.development.map((point, index) => <li key={index} className="flex items-start gap-2">
                         <span className="text-primary font-medium">{index + 1}.</span>
                         <span className="text-foreground">{point}</span>
-                      </li>
-                    ))}
+                      </li>)}
                   </ul>
                 </div>
 
@@ -274,19 +251,15 @@ ${generatedScript.tips.map(tip => `• ${tip}`).join('\n')}`;
                     <Label className="text-xs text-amber-600">DICAS DE PRODUÇÃO</Label>
                   </div>
                   <ul className="space-y-1">
-                    {generatedScript.tips.map((tip, index) => (
-                      <li key={index} className="text-sm text-foreground flex items-start gap-2">
+                    {generatedScript.tips.map((tip, index) => <li key={index} className="text-sm text-foreground flex items-start gap-2">
                         <span className="text-amber-500">•</span>
                         {tip}
-                      </li>
-                    ))}
+                      </li>)}
                   </ul>
                 </div>
-              </div>
-            )}
+              </div>}
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 }
