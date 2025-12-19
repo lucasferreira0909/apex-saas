@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { User, Lock, Camera, Save, CreditCard } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { User, Lock, Camera, Save, CreditCard, CheckCircle2, XCircle, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useImageUpload } from "@/hooks/useImageUpload";
 import { toast } from "@/hooks/use-toast";
@@ -23,12 +24,27 @@ export default function ApexSettings() {
   } = useImageUpload();
   const [activeTab, setActiveTab] = useState("profile");
   const [loading, setLoading] = useState(false);
+  const [showNewPassword, setShowNewPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
     confirmPassword: ''
   });
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Password validation
+  const passwordValidation = useMemo(() => {
+    const hasMinLength = passwordData.newPassword.length >= 6;
+    const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>\/\\]/.test(passwordData.newPassword);
+    const passwordsMatch = passwordData.newPassword === passwordData.confirmPassword && passwordData.confirmPassword.length > 0;
+    return {
+      hasMinLength,
+      hasSpecialChar,
+      passwordsMatch,
+      isValid: hasMinLength && hasSpecialChar && passwordsMatch
+    };
+  }, [passwordData.newPassword, passwordData.confirmPassword]);
   const tabs = [{
     id: "profile",
     label: "Perfil",
@@ -108,18 +124,10 @@ export default function ApexSettings() {
   };
   const handlePasswordChange = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (passwordData.newPassword.length < 6) {
+    if (!passwordValidation.isValid) {
       toast({
         title: "Erro",
-        description: "A senha deve ter pelo menos 6 caracteres",
-        variant: "destructive"
-      });
-      return;
-    }
-    if (passwordData.newPassword !== passwordData.confirmPassword) {
-      toast({
-        title: "Erro",
-        description: "As senhas não coincidem",
+        description: "A senha não atende aos requisitos mínimos",
         variant: "destructive"
       });
       return;
@@ -250,25 +258,70 @@ export default function ApexSettings() {
                     <div className="space-y-2 mb-4">
                       <Label htmlFor="currentPassword">Senha Atual</Label>
                       <Input id="currentPassword" type="password" placeholder="Digite sua senha atual" value={passwordData.currentPassword} onChange={e => setPasswordData(prev => ({
-                    ...prev,
-                    currentPassword: e.target.value
-                  }))} />
+                        ...prev,
+                        currentPassword: e.target.value
+                      }))} />
                     </div>
                     <div className="space-y-2 mb-4">
                       <Label htmlFor="newPassword">Nova Senha</Label>
-                      <Input id="newPassword" type="password" placeholder="Mínimo 6 caracteres" value={passwordData.newPassword} onChange={e => setPasswordData(prev => ({
-                    ...prev,
-                    newPassword: e.target.value
-                  }))} />
+                      <div className="relative">
+                        <Input id="newPassword" type={showNewPassword ? "text" : "password"} placeholder="Mínimo 6 caracteres" value={passwordData.newPassword} onChange={e => setPasswordData(prev => ({
+                          ...prev,
+                          newPassword: e.target.value
+                        }))} className="pr-10" />
+                        <button
+                          type="button"
+                          onClick={() => setShowNewPassword(!showNewPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {showNewPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
                     </div>
                     <div className="space-y-2 mb-4">
                       <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
-                      <Input id="confirmPassword" type="password" placeholder="Confirme a nova senha" value={passwordData.confirmPassword} onChange={e => setPasswordData(prev => ({
-                    ...prev,
-                    confirmPassword: e.target.value
-                  }))} />
+                      <div className="relative">
+                        <Input id="confirmPassword" type={showConfirmPassword ? "text" : "password"} placeholder="Confirme a nova senha" value={passwordData.confirmPassword} onChange={e => setPasswordData(prev => ({
+                          ...prev,
+                          confirmPassword: e.target.value
+                        }))} className="pr-10" />
+                        <button
+                          type="button"
+                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                          {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
                     </div>
-                    <Button type="submit" disabled={loading || !passwordData.newPassword || !passwordData.confirmPassword}>
+
+                    {/* Password validation feedback */}
+                    {passwordData.newPassword.length > 0 && (
+                      <Alert variant={passwordValidation.isValid ? "default" : "destructive"} className="py-3 border-secondary mb-4">
+                        <AlertDescription className="space-y-1.5">
+                          <div className="flex items-center gap-2">
+                            {passwordValidation.hasMinLength ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4" />}
+                            <span className={passwordValidation.hasMinLength ? "text-green-500" : ""}>
+                              Mínimo 6 caracteres
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {passwordValidation.hasSpecialChar ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4" />}
+                            <span className={passwordValidation.hasSpecialChar ? "text-green-500" : ""}>
+                              Um caractere especial (como /, @, etc)
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {passwordValidation.passwordsMatch ? <CheckCircle2 className="h-4 w-4 text-green-500" /> : <XCircle className="h-4 w-4" />}
+                            <span className={passwordValidation.passwordsMatch ? "text-green-500" : ""}>
+                              As senhas coincidem
+                            </span>
+                          </div>
+                        </AlertDescription>
+                      </Alert>
+                    )}
+
+                    <Button type="submit" disabled={loading || !passwordValidation.isValid}>
                       <Lock className="mr-2 h-4 w-4" />
                       {loading ? "Alterando..." : "Alterar Senha"}
                     </Button>
