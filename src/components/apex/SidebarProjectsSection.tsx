@@ -600,6 +600,8 @@ interface SortableProjectItemProps {
 }
 
 function SortableProjectItem({ item, onItemClick, onRemoveItem }: SortableProjectItemProps) {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  
   const {
     attributes,
     listeners,
@@ -615,38 +617,62 @@ function SortableProjectItem({ item, onItemClick, onRemoveItem }: SortableProjec
     opacity: isDragging ? 0.5 : 1,
   };
 
+  const handleRemove = () => {
+    onRemoveItem(item.id);
+    setConfirmOpen(false);
+  };
+
   return (
-    <div 
-      ref={setNodeRef} 
-      style={style} 
-      className="flex items-center group/item"
-    >
-      <div
-        {...attributes}
-        {...listeners}
-        className="p-1 cursor-grab opacity-0 group-hover/item:opacity-100 transition-opacity"
+    <>
+      <div 
+        ref={setNodeRef} 
+        style={style} 
+        className="flex items-center group/item"
       >
-        <GripVertical className="h-3 w-3 text-muted-foreground" />
+        <div
+          {...attributes}
+          {...listeners}
+          className="p-1 cursor-grab opacity-0 group-hover/item:opacity-100 transition-opacity"
+        >
+          <GripVertical className="h-3 w-3 text-muted-foreground" />
+        </div>
+        <button
+          className="flex items-center gap-2 flex-1 rounded px-2 py-1 text-sm hover:bg-accent transition-colors text-left"
+          onClick={() => onItemClick(item)}
+        >
+          {item.item_type === 'funnel' ? (
+            <Zap className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#e8e8e8' }} />
+          ) : (
+            <LayoutGrid className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#e8e8e8' }} />
+          )}
+          <span className="truncate">{item.item_name || 'Sem nome'}</span>
+        </button>
+        <Button
+          variant="ghost"
+          size="icon"
+          className="h-6 w-6 opacity-0 group-hover/item:opacity-100 transition-opacity"
+          onClick={() => setConfirmOpen(true)}
+        >
+          <X className="h-3 w-3" />
+        </Button>
       </div>
-      <button
-        className="flex items-center gap-2 flex-1 rounded px-2 py-1 text-sm hover:bg-accent transition-colors text-left"
-        onClick={() => onItemClick(item)}
-      >
-        {item.item_type === 'funnel' ? (
-          <Zap className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#e8e8e8' }} />
-        ) : (
-          <LayoutGrid className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#e8e8e8' }} />
-        )}
-        <span className="truncate">{item.item_name || 'Sem nome'}</span>
-      </button>
-      <Button
-        variant="ghost"
-        size="icon"
-        className="h-6 w-6 opacity-0 group-hover/item:opacity-100 transition-opacity"
-        onClick={() => onRemoveItem(item.id)}
-      >
-        <X className="h-3 w-3" />
-      </Button>
-    </div>
+
+      <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Remover projeto</AlertDialogTitle>
+            <AlertDialogDescription>
+              Deseja remover "{item.item_name || 'Sem nome'}" desta pasta? O projeto não será excluído, apenas removido da pasta.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleRemove}>
+              Remover
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
