@@ -41,7 +41,7 @@ function CardItem({
           <div className="flex items-center justify-between gap-2">
             <span className="line-clamp-2 font-medium text-sm">{card.title}</span>
           </div>
-          {card.description && <p className="text-xs text-muted-foreground line-clamp-2">{card.description}</p>}
+          {card.description && <p className="text-xs text-muted-foreground whitespace-pre-wrap break-words">{card.description}</p>}
           
           {attachmentCount > 0 && (
             <div className="flex flex-wrap gap-1.5">
