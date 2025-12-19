@@ -124,7 +124,7 @@ export default function UsefulSites() {
         </Link>
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center">
-            <Globe className="h-8 w-8 mr-3 text-primary" />
+            <Globe className="h-8 w-8 mr-3 text-[#e8e8e8]" />
             Sites Úteis
           </h1>
           <p className="text-muted-foreground">Coleção curada de ferramentas e sites essenciais</p>
