@@ -60,6 +60,7 @@ export function SidebarProjectsSection() {
   const [folderToDelete, setFolderToDelete] = useState<SidebarFolder | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
   const [activeItem, setActiveItem] = useState<{ type: 'folder' | 'item'; data: SidebarFolder | SidebarFolderItem } | null>(null);
+  const [selectedProjects, setSelectedProjects] = useState<Set<string>>(new Set());
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -179,6 +180,7 @@ export function SidebarProjectsSection() {
   const openManageDialog = (folder: SidebarFolder) => {
     setSelectedFolder(folder);
     setFolderName(folder.name);
+    setSelectedProjects(new Set());
     setManageFolderOpen(true);
   };
 
@@ -214,9 +216,26 @@ export function SidebarProjectsSection() {
     }
   };
 
-  const handleAddProject = async (type: 'funnel' | 'board', id: string) => {
+  const toggleProjectSelection = (type: 'funnel' | 'board', id: string) => {
+    const key = `${type}:${id}`;
+    setSelectedProjects(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
+
+  const handleAddSelectedProjects = async () => {
     if (!selectedFolder) return;
-    await addItemToFolder(selectedFolder.id, type, id);
+    for (const key of selectedProjects) {
+      const [type, id] = key.split(':') as ['funnel' | 'board', string];
+      await addItemToFolder(selectedFolder.id, type, id);
+    }
+    setSelectedProjects(new Set());
   };
 
   const getAvailableItems = () => {
@@ -358,38 +377,67 @@ export function SidebarProjectsSection() {
                   Nenhum projeto disponível para adicionar
                 </div>
               ) : (
-                <ScrollArea className="h-[400px] pr-4">
-                  {availableFunnels.length > 0 && (
-                    <div className="space-y-2 mb-4">
-                      <Label className="text-muted-foreground text-xs uppercase tracking-wider">Funis</Label>
-                      {availableFunnels.map((funnel) => (
-                        <button
-                          key={funnel.id}
-                          className="flex items-center gap-3 w-full rounded-lg px-3 py-2 text-left hover:bg-accent transition-colors"
-                          onClick={() => handleAddProject('funnel', funnel.id)}
-                        >
-                          <Zap className="h-4 w-4 text-primary" />
-                          <span className="truncate">{funnel.name}</span>
-                        </button>
-                      ))}
-                    </div>
+                <div className="space-y-4">
+                  <ScrollArea className="h-[350px] pr-4">
+                    {availableFunnels.length > 0 && (
+                      <div className="space-y-2 mb-4">
+                        <Label className="text-muted-foreground text-xs uppercase tracking-wider">Funis</Label>
+                        {availableFunnels.map((funnel) => {
+                          const isSelected = selectedProjects.has(`funnel:${funnel.id}`);
+                          return (
+                            <button
+                              key={funnel.id}
+                              className={cn(
+                                "flex items-center gap-3 w-full rounded-lg px-3 py-2 text-left transition-colors",
+                                isSelected ? "bg-primary/10 border border-primary/30" : "hover:bg-accent"
+                              )}
+                              onClick={() => toggleProjectSelection('funnel', funnel.id)}
+                            >
+                              <div className={cn(
+                                "h-4 w-4 rounded border flex items-center justify-center transition-colors",
+                                isSelected ? "bg-primary border-primary" : "border-muted-foreground/30"
+                              )}>
+                                {isSelected && <span className="text-primary-foreground text-xs">✓</span>}
+                              </div>
+                              <span className="truncate">{funnel.name}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {availableBoards.length > 0 && (
+                      <div className="space-y-2">
+                        <Label className="text-muted-foreground text-xs uppercase tracking-wider">Quadros</Label>
+                        {availableBoards.map((board) => {
+                          const isSelected = selectedProjects.has(`board:${board.id}`);
+                          return (
+                            <button
+                              key={board.id}
+                              className={cn(
+                                "flex items-center gap-3 w-full rounded-lg px-3 py-2 text-left transition-colors",
+                                isSelected ? "bg-primary/10 border border-primary/30" : "hover:bg-accent"
+                              )}
+                              onClick={() => toggleProjectSelection('board', board.id)}
+                            >
+                              <div className={cn(
+                                "h-4 w-4 rounded border flex items-center justify-center transition-colors",
+                                isSelected ? "bg-primary border-primary" : "border-muted-foreground/30"
+                              )}>
+                                {isSelected && <span className="text-primary-foreground text-xs">✓</span>}
+                              </div>
+                              <span className="truncate">{board.name}</span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </ScrollArea>
+                  {selectedProjects.size > 0 && (
+                    <Button onClick={handleAddSelectedProjects} className="w-full">
+                      Adicionar {selectedProjects.size} projeto{selectedProjects.size > 1 ? 's' : ''}
+                    </Button>
                   )}
-                  {availableBoards.length > 0 && (
-                    <div className="space-y-2">
-                      <Label className="text-muted-foreground text-xs uppercase tracking-wider">Quadros</Label>
-                      {availableBoards.map((board) => (
-                        <button
-                          key={board.id}
-                          className="flex items-center gap-3 w-full rounded-lg px-3 py-2 text-left hover:bg-accent transition-colors"
-                          onClick={() => handleAddProject('board', board.id)}
-                        >
-                          <LayoutGrid className="h-4 w-4 text-blue-500" />
-                          <span className="truncate">{board.name}</span>
-                        </button>
-                      ))}
-                    </div>
-                  )}
-                </ScrollArea>
+                </div>
               )}
             </TabsContent>
             <TabsContent value="settings" className="mt-4 space-y-4">
