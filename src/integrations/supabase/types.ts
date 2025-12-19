@@ -128,6 +128,7 @@ export type Database = {
         Row: {
           board_id: string
           created_at: string
+          icon: string | null
           id: string
           order_index: number
           title: string
@@ -136,6 +137,7 @@ export type Database = {
         Insert: {
           board_id: string
           created_at?: string
+          icon?: string | null
           id?: string
           order_index?: number
           title: string
@@ -144,6 +146,7 @@ export type Database = {
         Update: {
           board_id?: string
           created_at?: string
+          icon?: string | null
           id?: string
           order_index?: number
           title?: string
