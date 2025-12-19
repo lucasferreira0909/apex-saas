@@ -9,11 +9,13 @@ import { Mail, ArrowLeft, Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+
 interface GeneratedEmail {
   subject: string;
   preheader: string;
   body: string;
 }
+
 export default function EmailGenerator() {
   const [emailType, setEmailType] = useState("welcome");
   const [productName, setProductName] = useState("");
@@ -23,9 +25,8 @@ export default function EmailGenerator() {
   const [generatedEmail, setGeneratedEmail] = useState<GeneratedEmail | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+
   const generateEmail = async () => {
     if (!productName.trim() || !productDescription.trim()) {
       toast({
@@ -35,23 +36,18 @@ export default function EmailGenerator() {
       });
       return;
     }
+
     setIsGenerating(true);
     setGeneratedEmail(null);
+
     try {
-      const {
-        data,
-        error
-      } = await supabase.functions.invoke('generate-email', {
-        body: {
-          emailType,
-          productName,
-          productDescription,
-          tone,
-          cta
-        }
+      const { data, error } = await supabase.functions.invoke('generate-email', {
+        body: { emailType, productName, productDescription, tone, cta }
       });
+
       if (error) throw new Error(error.message);
       if (data.error) throw new Error(data.error);
+
       setGeneratedEmail(data);
       toast({
         title: "Email gerado!",
@@ -68,6 +64,7 @@ export default function EmailGenerator() {
       setIsGenerating(false);
     }
   };
+
   const copyToClipboard = async (text: string, field: string) => {
     await navigator.clipboard.writeText(text);
     setCopiedField(field);
@@ -77,12 +74,15 @@ export default function EmailGenerator() {
       description: "Texto copiado para a área de transferência."
     });
   };
+
   const copyAll = async () => {
     if (!generatedEmail) return;
     const fullEmail = `Assunto: ${generatedEmail.subject}\n\nPrévia: ${generatedEmail.preheader}\n\n${generatedEmail.body}`;
     await copyToClipboard(fullEmail, "all");
   };
-  return <div className="space-y-6">
+
+  return (
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center space-x-4">
         <Link to="/tools">
@@ -92,7 +92,7 @@ export default function EmailGenerator() {
         </Link>
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center">
-            <Mail className="h-8 w-8 mr-3 text-white" />
+            <Mail className="h-8 w-8 mr-3 text-primary" />
             Gerador de E-mails
           </h1>
           <p className="text-muted-foreground">Crie emails de marketing que convertem</p>
@@ -135,12 +135,24 @@ export default function EmailGenerator() {
 
             <div className="space-y-2">
               <Label htmlFor="productName">Nome do Produto/Serviço *</Label>
-              <Input id="productName" value={productName} onChange={e => setProductName(e.target.value)} placeholder="Ex: Curso de Marketing Digital" className="bg-input border-border" />
+              <Input
+                id="productName"
+                value={productName}
+                onChange={e => setProductName(e.target.value)}
+                placeholder="Ex: Curso de Marketing Digital"
+                className="bg-input border-border"
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="productDescription">Descrição *</Label>
-              <Textarea id="productDescription" value={productDescription} onChange={e => setProductDescription(e.target.value)} placeholder="Descreva o produto, seus benefícios principais e diferenciais..." className="bg-input border-border min-h-[100px]" />
+              <Textarea
+                id="productDescription"
+                value={productDescription}
+                onChange={e => setProductDescription(e.target.value)}
+                placeholder="Descreva o produto, seus benefícios principais e diferenciais..."
+                className="bg-input border-border min-h-[100px]"
+              />
             </div>
 
             <div className="space-y-3">
@@ -167,17 +179,27 @@ export default function EmailGenerator() {
 
             <div className="space-y-2">
               <Label htmlFor="cta">CTA Desejado (opcional)</Label>
-              <Input id="cta" value={cta} onChange={e => setCta(e.target.value)} placeholder="Ex: Quero garantir minha vaga" className="bg-input border-border" />
+              <Input
+                id="cta"
+                value={cta}
+                onChange={e => setCta(e.target.value)}
+                placeholder="Ex: Quero garantir minha vaga"
+                className="bg-input border-border"
+              />
             </div>
 
             <Button onClick={generateEmail} disabled={isGenerating || !productName.trim() || !productDescription.trim()} className="w-full">
-              {isGenerating ? <>
+              {isGenerating ? (
+                <>
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent mr-2" />
                   Gerando Email...
-                </> : <>
+                </>
+              ) : (
+                <>
                   <Mail className="h-4 w-4 mr-2" />
                   Gerar Email
-                </>}
+                </>
+              )}
             </Button>
           </CardContent>
         </Card>
@@ -190,18 +212,23 @@ export default function EmailGenerator() {
                 <CardTitle className="text-card-foreground">Email Gerado</CardTitle>
                 <CardDescription>{generatedEmail ? "Seu email está pronto!" : "Aguardando geração"}</CardDescription>
               </div>
-              {generatedEmail && <Button variant="outline" size="sm" onClick={copyAll}>
+              {generatedEmail && (
+                <Button variant="outline" size="sm" onClick={copyAll}>
                   {copiedField === "all" ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
                   Copiar Tudo
-                </Button>}
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent>
-            {!generatedEmail ? <div className="text-center py-12">
+            {!generatedEmail ? (
+              <div className="text-center py-12">
                 <Mail className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium text-card-foreground mb-2">Nenhum email gerado</h3>
                 <p className="text-muted-foreground">Configure e clique em "Gerar Email"</p>
-              </div> : <div className="space-y-4">
+              </div>
+            ) : (
+              <div className="space-y-4">
                 <div className="p-4 bg-muted/50 rounded-lg space-y-1">
                   <div className="flex items-center justify-between">
                     <Label className="text-xs text-muted-foreground">ASSUNTO</Label>
@@ -231,9 +258,11 @@ export default function EmailGenerator() {
                   </div>
                   <p className="text-foreground whitespace-pre-wrap">{generatedEmail.body}</p>
                 </div>
-              </div>}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
-    </div>;
+    </div>
+  );
 }

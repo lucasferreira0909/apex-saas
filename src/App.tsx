@@ -26,9 +26,6 @@ import OfferGenerator from "./pages/apex/OfferGenerator";
 import EmailGenerator from "./pages/apex/EmailGenerator";
 import ScriptGenerator from "./pages/apex/ScriptGenerator";
 import PersonaGenerator from "./pages/apex/PersonaGenerator";
-import ProfileStructureGenerator from "./pages/apex/ProfileStructureGenerator";
-import OrderBumpGenerator from "./pages/apex/OrderBumpGenerator";
-import UsefulSites from "./pages/apex/UsefulSites";
 
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
@@ -65,9 +62,6 @@ const App = () => (
                   <Route path="/email-generator" element={<EmailGenerator />} />
                   <Route path="/script-generator" element={<ScriptGenerator />} />
                   <Route path="/persona-generator" element={<PersonaGenerator />} />
-                  <Route path="/profile-structure-generator" element={<ProfileStructureGenerator />} />
-                  <Route path="/orderbump-generator" element={<OrderBumpGenerator />} />
-                  <Route path="/useful-sites" element={<UsefulSites />} />
                   
                   <Route path="/tools" element={<Tools />} />
                   <Route path="*" element={<NotFound />} />

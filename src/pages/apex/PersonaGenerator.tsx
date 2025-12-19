@@ -8,6 +8,7 @@ import { Users, ArrowLeft, Copy, Check, Briefcase, DollarSign, Heart, ShoppingBa
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+
 interface GeneratedPersona {
   name: string;
   age: number;
@@ -23,6 +24,7 @@ interface GeneratedPersona {
   triggers: string[];
   quote: string;
 }
+
 export default function PersonaGenerator() {
   const [business, setBusiness] = useState("");
   const [productDescription, setProductDescription] = useState("");
@@ -31,9 +33,8 @@ export default function PersonaGenerator() {
   const [generatedPersona, setGeneratedPersona] = useState<GeneratedPersona | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+
   const generatePersona = async () => {
     if (!business.trim() || !productDescription.trim()) {
       toast({
@@ -43,22 +44,18 @@ export default function PersonaGenerator() {
       });
       return;
     }
+
     setIsGenerating(true);
     setGeneratedPersona(null);
+
     try {
-      const {
-        data,
-        error
-      } = await supabase.functions.invoke('generate-persona', {
-        body: {
-          business,
-          productDescription,
-          currentAudience,
-          priceRange
-        }
+      const { data, error } = await supabase.functions.invoke('generate-persona', {
+        body: { business, productDescription, currentAudience, priceRange }
       });
+
       if (error) throw new Error(error.message);
       if (data.error) throw new Error(data.error);
+
       setGeneratedPersona(data);
       toast({
         title: "Persona gerada!",
@@ -75,6 +72,7 @@ export default function PersonaGenerator() {
       setIsGenerating(false);
     }
   };
+
   const copyPersona = async () => {
     if (!generatedPersona) return;
     const personaText = `PERSONA: ${generatedPersona.name}, ${generatedPersona.age} anos
@@ -105,6 +103,7 @@ ${generatedPersona.triggers.map(t => `• ${t}`).join('\n')}
 
 FRASE TÍPICA
 "${generatedPersona.quote}"`;
+
     await navigator.clipboard.writeText(personaText);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
@@ -113,7 +112,9 @@ FRASE TÍPICA
       description: "Persona copiada para a área de transferência."
     });
   };
-  return <div className="space-y-6">
+
+  return (
+    <div className="space-y-6">
       {/* Header */}
       <div className="flex items-center space-x-4">
         <Link to="/tools">
@@ -123,7 +124,7 @@ FRASE TÍPICA
         </Link>
         <div>
           <h1 className="text-3xl font-bold text-foreground flex items-center">
-            <Users className="h-8 w-8 mr-3 text-white" />
+            <Users className="h-8 w-8 mr-3 text-primary" />
             Gerador de Persona
           </h1>
           <p className="text-muted-foreground">Crie personas detalhadas do seu cliente ideal</p>
@@ -140,32 +141,60 @@ FRASE TÍPICA
           <CardContent className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="business">Tipo de Negócio *</Label>
-              <Input id="business" value={business} onChange={e => setBusiness(e.target.value)} placeholder="Ex: Agência de marketing digital" className="bg-input border-border" />
+              <Input
+                id="business"
+                value={business}
+                onChange={e => setBusiness(e.target.value)}
+                placeholder="Ex: Agência de marketing digital"
+                className="bg-input border-border"
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="productDescription">Descrição do Produto/Serviço *</Label>
-              <Textarea id="productDescription" value={productDescription} onChange={e => setProductDescription(e.target.value)} placeholder="Descreva seu produto ou serviço, seus benefícios e diferenciais..." className="bg-input border-border min-h-[100px]" />
+              <Textarea
+                id="productDescription"
+                value={productDescription}
+                onChange={e => setProductDescription(e.target.value)}
+                placeholder="Descreva seu produto ou serviço, seus benefícios e diferenciais..."
+                className="bg-input border-border min-h-[100px]"
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="currentAudience">Informações sobre Público Atual (opcional)</Label>
-              <Textarea id="currentAudience" value={currentAudience} onChange={e => setCurrentAudience(e.target.value)} placeholder="O que você já sabe sobre seus clientes atuais?" className="bg-input border-border min-h-[80px]" />
+              <Textarea
+                id="currentAudience"
+                value={currentAudience}
+                onChange={e => setCurrentAudience(e.target.value)}
+                placeholder="O que você já sabe sobre seus clientes atuais?"
+                className="bg-input border-border min-h-[80px]"
+              />
             </div>
 
             <div className="space-y-2">
               <Label htmlFor="priceRange">Faixa de Preço (opcional)</Label>
-              <Input id="priceRange" value={priceRange} onChange={e => setPriceRange(e.target.value)} placeholder="Ex: R$ 500 a R$ 2.000" className="bg-input border-border" />
+              <Input
+                id="priceRange"
+                value={priceRange}
+                onChange={e => setPriceRange(e.target.value)}
+                placeholder="Ex: R$ 500 a R$ 2.000"
+                className="bg-input border-border"
+              />
             </div>
 
             <Button onClick={generatePersona} disabled={isGenerating || !business.trim() || !productDescription.trim()} className="w-full">
-              {isGenerating ? <>
+              {isGenerating ? (
+                <>
                   <div className="animate-spin rounded-full h-4 w-4 border-2 border-current border-t-transparent mr-2" />
                   Gerando Persona...
-                </> : <>
+                </>
+              ) : (
+                <>
                   <Users className="h-4 w-4 mr-2" />
                   Gerar Persona
-                </>}
+                </>
+              )}
             </Button>
           </CardContent>
         </Card>
@@ -178,18 +207,23 @@ FRASE TÍPICA
                 <CardTitle className="text-card-foreground">Persona Gerada</CardTitle>
                 <CardDescription>{generatedPersona ? "Sua persona está pronta!" : "Aguardando geração"}</CardDescription>
               </div>
-              {generatedPersona && <Button variant="outline" size="sm" onClick={copyPersona}>
+              {generatedPersona && (
+                <Button variant="outline" size="sm" onClick={copyPersona}>
                   {copied ? <Check className="h-4 w-4 mr-2" /> : <Copy className="h-4 w-4 mr-2" />}
                   Copiar
-                </Button>}
+                </Button>
+              )}
             </div>
           </CardHeader>
           <CardContent>
-            {!generatedPersona ? <div className="text-center py-12">
+            {!generatedPersona ? (
+              <div className="text-center py-12">
                 <Users className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
                 <h3 className="text-lg font-medium text-card-foreground mb-2">Nenhuma persona gerada</h3>
                 <p className="text-muted-foreground">Configure e clique em "Gerar Persona"</p>
-              </div> : <div className="space-y-4">
+              </div>
+            ) : (
+              <div className="space-y-4">
                 {/* Header Card */}
                 <div className="p-4 bg-primary/10 rounded-lg border border-primary/20 text-center">
                   <div className="w-16 h-16 rounded-full bg-primary/20 mx-auto mb-3 flex items-center justify-center">
@@ -224,9 +258,11 @@ FRASE TÍPICA
                     <Label className="text-xs text-red-600 font-medium">DORES</Label>
                   </div>
                   <ul className="space-y-1">
-                    {generatedPersona.pains.map((pain, i) => <li key={i} className="text-sm text-foreground flex items-start gap-2">
+                    {generatedPersona.pains.map((pain, i) => (
+                      <li key={i} className="text-sm text-foreground flex items-start gap-2">
                         <span className="text-red-500">•</span>{pain}
-                      </li>)}
+                      </li>
+                    ))}
                   </ul>
                 </div>
 
@@ -237,9 +273,11 @@ FRASE TÍPICA
                     <Label className="text-xs text-green-600 font-medium">DESEJOS</Label>
                   </div>
                   <ul className="space-y-1">
-                    {generatedPersona.desires.map((desire, i) => <li key={i} className="text-sm text-foreground flex items-start gap-2">
+                    {generatedPersona.desires.map((desire, i) => (
+                      <li key={i} className="text-sm text-foreground flex items-start gap-2">
                         <span className="text-green-500">•</span>{desire}
-                      </li>)}
+                      </li>
+                    ))}
                   </ul>
                 </div>
 
@@ -259,7 +297,9 @@ FRASE TÍPICA
                     <Label className="text-xs text-blue-600 font-medium">CANAIS PREFERIDOS</Label>
                   </div>
                   <div className="flex flex-wrap gap-2">
-                    {generatedPersona.preferredChannels.map((channel, i) => <span key={i} className="px-2 py-1 bg-blue-500/20 rounded text-xs text-blue-700">{channel}</span>)}
+                    {generatedPersona.preferredChannels.map((channel, i) => (
+                      <span key={i} className="px-2 py-1 bg-blue-500/20 rounded text-xs text-blue-700">{channel}</span>
+                    ))}
                   </div>
                 </div>
 
@@ -270,9 +310,11 @@ FRASE TÍPICA
                     <Label className="text-xs text-amber-600 font-medium">GATILHOS DE COMPRA</Label>
                   </div>
                   <ul className="space-y-1">
-                    {generatedPersona.triggers.map((trigger, i) => <li key={i} className="text-sm text-foreground flex items-start gap-2">
+                    {generatedPersona.triggers.map((trigger, i) => (
+                      <li key={i} className="text-sm text-foreground flex items-start gap-2">
                         <span className="text-amber-500">•</span>{trigger}
-                      </li>)}
+                      </li>
+                    ))}
                   </ul>
                 </div>
 
@@ -284,9 +326,11 @@ FRASE TÍPICA
                   </div>
                   <p className="text-foreground italic">"{generatedPersona.quote}"</p>
                 </div>
-              </div>}
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
-    </div>;
+    </div>
+  );
 }

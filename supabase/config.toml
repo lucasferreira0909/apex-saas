@@ -32,9 +32,3 @@ verify_jwt = false
 
 [functions.generate-persona]
 verify_jwt = false
-
-[functions.generate-profile-structure]
-verify_jwt = false
-
-[functions.generate-orderbump]
-verify_jwt = false
