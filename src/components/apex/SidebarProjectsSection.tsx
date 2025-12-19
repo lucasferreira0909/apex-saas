@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronRight, Folder, Zap, LayoutGrid, MoreHorizontal, Trash2, Plus, X, Settings } from "lucide-react";
+import { ChevronRight, Folder, Zap, LayoutGrid, MoreHorizontal, Trash2, Plus, X, Settings, GripVertical } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSidebarFolders, SidebarFolder, SidebarFolderItem } from "@/hooks/useSidebarFolders";
 import { useFunnels } from "@/hooks/useFunnels";
@@ -15,10 +15,39 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
+import {
+  DndContext,
+  DragEndEvent,
+  DragOverEvent,
+  DragOverlay,
+  DragStartEvent,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  closestCenter,
+} from "@dnd-kit/core";
+import {
+  SortableContext,
+  useSortable,
+  verticalListSortingStrategy,
+  arrayMove,
+} from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 
 export function SidebarProjectsSection() {
   const navigate = useNavigate();
-  const { folders, loading, createFolder, deleteFolder, renameFolder, addItemToFolder, removeItemFromFolder } = useSidebarFolders();
+  const { 
+    folders, 
+    loading, 
+    createFolder, 
+    deleteFolder, 
+    renameFolder, 
+    addItemToFolder, 
+    removeItemFromFolder,
+    reorderFolders,
+    moveItemToFolder,
+    reorderItemsInFolder
+  } = useSidebarFolders();
   const { data: funnels } = useFunnels();
   const { data: boards } = useBoards();
 
@@ -30,6 +59,110 @@ export function SidebarProjectsSection() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [folderToDelete, setFolderToDelete] = useState<SidebarFolder | null>(null);
   const [expandedFolders, setExpandedFolders] = useState<Set<string>>(new Set());
+  const [activeItem, setActiveItem] = useState<{ type: 'folder' | 'item'; data: SidebarFolder | SidebarFolderItem } | null>(null);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 8,
+      },
+    })
+  );
+
+  const handleDragStart = (event: DragStartEvent) => {
+    const { active } = event;
+    const activeId = active.id as string;
+    
+    // Check if it's a folder
+    const folder = folders.find(f => f.id === activeId);
+    if (folder) {
+      setActiveItem({ type: 'folder', data: folder });
+      return;
+    }
+    
+    // Check if it's an item
+    const item = folders.flatMap(f => f.items).find(i => i.id === activeId);
+    if (item) {
+      setActiveItem({ type: 'item', data: item });
+    }
+  };
+
+  const handleDragOver = (event: DragOverEvent) => {
+    const { active, over } = event;
+    if (!over) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    // Check if dragging an item
+    const activeItem = folders.flatMap(f => f.items).find(i => i.id === activeId);
+    if (!activeItem) return;
+
+    // Check if over a folder (to expand it)
+    const overFolder = folders.find(f => f.id === overId);
+    if (overFolder && !expandedFolders.has(overId)) {
+      setExpandedFolders(prev => new Set([...prev, overId]));
+    }
+  };
+
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    setActiveItem(null);
+    
+    if (!over) return;
+
+    const activeId = active.id as string;
+    const overId = over.id as string;
+
+    if (activeId === overId) return;
+
+    // Check if dragging a folder
+    const activeFolderIndex = folders.findIndex(f => f.id === activeId);
+    const overFolderIndex = folders.findIndex(f => f.id === overId);
+
+    if (activeFolderIndex !== -1 && overFolderIndex !== -1) {
+      // Reordering folders
+      const newOrder = arrayMove(folders, activeFolderIndex, overFolderIndex);
+      await reorderFolders(newOrder);
+      return;
+    }
+
+    // Check if dragging an item
+    const activeItemData = folders.flatMap(f => f.items).find(i => i.id === activeId);
+    if (!activeItemData) return;
+
+    // Find source folder
+    const sourceFolderId = activeItemData.folder_id;
+
+    // Check if dropping on a folder
+    const targetFolder = folders.find(f => f.id === overId);
+    if (targetFolder) {
+      if (sourceFolderId !== targetFolder.id) {
+        await moveItemToFolder(activeId, targetFolder.id);
+      }
+      return;
+    }
+
+    // Check if dropping on another item
+    const overItem = folders.flatMap(f => f.items).find(i => i.id === overId);
+    if (overItem) {
+      const targetFolderId = overItem.folder_id;
+      
+      if (sourceFolderId === targetFolderId) {
+        // Reordering within the same folder
+        const folder = folders.find(f => f.id === sourceFolderId);
+        if (folder) {
+          const oldIndex = folder.items.findIndex(i => i.id === activeId);
+          const newIndex = folder.items.findIndex(i => i.id === overId);
+          const newOrder = arrayMove(folder.items, oldIndex, newIndex);
+          await reorderItemsInFolder(sourceFolderId, newOrder);
+        }
+      } else {
+        // Moving to another folder
+        await moveItemToFolder(activeId, targetFolderId);
+      }
+    }
+  };
 
   const handleCreateFolder = async () => {
     if (!newFolderName.trim()) return;
@@ -86,7 +219,6 @@ export function SidebarProjectsSection() {
     await addItemToFolder(selectedFolder.id, type, id);
   };
 
-  // Get items already in the selected folder to filter them out
   const getAvailableItems = () => {
     if (!selectedFolder) return { availableFunnels: [], availableBoards: [] };
     
@@ -132,18 +264,49 @@ export function SidebarProjectsSection() {
                 Nenhuma pasta criada
               </div>
             ) : (
-              folders.map((folder) => (
-                <FolderItem
-                  key={folder.id}
-                  folder={folder}
-                  isExpanded={expandedFolders.has(folder.id)}
-                  onToggle={() => toggleFolder(folder.id)}
-                  onItemClick={handleItemClick}
-                  onManage={() => openManageDialog(folder)}
-                  onDelete={() => confirmDelete(folder)}
-                  onRemoveItem={removeItemFromFolder}
-                />
-              ))
+              <DndContext
+                sensors={sensors}
+                collisionDetection={closestCenter}
+                onDragStart={handleDragStart}
+                onDragOver={handleDragOver}
+                onDragEnd={handleDragEnd}
+              >
+                <SortableContext
+                  items={folders.map(f => f.id)}
+                  strategy={verticalListSortingStrategy}
+                >
+                  {folders.map((folder) => (
+                    <SortableFolderItem
+                      key={folder.id}
+                      folder={folder}
+                      isExpanded={expandedFolders.has(folder.id)}
+                      onToggle={() => toggleFolder(folder.id)}
+                      onItemClick={handleItemClick}
+                      onManage={() => openManageDialog(folder)}
+                      onDelete={() => confirmDelete(folder)}
+                      onRemoveItem={removeItemFromFolder}
+                    />
+                  ))}
+                </SortableContext>
+                <DragOverlay>
+                  {activeItem && activeItem.type === 'folder' && (
+                    <div className="bg-sidebar rounded-md border border-border shadow-lg p-2 flex items-center gap-2">
+                      <Folder className="h-4 w-4 text-amber-500" />
+                      <span className="text-sm">{(activeItem.data as SidebarFolder).name}</span>
+                    </div>
+                  )}
+                  {activeItem && activeItem.type === 'item' && (
+                    <div className="bg-sidebar rounded-md border border-border shadow-lg p-2 flex items-center gap-2">
+                      {(activeItem.data as SidebarFolderItem).item_type === 'funnel' ? (
+                        <Zap className="h-3.5 w-3.5 text-primary" />
+                      ) : (
+                        <LayoutGrid className="h-3.5 w-3.5 text-blue-500" />
+                      )}
+                      <span className="text-sm">{(activeItem.data as SidebarFolderItem).item_name || 'Sem nome'}</span>
+                    </div>
+                  )}
+                </DragOverlay>
+              </DndContext>
             )}
           </SidebarMenu>
         </SidebarGroupContent>
@@ -178,7 +341,7 @@ export function SidebarProjectsSection() {
         </DialogContent>
       </Dialog>
 
-      {/* Manage Folder Dialog (Rename + Add Projects) */}
+      {/* Manage Folder Dialog */}
       <Dialog open={manageFolderOpen} onOpenChange={setManageFolderOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -270,7 +433,7 @@ export function SidebarProjectsSection() {
   );
 }
 
-interface FolderItemProps {
+interface SortableFolderItemProps {
   folder: SidebarFolder;
   isExpanded: boolean;
   onToggle: () => void;
@@ -280,7 +443,7 @@ interface FolderItemProps {
   onRemoveItem: (itemId: string) => void;
 }
 
-function FolderItem({ 
+function SortableFolderItem({ 
   folder, 
   isExpanded, 
   onToggle, 
@@ -288,13 +451,35 @@ function FolderItem({
   onManage, 
   onDelete,
   onRemoveItem 
-}: FolderItemProps) {
+}: SortableFolderItemProps) {
   const [menuOpen, setMenuOpen] = useState(false);
+  
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: folder.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
 
   return (
-    <SidebarMenuItem>
+    <SidebarMenuItem ref={setNodeRef} style={style}>
       <Collapsible open={isExpanded} onOpenChange={onToggle}>
         <div className="flex items-center group">
+          <div
+            {...attributes}
+            {...listeners}
+            className="p-1 cursor-grab opacity-0 group-hover:opacity-100 transition-opacity"
+          >
+            <GripVertical className="h-3 w-3 text-muted-foreground" />
+          </div>
           <CollapsibleTrigger asChild>
             <SidebarMenuButton className="flex-1 justify-start">
               <ChevronRight className={cn(
@@ -340,33 +525,81 @@ function FolderItem({
                 Pasta vazia
               </div>
             ) : (
-              folder.items.map((item) => (
-                <div key={item.id} className="flex items-center group/item">
-                  <button
-                    className="flex items-center gap-2 flex-1 rounded px-2 py-1 text-sm hover:bg-accent transition-colors text-left"
-                    onClick={() => onItemClick(item)}
-                  >
-                    {item.item_type === 'funnel' ? (
-                      <Zap className="h-3.5 w-3.5 text-primary flex-shrink-0" />
-                    ) : (
-                      <LayoutGrid className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
-                    )}
-                    <span className="truncate">{item.item_name || 'Sem nome'}</span>
-                  </button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="h-6 w-6 opacity-0 group-hover/item:opacity-100 transition-opacity"
-                    onClick={() => onRemoveItem(item.id)}
-                  >
-                    <X className="h-3 w-3" />
-                  </Button>
-                </div>
-              ))
+              <SortableContext
+                items={folder.items.map(i => i.id)}
+                strategy={verticalListSortingStrategy}
+              >
+                {folder.items.map((item) => (
+                  <SortableProjectItem
+                    key={item.id}
+                    item={item}
+                    onItemClick={onItemClick}
+                    onRemoveItem={onRemoveItem}
+                  />
+                ))}
+              </SortableContext>
             )}
           </div>
         </CollapsibleContent>
       </Collapsible>
     </SidebarMenuItem>
+  );
+}
+
+interface SortableProjectItemProps {
+  item: SidebarFolderItem;
+  onItemClick: (item: SidebarFolderItem) => void;
+  onRemoveItem: (itemId: string) => void;
+}
+
+function SortableProjectItem({ item, onItemClick, onRemoveItem }: SortableProjectItemProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging,
+  } = useSortable({ id: item.id });
+
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    opacity: isDragging ? 0.5 : 1,
+  };
+
+  return (
+    <div 
+      ref={setNodeRef} 
+      style={style} 
+      className="flex items-center group/item"
+    >
+      <div
+        {...attributes}
+        {...listeners}
+        className="p-1 cursor-grab opacity-0 group-hover/item:opacity-100 transition-opacity"
+      >
+        <GripVertical className="h-3 w-3 text-muted-foreground" />
+      </div>
+      <button
+        className="flex items-center gap-2 flex-1 rounded px-2 py-1 text-sm hover:bg-accent transition-colors text-left"
+        onClick={() => onItemClick(item)}
+      >
+        {item.item_type === 'funnel' ? (
+          <Zap className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+        ) : (
+          <LayoutGrid className="h-3.5 w-3.5 text-blue-500 flex-shrink-0" />
+        )}
+        <span className="truncate">{item.item_name || 'Sem nome'}</span>
+      </button>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-6 w-6 opacity-0 group-hover/item:opacity-100 transition-opacity"
+        onClick={() => onRemoveItem(item.id)}
+      >
+        <X className="h-3 w-3" />
+      </Button>
+    </div>
   );
 }

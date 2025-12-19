@@ -255,6 +255,98 @@ export function useSidebarFolders() {
     }
   };
 
+  const reorderFolders = async (newOrder: SidebarFolder[]) => {
+    try {
+      // Optimistically update local state
+      setFolders(newOrder);
+
+      // Update order_index for each folder
+      const updates = newOrder.map((folder, index) => 
+        supabase
+          .from('sidebar_folders')
+          .update({ order_index: index })
+          .eq('id', folder.id)
+      );
+
+      await Promise.all(updates);
+    } catch (error) {
+      console.error('Error reordering folders:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível reordenar as pastas.",
+        variant: "destructive"
+      });
+      await fetchFolders(); // Revert on error
+    }
+  };
+
+  const moveItemToFolder = async (itemId: string, newFolderId: string) => {
+    try {
+      // Get current item info
+      const currentItem = folders.flatMap(f => f.items).find(i => i.id === itemId);
+      if (!currentItem) return;
+
+      // If moving to the same folder, do nothing
+      if (currentItem.folder_id === newFolderId) return;
+
+      // Get the target folder's item count
+      const targetFolder = folders.find(f => f.id === newFolderId);
+      const newOrderIndex = targetFolder?.items.length || 0;
+
+      const { error } = await supabase
+        .from('sidebar_folder_items')
+        .update({ 
+          folder_id: newFolderId,
+          order_index: newOrderIndex
+        })
+        .eq('id', itemId);
+
+      if (error) throw error;
+
+      await fetchFolders();
+      toast({
+        title: "Projeto movido",
+        description: "O projeto foi movido para outra pasta."
+      });
+    } catch (error) {
+      console.error('Error moving item to folder:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível mover o projeto.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const reorderItemsInFolder = async (folderId: string, newOrder: SidebarFolderItem[]) => {
+    try {
+      // Optimistically update local state
+      setFolders(prev => prev.map(folder => 
+        folder.id === folderId 
+          ? { ...folder, items: newOrder }
+          : folder
+      ));
+
+      // Update order_index for each item
+      const updates = newOrder.map((item, index) => 
+        supabase
+          .from('sidebar_folder_items')
+          .update({ order_index: index })
+          .eq('id', item.id)
+      );
+
+      await Promise.all(updates);
+    } catch (error) {
+      console.error('Error reordering items:', error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível reordenar os projetos.",
+        variant: "destructive"
+      });
+      await fetchFolders(); // Revert on error
+    }
+  };
+
   return {
     folders,
     loading,
@@ -263,6 +355,9 @@ export function useSidebarFolders() {
     deleteFolder,
     renameFolder,
     addItemToFolder,
-    removeItemFromFolder
+    removeItemFromFolder,
+    reorderFolders,
+    moveItemToFolder,
+    reorderItemsInFolder
   };
 }
