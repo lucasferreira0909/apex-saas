@@ -18,7 +18,7 @@ import { DataGridTable } from '@/components/ui/data-grid-table';
 import { DataGridPagination } from '@/components/ui/data-grid-pagination';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useBoards, useBoard, useCreateBoard, useDeleteBoard } from '@/hooks/useBoards';
-import { useCreateCard, useUpdateCard, useDeleteCard } from '@/hooks/useBoardCards';
+import { useCreateCard, useUpdateCard, useDeleteCard, useReorderCards } from '@/hooks/useBoardCards';
 import { useUploadAttachment } from '@/hooks/useCardAttachments';
 import { useCreateColumn, useUpdateMultipleColumnsOrder, useUpdateColumnTitle, useDeleteColumn, useUpdateColumnIcon } from '@/hooks/useBoardColumns';
 import { Board, BoardCard, BoardTemplate } from '@/types/board';
@@ -121,12 +121,22 @@ export default function Boards() {
   const createCard = useCreateCard();
   const updateCard = useUpdateCard();
   const deleteCard = useDeleteCard();
+  const reorderCards = useReorderCards();
   const uploadAttachment = useUploadAttachment();
   const updateColumnsOrder = useUpdateMultipleColumnsOrder();
   const updateColumnTitle = useUpdateColumnTitle();
   const updateColumnIcon = useUpdateColumnIcon();
   const deleteColumn = useDeleteColumn();
   const createColumn = useCreateColumn();
+
+  // Rows board reorder handler
+  const handleReorderRowsCards = (cards: Array<{ id: string; order_index: number }>) => {
+    if (!selectedBoardId) return;
+    reorderCards.mutate({
+      board_id: selectedBoardId,
+      cards: cards.map(c => ({ id: c.id, order_index: c.order_index }))
+    });
+  };
 
   // Board type selection handler
   const handleSelectBoardType = (type: 'kanban' | 'rows') => {
@@ -528,6 +538,7 @@ export default function Boards() {
               if (fullCard) handleEditCard(fullCard);
             }}
             onDeleteCard={handleDeleteCard}
+            onReorderCards={handleReorderRowsCards}
           />
         ) : (
           <KanbanBoard 
