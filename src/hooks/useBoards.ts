@@ -67,8 +67,8 @@ export function useCreateBoard() {
     mutationFn: async (data: { 
       name: string; 
       description?: string; 
-      template_type: 'leads' | 'free';
-      columns: string[];
+      template_type: 'leads' | 'free' | 'kanban' | 'rows';
+      columns?: string[];
     }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
@@ -92,17 +92,20 @@ export function useCreateBoard() {
       
       if (boardError) throw boardError;
       
-      const columnsData = data.columns.map((title, index) => ({
-        board_id: board.id,
-        title,
-        order_index: index
-      }));
-      
-      const { error: columnsError } = await supabase
-        .from('board_columns')
-        .insert(columnsData);
-      
-      if (columnsError) throw columnsError;
+      // Only create columns if provided and not empty
+      if (data.columns && data.columns.length > 0) {
+        const columnsData = data.columns.map((title, index) => ({
+          board_id: board.id,
+          title,
+          order_index: index
+        }));
+        
+        const { error: columnsError } = await supabase
+          .from('board_columns')
+          .insert(columnsData);
+        
+        if (columnsError) throw columnsError;
+      }
       
       return board;
     },

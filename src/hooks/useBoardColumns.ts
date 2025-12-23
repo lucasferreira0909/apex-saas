@@ -17,15 +17,18 @@ export function useCreateColumn() {
 
       const maxOrderIndex = existingColumns?.[0]?.order_index ?? -1;
 
-      const { error } = await supabase
+      const { data, error } = await supabase
         .from('board_columns')
         .insert({
           board_id: boardId,
           title,
           order_index: maxOrderIndex + 1
-        });
+        })
+        .select()
+        .single();
 
       if (error) throw error;
+      return data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['board'] });

@@ -11,6 +11,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 import { KanbanBoard } from '@/components/apex/KanbanBoard';
+import { RowsBoard } from '@/components/apex/RowsBoard';
 import { CardAttachments } from '@/components/apex/CardAttachments';
 import { DataGrid, DataGridContainer } from '@/components/ui/data-grid';
 import { DataGridTable } from '@/components/ui/data-grid-table';
@@ -21,7 +22,7 @@ import { useCreateCard, useUpdateCard, useDeleteCard } from '@/hooks/useBoardCar
 import { useUploadAttachment } from '@/hooks/useCardAttachments';
 import { useCreateColumn, useUpdateMultipleColumnsOrder, useUpdateColumnTitle, useDeleteColumn, useUpdateColumnIcon } from '@/hooks/useBoardColumns';
 import { Board, BoardCard, BoardTemplate } from '@/types/board';
-import { Plus, ArrowLeft, Trash2, Search, MoreHorizontal, Edit, Upload, X, FileText, Image, File, Loader2 } from 'lucide-react';
+import { Plus, ArrowLeft, Trash2, Search, MoreHorizontal, Edit, Upload, X, FileText, Image, File, Loader2, LayoutGrid, List } from 'lucide-react';
 import { icons } from 'lucide-react';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 import { IconPickerDialog } from '@/components/apex/IconPickerDialog';
@@ -49,7 +50,12 @@ export default function Boards() {
   const navigate = useNavigate();
   
   const [isCreateSheetOpen, setIsCreateSheetOpen] = useState(false);
+  const [isTypeSelectSheetOpen, setIsTypeSelectSheetOpen] = useState(false);
+  const [selectedBoardType, setSelectedBoardType] = useState<'kanban' | 'rows' | null>(null);
   const [isAddCardSheetOpen, setIsAddCardSheetOpen] = useState(false);
+  const [isAddRowsCardSheetOpen, setIsAddRowsCardSheetOpen] = useState(false);
+  const [rowsCardTitle, setRowsCardTitle] = useState('');
+  const [rowsCardDescription, setRowsCardDescription] = useState('');
   
   // Read board ID from URL params
   const selectedBoardId = searchParams.get('board');
@@ -122,15 +128,19 @@ export default function Boards() {
   const deleteColumn = useDeleteColumn();
   const createColumn = useCreateColumn();
 
-  // Pre-select free template (only template available)
-  const freeTemplate: BoardTemplate = {
-    id: 'free',
-    title: 'Quadro Livre',
-    description: 'Crie seu próprio quadro personalizado com colunas customizáveis',
-    icon: null as any,
-    color: 'text-purple-600',
-    features: ['Colunas personalizadas', 'Flexibilidade total', 'Adaptável a qualquer processo'],
-    defaultColumns: []
+  // Board type selection handler
+  const handleSelectBoardType = (type: 'kanban' | 'rows') => {
+    setSelectedBoardType(type);
+    setIsTypeSelectSheetOpen(false);
+    setIsCreateSheetOpen(true);
+  };
+
+  // Reset create board flow
+  const resetCreateFlow = () => {
+    setBoardName('');
+    setBoardDescription('');
+    setCustomColumns(['']);
+    setSelectedBoardType(null);
   };
 
   const handleCreateBoard = async () => {
@@ -138,24 +148,64 @@ export default function Boards() {
       toast.error('Preencha o nome do quadro');
       return;
     }
-    const columns = customColumns.filter(col => col.trim());
-    if (columns.length === 0) {
-      toast.error('Adicione pelo menos uma coluna');
+    if (!selectedBoardType) {
+      toast.error('Selecione o tipo do quadro');
       return;
     }
+    
+    const columns = selectedBoardType === 'kanban' 
+      ? customColumns.filter(col => col.trim())
+      : [];
+    
     const result = await createBoard.mutateAsync({
       name: boardName,
       description: boardDescription || undefined,
-      template_type: 'free',
-      columns
+      template_type: selectedBoardType,
+      columns: columns.length > 0 ? columns : undefined
     });
     if (result) {
       setIsCreateSheetOpen(false);
-      setBoardName('');
-      setBoardDescription('');
-      setCustomColumns(['']);
+      resetCreateFlow();
       setSelectedBoardId(result.id);
     }
+  };
+
+  // Add card for rows board
+  const handleAddRowsCard = async () => {
+    if (!rowsCardTitle.trim() || !selectedBoardId) {
+      toast.error('Preencha o nome do elemento');
+      return;
+    }
+    
+    const existingCards = boardData?.cards || [];
+    const maxOrderIndex = existingCards.length > 0 
+      ? Math.max(...existingCards.map(c => c.order_index)) 
+      : -1;
+    
+    // For rows board, we use a default column or create one if needed
+    let columnId = boardData?.columns[0]?.id;
+    
+    if (!columnId) {
+      // Create a default column for rows board
+      const newColumn = await createColumn.mutateAsync({ 
+        boardId: selectedBoardId, 
+        title: 'Elementos' 
+      });
+      columnId = newColumn.id;
+    }
+    
+    await createCard.mutateAsync({
+      board_id: selectedBoardId,
+      column_id: columnId,
+      title: rowsCardTitle,
+      description: rowsCardDescription || undefined,
+      priority: 'medium',
+      order_index: maxOrderIndex + 1
+    });
+    
+    setIsAddRowsCardSheetOpen(false);
+    setRowsCardTitle('');
+    setRowsCardDescription('');
   };
 
   const handleAddCard = async () => {
@@ -437,6 +487,7 @@ export default function Boards() {
   });
 
   const isLeadsBoard = false; // Leads template removed - all boards are free boards
+  const isRowsBoard = boardData?.board.template_type === 'rows';
 
   if (selectedBoardId && boardData) {
     return (
@@ -451,7 +502,7 @@ export default function Boards() {
               {boardData.board.description && <p className="text-muted-foreground">{boardData.board.description}</p>}
             </div>
           </div>
-          {!isLeadsBoard && (
+          {!isLeadsBoard && !isRowsBoard && (
             <Button onClick={() => setIsAddColumnSheetOpen(true)}>
               <Plus className="h-4 w-4 mr-2" />
               Nova Coluna
@@ -463,6 +514,21 @@ export default function Boards() {
           <div className="flex justify-center items-center h-64">
             <p className="text-muted-foreground">Carregando...</p>
           </div>
+        ) : isRowsBoard ? (
+          <RowsBoard
+            cards={boardData.cards.map(c => ({
+              id: c.id,
+              title: c.title,
+              description: c.description,
+              order_index: c.order_index
+            }))}
+            onAddCard={() => setIsAddRowsCardSheetOpen(true)}
+            onEditCard={(card) => {
+              const fullCard = boardData.cards.find(c => c.id === card.id);
+              if (fullCard) handleEditCard(fullCard);
+            }}
+            onDeleteCard={handleDeleteCard}
+          />
         ) : (
           <KanbanBoard 
             columns={boardData.columns} 
@@ -714,7 +780,7 @@ export default function Boards() {
           <h1 className="text-3xl font-bold text-foreground">Quadros</h1>
           <p className="text-muted-foreground">Organize suas tarefas e projetos</p>
         </div>
-        <Button onClick={() => setIsCreateSheetOpen(true)}>
+        <Button onClick={() => setIsTypeSelectSheetOpen(true)}>
           <Plus className="h-4 w-4 mr-2" />
           Novo Quadro
         </Button>
@@ -763,18 +829,68 @@ export default function Boards() {
         </CardContent>
       </Card>
 
+      {/* Type Selection Sheet */}
+      <Sheet open={isTypeSelectSheetOpen} onOpenChange={open => {
+        setIsTypeSelectSheetOpen(open);
+        if (!open) resetCreateFlow();
+      }}>
+        <SheetContent className="sm:max-w-xl">
+          <SheetHeader>
+            <SheetTitle>Escolha o tipo de quadro</SheetTitle>
+            <SheetDescription>Selecione o formato que melhor se adapta às suas necessidades</SheetDescription>
+          </SheetHeader>
+          <SheetBody>
+            <div className="grid gap-4">
+              <Card 
+                className="bg-card border-border hover:shadow-lg transition-all cursor-pointer hover:border-primary"
+                onClick={() => handleSelectBoardType('kanban')}
+              >
+                <CardHeader>
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 rounded-lg bg-muted">
+                      <LayoutGrid className="h-5 w-5 text-foreground" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-sm">Kanban</CardTitle>
+                    </div>
+                  </div>
+                  <CardDescription className="text-xs">
+                    Organize seus cards em colunas arrastáveis. Ideal para gerenciar fluxos de trabalho e processos.
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+              
+              <Card 
+                className="bg-card border-border hover:shadow-lg transition-all cursor-pointer hover:border-primary"
+                onClick={() => handleSelectBoardType('rows')}
+              >
+                <CardHeader>
+                  <div className="flex items-center space-x-3">
+                    <div className="p-2 rounded-lg bg-muted">
+                      <List className="h-5 w-5 text-foreground" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-sm">Linhas</CardTitle>
+                    </div>
+                  </div>
+                  <CardDescription className="text-xs">
+                    Visualize seus elementos em formato de lista. Ideal para anotações, listas e conteúdos simples.
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            </div>
+          </SheetBody>
+        </SheetContent>
+      </Sheet>
+
       {/* Create Board Sheet */}
       <Sheet open={isCreateSheetOpen} onOpenChange={open => {
         setIsCreateSheetOpen(open);
-        if (!open) {
-          setBoardName('');
-          setBoardDescription('');
-          setCustomColumns(['']);
-        }
+        if (!open) resetCreateFlow();
       }}>
         <SheetContent className="sm:max-w-xl md:max-w-2xl">
           <SheetHeader>
-            <SheetTitle>Novo Quadro</SheetTitle>
+            <SheetTitle>Novo Quadro {selectedBoardType === 'kanban' ? 'Kanban' : 'de Linhas'}</SheetTitle>
             <SheetDescription>Preencha as informações do seu quadro</SheetDescription>
           </SheetHeader>
           <SheetBody>
@@ -784,32 +900,80 @@ export default function Boards() {
                 <Input id="board-name" placeholder="Digite o nome do quadro" value={boardName} onChange={e => setBoardName(e.target.value)} />
               </div>
               
+              {selectedBoardType === 'kanban' && (
+                <div className="flex flex-col gap-2">
+                  <Label>Colunas (opcional)</Label>
+                  {customColumns.map((col, index) => (
+                    <div key={index} className="flex gap-2">
+                      <Input 
+                        placeholder={`Coluna ${index + 1}`} 
+                        value={col} 
+                        onChange={e => {
+                          const newCols = [...customColumns];
+                          newCols[index] = e.target.value;
+                          setCustomColumns(newCols);
+                        }} 
+                      />
+                      {customColumns.length > 1 && (
+                        <Button variant="outline" size="icon" onClick={() => {
+                          setCustomColumns(customColumns.filter((_, i) => i !== index));
+                        }}>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  ))}
+                  <Button variant="outline" size="sm" onClick={() => setCustomColumns([...customColumns, ''])}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Adicionar Coluna
+                  </Button>
+                </div>
+              )}
+            </div>
+          </SheetBody>
+          <SheetFooter>
+            <Button variant="outline" onClick={() => {
+              setIsCreateSheetOpen(false);
+              setIsTypeSelectSheetOpen(true);
+            }}>Voltar</Button>
+            <Button onClick={handleCreateBoard}>Criar Quadro</Button>
+          </SheetFooter>
+        </SheetContent>
+      </Sheet>
+
+      {/* Add Rows Card Sheet */}
+      <Sheet open={isAddRowsCardSheetOpen} onOpenChange={open => {
+        setIsAddRowsCardSheetOpen(open);
+        if (!open) {
+          setRowsCardTitle('');
+          setRowsCardDescription('');
+        }
+      }}>
+        <SheetContent>
+          <SheetHeader>
+            <SheetTitle>Adicionar Elemento</SheetTitle>
+            <SheetDescription>Preencha as informações do novo elemento</SheetDescription>
+          </SheetHeader>
+          <SheetBody>
+            <div className="grid gap-5">
               <div className="flex flex-col gap-2">
-                <Label>Colunas</Label>
-                {customColumns.map((col, index) => (
-                  <div key={index} className="flex gap-2">
-                    <Input 
-                      placeholder={`Coluna ${index + 1}`} 
-                      value={col} 
-                      onChange={e => {
-                        const newCols = [...customColumns];
-                        newCols[index] = e.target.value;
-                        setCustomColumns(newCols);
-                      }} 
-                    />
-                    {customColumns.length > 1 && (
-                      <Button variant="outline" size="icon" onClick={() => {
-                        setCustomColumns(customColumns.filter((_, i) => i !== index));
-                      }}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                ))}
-                <Button variant="outline" size="sm" onClick={() => setCustomColumns([...customColumns, ''])}>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Adicionar Coluna
-                </Button>
+                <Label htmlFor="rows-card-title">Nome *</Label>
+                <Input 
+                  id="rows-card-title" 
+                  placeholder="Digite o nome do elemento" 
+                  value={rowsCardTitle} 
+                  onChange={e => setRowsCardTitle(e.target.value)} 
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="rows-card-description">Descrição *</Label>
+                <Textarea 
+                  id="rows-card-description" 
+                  placeholder="Digite a descrição do elemento" 
+                  rows={4} 
+                  value={rowsCardDescription} 
+                  onChange={e => setRowsCardDescription(e.target.value)} 
+                />
               </div>
             </div>
           </SheetBody>
@@ -817,7 +981,10 @@ export default function Boards() {
             <SheetClose asChild>
               <Button variant="outline">Cancelar</Button>
             </SheetClose>
-            <Button onClick={handleCreateBoard}>Criar Quadro</Button>
+            <Button onClick={handleAddRowsCard} disabled={createCard.isPending}>
+              {createCard.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Adicionar
+            </Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>
