@@ -3,7 +3,7 @@ export interface Board {
   user_id: string;
   name: string;
   description: string | null;
-  template_type: 'leads' | 'free';
+  template_type: 'leads' | 'free' | 'kanban' | 'rows';
   created_at: string;
   updated_at: string;
 }
@@ -30,11 +30,21 @@ export interface BoardCard {
 }
 
 export interface BoardTemplate {
-  id: 'leads' | 'free';
+  id: 'leads' | 'free' | 'kanban' | 'rows';
   title: string;
   description: string;
   icon: any;
   color: string;
   features: string[];
   defaultColumns?: string[];
+}
+
+export interface RowsCard {
+  id: string;
+  board_id: string;
+  title: string;
+  description: string | null;
+  order_index: number;
+  created_at: string;
+  updated_at: string;
 }
