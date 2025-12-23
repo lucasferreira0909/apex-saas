@@ -11,19 +11,17 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 
 import { KanbanBoard } from '@/components/apex/KanbanBoard';
-import { KanbanListView } from '@/components/apex/KanbanListView';
 import { CardAttachments } from '@/components/apex/CardAttachments';
 import { DataGrid, DataGridContainer } from '@/components/ui/data-grid';
 import { DataGridTable } from '@/components/ui/data-grid-table';
 import { DataGridPagination } from '@/components/ui/data-grid-pagination';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { ToggleGroup, ToggleGroupItem } from '@/components/ui/toggle-group';
 import { useBoards, useBoard, useCreateBoard, useDeleteBoard } from '@/hooks/useBoards';
 import { useCreateCard, useUpdateCard, useDeleteCard } from '@/hooks/useBoardCards';
 import { useUploadAttachment } from '@/hooks/useCardAttachments';
 import { useCreateColumn, useUpdateMultipleColumnsOrder, useUpdateColumnTitle, useDeleteColumn, useUpdateColumnIcon } from '@/hooks/useBoardColumns';
 import { Board, BoardCard, BoardTemplate } from '@/types/board';
-import { Plus, ArrowLeft, Trash2, Search, MoreHorizontal, Edit, Upload, X, FileText, Image, File, Loader2, LayoutGrid, List } from 'lucide-react';
+import { Plus, ArrowLeft, Trash2, Search, MoreHorizontal, Edit, Upload, X, FileText, Image, File, Loader2 } from 'lucide-react';
 import { icons } from 'lucide-react';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 import { IconPickerDialog } from '@/components/apex/IconPickerDialog';
@@ -105,9 +103,6 @@ export default function Boards() {
   // Icon picker states
   const [isIconPickerOpen, setIsIconPickerOpen] = useState(false);
   
-  // View mode state (kanban or list)
-  const [viewMode, setViewMode] = useState<'kanban' | 'list'>('kanban');
-  
   // Pending attachments for new card
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
@@ -144,6 +139,10 @@ export default function Boards() {
       return;
     }
     const columns = customColumns.filter(col => col.trim());
+    if (columns.length === 0) {
+      toast.error('Adicione pelo menos uma coluna');
+      return;
+    }
     const result = await createBoard.mutateAsync({
       name: boardName,
       description: boardDescription || undefined,
@@ -452,29 +451,19 @@ export default function Boards() {
               {boardData.board.description && <p className="text-muted-foreground">{boardData.board.description}</p>}
             </div>
           </div>
-          <div className="flex items-center gap-2">
-            <ToggleGroup type="single" value={viewMode} onValueChange={(value) => value && setViewMode(value as 'kanban' | 'list')}>
-              <ToggleGroupItem value="kanban" aria-label="Visualização Kanban">
-                <LayoutGrid className="h-4 w-4" />
-              </ToggleGroupItem>
-              <ToggleGroupItem value="list" aria-label="Visualização Lista">
-                <List className="h-4 w-4" />
-              </ToggleGroupItem>
-            </ToggleGroup>
-            {!isLeadsBoard && (
-              <Button onClick={() => setIsAddColumnSheetOpen(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Nova Coluna
-              </Button>
-            )}
-          </div>
+          {!isLeadsBoard && (
+            <Button onClick={() => setIsAddColumnSheetOpen(true)}>
+              <Plus className="h-4 w-4 mr-2" />
+              Nova Coluna
+            </Button>
+          )}
         </div>
 
         {loadingBoard ? (
           <div className="flex justify-center items-center h-64">
             <p className="text-muted-foreground">Carregando...</p>
           </div>
-        ) : viewMode === 'kanban' ? (
+        ) : (
           <KanbanBoard 
             columns={boardData.columns} 
             cards={boardData.cards} 
@@ -489,14 +478,6 @@ export default function Boards() {
             onDeleteColumn={handleOpenDeleteColumnDialog}
             onEditCard={handleEditCard}
             hideColumnActions={isLeadsBoard}
-          />
-        ) : (
-          <KanbanListView
-            columns={boardData.columns}
-            cards={boardData.cards}
-            onCardMove={handleCardMove}
-            onDeleteCard={handleDeleteCard}
-            onEditCard={handleEditCard}
           />
         )}
 
