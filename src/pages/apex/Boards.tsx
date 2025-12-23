@@ -779,6 +779,54 @@ export default function Boards() {
           onSelect={handleSelectIcon}
           currentIcon={editingColumnIcon}
         />
+
+        {/* Add Rows Card Sheet */}
+        <Sheet open={isAddRowsCardSheetOpen} onOpenChange={open => {
+          setIsAddRowsCardSheetOpen(open);
+          if (!open) {
+            setRowsCardTitle('');
+            setRowsCardDescription('');
+          }
+        }}>
+          <SheetContent>
+            <SheetHeader>
+              <SheetTitle>Adicionar Elemento</SheetTitle>
+              <SheetDescription>Preencha as informações do novo elemento</SheetDescription>
+            </SheetHeader>
+            <SheetBody>
+              <div className="grid gap-5">
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="rows-card-title">Nome *</Label>
+                  <Input 
+                    id="rows-card-title" 
+                    placeholder="Digite o nome do elemento" 
+                    value={rowsCardTitle} 
+                    onChange={e => setRowsCardTitle(e.target.value)} 
+                  />
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label htmlFor="rows-card-description">Descrição *</Label>
+                  <Textarea 
+                    id="rows-card-description" 
+                    placeholder="Digite a descrição do elemento" 
+                    rows={4} 
+                    value={rowsCardDescription} 
+                    onChange={e => setRowsCardDescription(e.target.value)} 
+                  />
+                </div>
+              </div>
+            </SheetBody>
+            <SheetFooter>
+              <SheetClose asChild>
+                <Button variant="outline">Cancelar</Button>
+              </SheetClose>
+              <Button onClick={handleAddRowsCard} disabled={createCard.isPending}>
+                {createCard.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                Adicionar
+              </Button>
+            </SheetFooter>
+          </SheetContent>
+        </Sheet>
       </div>
     );
   }
@@ -948,54 +996,6 @@ export default function Boards() {
               setIsTypeSelectSheetOpen(true);
             }}>Voltar</Button>
             <Button onClick={handleCreateBoard}>Criar Quadro</Button>
-          </SheetFooter>
-        </SheetContent>
-      </Sheet>
-
-      {/* Add Rows Card Sheet */}
-      <Sheet open={isAddRowsCardSheetOpen} onOpenChange={open => {
-        setIsAddRowsCardSheetOpen(open);
-        if (!open) {
-          setRowsCardTitle('');
-          setRowsCardDescription('');
-        }
-      }}>
-        <SheetContent>
-          <SheetHeader>
-            <SheetTitle>Adicionar Elemento</SheetTitle>
-            <SheetDescription>Preencha as informações do novo elemento</SheetDescription>
-          </SheetHeader>
-          <SheetBody>
-            <div className="grid gap-5">
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="rows-card-title">Nome *</Label>
-                <Input 
-                  id="rows-card-title" 
-                  placeholder="Digite o nome do elemento" 
-                  value={rowsCardTitle} 
-                  onChange={e => setRowsCardTitle(e.target.value)} 
-                />
-              </div>
-              <div className="flex flex-col gap-2">
-                <Label htmlFor="rows-card-description">Descrição *</Label>
-                <Textarea 
-                  id="rows-card-description" 
-                  placeholder="Digite a descrição do elemento" 
-                  rows={4} 
-                  value={rowsCardDescription} 
-                  onChange={e => setRowsCardDescription(e.target.value)} 
-                />
-              </div>
-            </div>
-          </SheetBody>
-          <SheetFooter>
-            <SheetClose asChild>
-              <Button variant="outline">Cancelar</Button>
-            </SheetClose>
-            <Button onClick={handleAddRowsCard} disabled={createCard.isPending}>
-              {createCard.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-              Adicionar
-            </Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>
