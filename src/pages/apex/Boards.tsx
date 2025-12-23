@@ -144,10 +144,6 @@ export default function Boards() {
       return;
     }
     const columns = customColumns.filter(col => col.trim());
-    if (columns.length === 0) {
-      toast.error('Adicione pelo menos uma coluna');
-      return;
-    }
     const result = await createBoard.mutateAsync({
       name: boardName,
       description: boardDescription || undefined,
