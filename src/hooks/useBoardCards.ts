@@ -141,3 +141,54 @@ export function useUpdateMultipleCards() {
     }
   });
 }
+
+export function useReorderCards() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (data: {
+      board_id: string;
+      cards: Array<{
+        id: string;
+        order_index: number;
+      }>;
+    }) => {
+      const promises = data.cards.map(card =>
+        supabase
+          .from('board_cards')
+          .update({ order_index: card.order_index })
+          .eq('id', card.id)
+      );
+      
+      await Promise.all(promises);
+    },
+    onMutate: async (newData) => {
+      await queryClient.cancelQueries({ queryKey: ['board', newData.board_id] });
+      const previousBoard = queryClient.getQueryData(['board', newData.board_id]);
+      
+      queryClient.setQueryData(['board', newData.board_id], (old: any) => {
+        if (!old) return old;
+        
+        const cardOrderMap = new Map(newData.cards.map(c => [c.id, c.order_index]));
+        
+        return {
+          ...old,
+          cards: old.cards.map((card: any) => ({
+            ...card,
+            order_index: cardOrderMap.get(card.id) ?? card.order_index
+          }))
+        };
+      });
+      
+      return { previousBoard };
+    },
+    onError: (err, newData, context) => {
+      if (context?.previousBoard) {
+        queryClient.setQueryData(['board', newData.board_id], context.previousBoard);
+      }
+    },
+    onSettled: (_, __, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['board', variables.board_id] });
+    }
+  });
+}
