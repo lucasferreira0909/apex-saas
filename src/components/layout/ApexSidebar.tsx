@@ -27,7 +27,7 @@ const menuItems = [{
   url: "/support",
   icon: HeadphonesIcon
 }, {
-  title: "Minha Conta",
+  title: "Configurações",
   url: "/settings",
   icon: Settings
 }];
