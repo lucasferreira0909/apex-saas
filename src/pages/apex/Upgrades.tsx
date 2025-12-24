@@ -6,6 +6,18 @@ import { CreditCard, Sparkles } from "lucide-react";
 
 export default function Upgrades() {
   const [activeTab, setActiveTab] = useState("credits");
+  const [selectedPackage, setSelectedPackage] = useState<string>("300");
+
+  const creditPackages = [
+    { id: "100", credits: 100, price: "R$ 17,90", perCredit: "R$ 0,18" },
+    { id: "300", credits: 300, price: "R$ 47,90", perCredit: "R$ 0,16", popular: true },
+    { id: "500", credits: 500, price: "R$ 87,90", perCredit: "R$ 0,18" },
+  ];
+
+  const handleCheckout = () => {
+    // TODO: Implement checkout logic
+    console.log("Checkout with package:", selectedPackage);
+  };
 
   const tabs = [
     { id: "credits", label: "Créditos", icon: Sparkles },
@@ -94,26 +106,26 @@ export default function Upgrades() {
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="p-4 rounded-lg border border-border hover:border-primary/50 transition-colors cursor-pointer">
-                      <h3 className="font-semibold text-card-foreground">100 Créditos</h3>
-                      <p className="text-lg font-bold mt-1" style={{ color: '#999999' }}>R$ 17,90</p>
-                      <p className="text-xs text-muted-foreground mt-1">R$ 0,18 por crédito</p>
-                    </div>
-                    <div className="p-4 rounded-lg border-2 border-primary/50 bg-primary/5 cursor-pointer">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-card-foreground">300 Créditos</h3>
-                        <Badge variant="secondary" className="text-xs">Popular</Badge>
+                    {creditPackages.map((pkg) => (
+                      <div
+                        key={pkg.id}
+                        onClick={() => setSelectedPackage(pkg.id)}
+                        className={`p-4 rounded-lg cursor-pointer transition-colors ${
+                          selectedPackage === pkg.id
+                            ? "border-2 border-primary bg-primary/5"
+                            : "border border-border hover:border-primary/50"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 mb-1">
+                          <h3 className="font-semibold text-card-foreground">{pkg.credits} Créditos</h3>
+                          {pkg.popular && <Badge variant="secondary" className="text-xs">Popular</Badge>}
+                        </div>
+                        <p className="text-lg font-bold mt-1" style={{ color: '#999999' }}>{pkg.price}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{pkg.perCredit} por crédito</p>
                       </div>
-                      <p className="text-lg font-bold mt-1" style={{ color: '#999999' }}>R$ 47,90</p>
-                      <p className="text-xs text-muted-foreground mt-1">R$ 0,16 por crédito</p>
-                    </div>
-                    <div className="p-4 rounded-lg border border-border hover:border-primary/50 transition-colors cursor-pointer">
-                      <h3 className="font-semibold text-card-foreground">500 Créditos</h3>
-                      <p className="text-lg font-bold mt-1" style={{ color: '#999999' }}>R$ 87,90</p>
-                      <p className="text-xs text-muted-foreground mt-1">R$ 0,18 por crédito</p>
-                    </div>
+                    ))}
                   </div>
-                  <Button className="w-full">
+                  <Button className="w-full" onClick={handleCheckout}>
                     Comprar Créditos
                   </Button>
                 </CardContent>
