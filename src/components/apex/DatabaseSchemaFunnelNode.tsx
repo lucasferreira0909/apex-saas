@@ -1,27 +1,40 @@
 import { memo } from "react";
 import { Position, NodeProps, Handle } from "@xyflow/react";
-import { MoreVertical, Trash2 } from "lucide-react";
+import { MoreVertical, Trash2, Copy } from "lucide-react";
 import { DatabaseSchemaNode, DatabaseSchemaNodeHeader, DatabaseSchemaNodeBody, DatabaseSchemaTableRow, DatabaseSchemaTableCell } from "./DatabaseSchemaNode";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Button } from "@/components/ui/button";
+
 export type DatabaseSchemaFunnelNodeData = {
   label: string;
   icon: any;
   configured: boolean;
   stats: Record<string, string | number>;
   onDelete?: (nodeId: string) => void;
+  onDuplicate?: (nodeId: string) => void;
 };
+
 const DatabaseSchemaFunnelNode = memo((props: NodeProps) => {
   const data = props.data as DatabaseSchemaFunnelNodeData;
   const Icon = data?.icon;
   const statsEntries = Object.entries(data?.stats || {});
+
   const handleDelete = (e: React.MouseEvent) => {
     e.stopPropagation();
     if (data?.onDelete) {
       data.onDelete(props.id);
     }
   };
-  return <DatabaseSchemaNode className="p-0 min-h-[120px] bg-muted">
+
+  const handleDuplicate = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (data?.onDuplicate) {
+      data.onDuplicate(props.id);
+    }
+  };
+
+  return (
+    <DatabaseSchemaNode className="p-0 min-h-[120px] bg-muted">
       <DatabaseSchemaNodeHeader className="relative bg-[#131313]">
         {Icon && <Icon className="h-5 w-5" />}
         <span className="flex-1">{data?.label}</span>
@@ -32,6 +45,10 @@ const DatabaseSchemaFunnelNode = memo((props: NodeProps) => {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="bg-popover z-50">
+            <DropdownMenuItem onClick={handleDuplicate} className="cursor-pointer">
+              <Copy className="h-4 w-4 mr-2" />
+              Duplicar
+            </DropdownMenuItem>
             <DropdownMenuItem onClick={handleDelete} className="text-destructive focus:text-destructive cursor-pointer">
               <Trash2 className="h-4 w-4 mr-2" />
               Excluir
@@ -42,45 +59,50 @@ const DatabaseSchemaFunnelNode = memo((props: NodeProps) => {
       <DatabaseSchemaNodeBody className="relative">
         {/* Handle de entrada (esquerda) */}
         <Handle id="input" type="target" position={Position.Left} className="!w-3 !h-3 !border-2 !border-primary !bg-background" style={{
-        top: '50%'
-      }} />
+          top: '50%'
+        }} />
 
         <DatabaseSchemaTableRow className="bg-muted">
           <DatabaseSchemaTableCell className="pl-4 pr-16 w-full bg-muted">
-            {statsEntries.length > 0 ? <div className="flex flex-col gap-1 py-2">
-                {statsEntries.map(([key, value]) => <div key={key} className="flex justify-between text-sm">
+            {statsEntries.length > 0 ? (
+              <div className="flex flex-col gap-1 py-2">
+                {statsEntries.map(([key, value]) => (
+                  <div key={key} className="flex justify-between text-sm">
                     <span className="text-muted-foreground">{key}:</span>
                     <span className="font-medium">{String(value)}</span>
-                  </div>)}
-              </div> : <span className="text-muted-foreground text-sm py-2 block">​ </span>}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <span className="text-muted-foreground text-sm py-2 block">​ </span>
+            )}
           </DatabaseSchemaTableCell>
         </DatabaseSchemaTableRow>
 
         {/* Handle Neutro (topo) */}
         <Handle id="neutral" type="source" position={Position.Right} className="!w-3 !h-3 !border-2" style={{
-        backgroundColor: '#9ca3af',
-        borderColor: '#6b7280',
-        top: '25%'
-      }} />
-        
+          backgroundColor: '#9ca3af',
+          borderColor: '#6b7280',
+          top: '25%'
+        }} />
 
         {/* Handle Se sim (meio) */}
         <Handle id="positive" type="source" position={Position.Right} className="!w-3 !h-3 !border-2" style={{
-        backgroundColor: '#22c55e',
-        borderColor: '#16a34a',
-        top: '50%'
-      }} />
-        
+          backgroundColor: '#22c55e',
+          borderColor: '#16a34a',
+          top: '50%'
+        }} />
 
         {/* Handle Negado (base) */}
         <Handle id="negative" type="source" position={Position.Right} className="!w-3 !h-3 !border-2" style={{
-        backgroundColor: '#ef4444',
-        borderColor: '#dc2626',
-        top: '75%'
-      }} />
-        
+          backgroundColor: '#ef4444',
+          borderColor: '#dc2626',
+          top: '75%'
+        }} />
       </DatabaseSchemaNodeBody>
-    </DatabaseSchemaNode>;
+    </DatabaseSchemaNode>
+  );
 });
+
 DatabaseSchemaFunnelNode.displayName = "DatabaseSchemaFunnelNode";
 export default DatabaseSchemaFunnelNode;

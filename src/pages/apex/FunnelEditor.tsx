@@ -71,6 +71,35 @@ export default function FunnelEditor() {
     setShowDeleteConfirm(true);
   }, []);
 
+  // Handle duplicate node request
+  const handleDuplicateRequest = useCallback((nodeId: string) => {
+    setNodes(prev => {
+      const nodeToDuplicate = prev.find(node => node.id === nodeId);
+      if (!nodeToDuplicate) return prev;
+
+      const newNode: Node = {
+        id: crypto.randomUUID(),
+        type: nodeToDuplicate.type,
+        position: {
+          x: nodeToDuplicate.position.x + 50,
+          y: nodeToDuplicate.position.y + 50,
+        },
+        data: {
+          ...nodeToDuplicate.data,
+          onDelete: handleDeleteRequest,
+          onDuplicate: handleDuplicateRequest,
+        },
+      };
+
+      return [...prev, newNode];
+    });
+    setHasUnsavedChanges(true);
+    toast({
+      title: "Elemento duplicado",
+      description: "O elemento foi duplicado com sucesso.",
+    });
+  }, []);
+
   // Confirm delete node
   const handleConfirmDelete = useCallback(() => {
     if (nodeToDelete) {
@@ -97,10 +126,11 @@ export default function FunnelEditor() {
         icon: element.icon,
         configured: element.configured,
         stats: element.stats,
-        onDelete: handleDeleteRequest
+        onDelete: handleDeleteRequest,
+        onDuplicate: handleDuplicateRequest,
       }
     }));
-  }, [handleDeleteRequest]);
+  }, [handleDeleteRequest, handleDuplicateRequest]);
 
   // Convert ReactFlow Nodes to FunnelElements
   const nodesToElements = useCallback((nodes: Node[]): FunnelElement[] => {
@@ -162,7 +192,8 @@ export default function FunnelEditor() {
         icon: elementType.icon,
         configured: false,
         stats: {},
-        onDelete: handleDeleteRequest
+        onDelete: handleDeleteRequest,
+        onDuplicate: handleDuplicateRequest,
       }
     };
     setNodes(prev => [...prev, newNode]);
