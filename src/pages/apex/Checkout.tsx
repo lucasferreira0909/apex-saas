@@ -144,7 +144,60 @@ export default function Checkout() {
         const cleanCardNumber = cardNumber.replace(/\s/g, "");
         
         if (cleanCardNumber === "4000000000000002") {
+          // Save failed transaction
+          await supabase.from("transactions").insert({
+            user_id: user.id,
+            package_id: packageId,
+            package_type: packageType,
+            amount: isCredits ? Math.round(creditPackages[packageId].priceValue * 100) : 4900,
+            credits_added: 0,
+            status: "failed",
+            payment_method: "card",
+            card_last_four: cleanCardNumber.slice(-4),
+            external_transaction_id: `test_${Date.now()}`,
+          });
           throw new Error("Cartão recusado. Por favor, tente outro cartão.");
+        }
+
+        const creditsToAdd = isCredits ? creditPackages[packageId].credits : 0;
+        const transactionId = `test_${Date.now()}`;
+
+        // Save successful transaction
+        const { error: transactionError } = await supabase.from("transactions").insert({
+          user_id: user.id,
+          package_id: packageId,
+          package_type: packageType,
+          amount: isCredits ? Math.round(creditPackages[packageId].priceValue * 100) : 4900,
+          credits_added: creditsToAdd,
+          status: "completed",
+          payment_method: "card",
+          card_last_four: cleanCardNumber.slice(-4),
+          external_transaction_id: transactionId,
+        });
+
+        if (transactionError) {
+          console.error("Error saving transaction:", transactionError);
+        }
+
+        // Update user credits if buying credits
+        if (isCredits && creditsToAdd > 0) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("credits")
+            .eq("user_id", user.id)
+            .maybeSingle();
+
+          const currentCredits = profile?.credits || 0;
+          const newCredits = currentCredits + creditsToAdd;
+
+          const { error: updateError } = await supabase
+            .from("profiles")
+            .update({ credits: newCredits })
+            .eq("user_id", user.id);
+
+          if (updateError) {
+            console.error("Error updating credits:", updateError);
+          }
         }
 
         console.log("Test transaction successful:", {
@@ -153,7 +206,8 @@ export default function Checkout() {
           userId: user.id,
           amount: isCredits ? creditPackages[packageId].price : "R$ 49,00",
           cardLast4: cleanCardNumber.slice(-4),
-          transactionId: `test_${Date.now()}`,
+          transactionId,
+          creditsAdded: creditsToAdd,
         });
 
         toast({
