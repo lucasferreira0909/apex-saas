@@ -128,26 +128,34 @@ export default function Checkout() {
 
     setIsLoading(true);
 
+    // Simulate payment processing delay for testing
+    const isTestMode = true; // Set to false to use real Sunize API
+
     try {
-      const { data, error } = await supabase.functions.invoke("sunize-checkout", {
-        body: {
+      if (isTestMode) {
+        // Simulated test transaction
+        await new Promise(resolve => setTimeout(resolve, 2000)); // 2 second delay
+        
+        // Test card numbers for different scenarios:
+        // 4242 4242 4242 4242 - Success
+        // 4000 0000 0000 0002 - Declined
+        // Any other - Success
+        
+        const cleanCardNumber = cardNumber.replace(/\s/g, "");
+        
+        if (cleanCardNumber === "4000000000000002") {
+          throw new Error("Cartão recusado. Por favor, tente outro cartão.");
+        }
+
+        console.log("Test transaction successful:", {
           packageId,
           packageType,
           userId: user.id,
-          userEmail: user.email,
-          paymentDetails: {
-            cardName: cardName.trim(),
-            cardNumber: cardNumber.replace(/\s/g, ""),
-            expiryMonth,
-            expiryYear,
-            cvv,
-          },
-        },
-      });
+          amount: isCredits ? creditPackages[packageId].price : "R$ 49,00",
+          cardLast4: cleanCardNumber.slice(-4),
+          transactionId: `test_${Date.now()}`,
+        });
 
-      if (error) throw error;
-
-      if (data.success) {
         toast({
           title: "Pagamento realizado!",
           description: isCredits 
@@ -156,7 +164,36 @@ export default function Checkout() {
         });
         navigate("/upgrades?payment=success");
       } else {
-        throw new Error(data.error || "Erro ao processar pagamento");
+        // Real Sunize API call
+        const { data, error } = await supabase.functions.invoke("sunize-checkout", {
+          body: {
+            packageId,
+            packageType,
+            userId: user.id,
+            userEmail: user.email,
+            paymentDetails: {
+              cardName: cardName.trim(),
+              cardNumber: cardNumber.replace(/\s/g, ""),
+              expiryMonth,
+              expiryYear,
+              cvv,
+            },
+          },
+        });
+
+        if (error) throw error;
+
+        if (data.success) {
+          toast({
+            title: "Pagamento realizado!",
+            description: isCredits 
+              ? `${creditPackages[packageId].credits} créditos foram adicionados à sua conta.`
+              : "Seu plano foi ativado com sucesso.",
+          });
+          navigate("/upgrades?payment=success");
+        } else {
+          throw new Error(data.error || "Erro ao processar pagamento");
+        }
       }
     } catch (error: unknown) {
       console.error("Payment error:", error);
