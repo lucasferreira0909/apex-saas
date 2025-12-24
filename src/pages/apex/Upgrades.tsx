@@ -60,7 +60,7 @@ export default function Upgrades() {
                       </div>
                       <div>
                         <h3 className="font-semibold text-card-foreground">Créditos Disponíveis</h3>
-                        <p className="text-2xl font-bold text-primary">100</p>
+                        <p className="text-2xl font-bold" style={{ color: '#999999' }}>100</p>
                       </div>
                     </div>
                     <Badge variant="secondary">Atualizado</Badge>
