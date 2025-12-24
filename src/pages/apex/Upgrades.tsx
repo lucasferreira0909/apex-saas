@@ -2,19 +2,18 @@ import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { CreditCard, Sparkles, Loader2, CheckCircle, XCircle } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { CreditCard, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { useSearchParams } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
 
 export default function Upgrades() {
   const [activeTab, setActiveTab] = useState("credits");
   const [selectedPackage, setSelectedPackage] = useState<string>("300");
-  const [isLoading, setIsLoading] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const creditPackages = [
     { id: "100", credits: 100, price: "R$ 17,90", perCredit: "R$ 0,18" },
@@ -44,7 +43,7 @@ export default function Upgrades() {
     }
   }, [searchParams, toast]);
 
-  const handleCreditsCheckout = async () => {
+  const handleCreditsCheckout = () => {
     if (!user) {
       toast({
         title: "Faça login",
@@ -53,40 +52,10 @@ export default function Upgrades() {
       });
       return;
     }
-
-    setIsLoading(true);
-
-    try {
-      const { data, error } = await supabase.functions.invoke("sunize-checkout", {
-        body: {
-          packageId: selectedPackage,
-          packageType: "credits",
-          userId: user.id,
-          userEmail: user.email,
-        },
-      });
-
-      if (error) throw error;
-
-      if (data.success && data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
-      } else {
-        throw new Error(data.error || "Erro ao criar sessão de pagamento");
-      }
-    } catch (error: unknown) {
-      console.error("Checkout error:", error);
-      const errorMessage = error instanceof Error ? error.message : "Erro ao processar pagamento";
-      toast({
-        title: "Erro no pagamento",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    navigate(`/checkout?package=${selectedPackage}&type=credits`);
   };
 
-  const handlePlanCheckout = async () => {
+  const handlePlanCheckout = () => {
     if (!user) {
       toast({
         title: "Faça login",
@@ -95,37 +64,7 @@ export default function Upgrades() {
       });
       return;
     }
-
-    setIsLoading(true);
-
-    try {
-      const { data, error } = await supabase.functions.invoke("sunize-checkout", {
-        body: {
-          packageId: "pro",
-          packageType: "plan",
-          userId: user.id,
-          userEmail: user.email,
-        },
-      });
-
-      if (error) throw error;
-
-      if (data.success && data.checkoutUrl) {
-        window.location.href = data.checkoutUrl;
-      } else {
-        throw new Error(data.error || "Erro ao criar sessão de pagamento");
-      }
-    } catch (error: unknown) {
-      console.error("Checkout error:", error);
-      const errorMessage = error instanceof Error ? error.message : "Erro ao processar pagamento";
-      toast({
-        title: "Erro no pagamento",
-        description: errorMessage,
-        variant: "destructive",
-      });
-    } finally {
-      setIsLoading(false);
-    }
+    navigate(`/checkout?package=pro&type=plan`);
   };
 
   return (
@@ -213,12 +152,12 @@ export default function Upgrades() {
                     {creditPackages.map((pkg) => (
                       <div
                         key={pkg.id}
-                        onClick={() => !isLoading && setSelectedPackage(pkg.id)}
+                        onClick={() => setSelectedPackage(pkg.id)}
                         className={`p-4 rounded-lg cursor-pointer transition-colors ${
                           selectedPackage === pkg.id
                             ? "border-2 border-primary bg-primary/5"
                             : "border border-border hover:border-primary/50"
-                        } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                        }`}
                       >
                         <div className="flex items-center gap-2 mb-1">
                           <h3 className="font-semibold text-card-foreground">{pkg.credits} Créditos</h3>
@@ -229,15 +168,8 @@ export default function Upgrades() {
                       </div>
                     ))}
                   </div>
-                  <Button className="w-full" onClick={handleCreditsCheckout} disabled={isLoading}>
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Processando...
-                      </>
-                    ) : (
-                      "Comprar Créditos"
-                    )}
+                  <Button className="w-full" onClick={handleCreditsCheckout}>
+                    Comprar Créditos
                   </Button>
                 </CardContent>
               </Card>
@@ -308,15 +240,8 @@ export default function Upgrades() {
                       <li>• Relatórios detalhados</li>
                       <li>• Suporte prioritário</li>
                     </ul>
-                    <Button className="w-full" onClick={handlePlanCheckout} disabled={isLoading}>
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Processando...
-                        </>
-                      ) : (
-                        "Renovar Plano"
-                      )}
+                    <Button className="w-full" onClick={handlePlanCheckout}>
+                      Renovar Plano
                     </Button>
                   </div>
                 </CardContent>
