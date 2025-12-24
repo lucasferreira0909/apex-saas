@@ -3,9 +3,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
 import { CreateFunnelDialog } from "@/components/apex/CreateFunnelDialog";
-import { useFunnels, useDeleteFunnel } from "@/hooks/useFunnels";
+import { useFunnels, useDeleteFunnel, useDeleteMultipleFunnels } from "@/hooks/useFunnels";
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
 import { DataGrid, DataGridContainer } from "@/components/ui/data-grid";
 import { DataGridTable } from "@/components/ui/data-grid-table";
@@ -13,7 +13,6 @@ import { DataGridPagination } from "@/components/ui/data-grid-pagination";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Plus, Search, Folder, MoreHorizontal, Edit, Trash2, X } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useNavigate } from "react-router-dom";
 import {
   ColumnDef,
@@ -23,6 +22,7 @@ import {
   getSortedRowModel,
   PaginationState,
   SortingState,
+  RowSelectionState,
   useReactTable,
 } from '@tanstack/react-table';
 
@@ -40,6 +40,8 @@ export default function Funnels() {
   const [selectedFolder, setSelectedFolder] = useState<string>("all");
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
@@ -49,6 +51,7 @@ export default function Funnels() {
   const navigate = useNavigate();
   const { data: funnels = [], isLoading } = useFunnels();
   const deleteFunnel = useDeleteFunnel();
+  const deleteMultipleFunnels = useDeleteMultipleFunnels();
 
   const getTypeBadge = (templateType: string | null) => {
     switch (templateType) {
@@ -114,7 +117,43 @@ export default function Funnels() {
     navigate(`/funnel-editor/${projectId}`);
   };
 
+  // Get selected row IDs
+  const selectedIds = useMemo(() => {
+    return Object.keys(rowSelection).filter(id => rowSelection[id]);
+  }, [rowSelection]);
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length > 0) {
+      await deleteMultipleFunnels.mutateAsync(selectedIds);
+      setRowSelection({});
+    }
+    setBulkDeleteDialogOpen(false);
+  };
+
   const columns = useMemo<ColumnDef<FunnelItem>[]>(() => [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected()}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Selecionar todos"
+          className="translate-y-[2px]"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Selecionar linha"
+          className="translate-y-[2px]"
+          onClick={(e) => e.stopPropagation()}
+        />
+      ),
+      size: 40,
+      enableSorting: false,
+      enableHiding: false,
+    },
     {
       accessorKey: 'name',
       header: 'Nome',
@@ -183,9 +222,12 @@ export default function Funnels() {
     state: {
       pagination,
       sorting,
+      rowSelection,
     },
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
+    onRowSelectionChange: setRowSelection,
+    enableRowSelection: true,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -221,6 +263,16 @@ export default function Funnels() {
           />
         </div>
         
+        {/* Bulk delete button */}
+        {selectedIds.length > 0 && (
+          <Button 
+            variant="destructive" 
+            onClick={() => setBulkDeleteDialogOpen(true)}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Excluir {selectedIds.length} selecionado{selectedIds.length > 1 ? 's' : ''}
+          </Button>
+        )}
       </div>
 
       {/* Active Filters Display */}
@@ -295,6 +347,15 @@ export default function Funnels() {
         onConfirm={handleConfirmDelete} 
         title="Excluir Funil" 
         description="Tem certeza que deseja excluir este funil? Esta ação não pode ser desfeita e todos os elementos do funil serão perdidos." 
+      />
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog 
+        open={bulkDeleteDialogOpen} 
+        onOpenChange={setBulkDeleteDialogOpen} 
+        onConfirm={handleBulkDelete} 
+        title="Excluir Funis Selecionados" 
+        description={`Tem certeza que deseja excluir ${selectedIds.length} funis? Esta ação não pode ser desfeita e todos os elementos dos funis serão perdidos.`} 
       />
     </div>
   );

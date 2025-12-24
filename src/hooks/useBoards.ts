@@ -140,3 +140,25 @@ export function useDeleteBoard() {
     }
   });
 }
+
+export function useDeleteMultipleBoards() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (boardIds: string[]) => {
+      const { error } = await supabase
+        .from('boards')
+        .delete()
+        .in('id', boardIds);
+      
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['boards'] });
+      toast.success(`${variables.length} quadros excluídos com sucesso`);
+    },
+    onError: () => {
+      toast.error('Não foi possível excluir os quadros');
+    }
+  });
+}
