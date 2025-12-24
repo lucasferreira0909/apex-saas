@@ -30,6 +30,33 @@ export function useCardAttachments(cardId: string | null) {
   });
 }
 
+export function useBoardCardAttachments(cardIds: string[]) {
+  return useQuery({
+    queryKey: ['board-card-attachments', cardIds],
+    queryFn: async () => {
+      if (!cardIds.length) return {};
+      const { data, error } = await supabase
+        .from('card_attachments')
+        .select('*')
+        .in('card_id', cardIds)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      
+      // Group attachments by card_id
+      const grouped: Record<string, CardAttachment[]> = {};
+      for (const attachment of data as CardAttachment[]) {
+        if (!grouped[attachment.card_id]) {
+          grouped[attachment.card_id] = [];
+        }
+        grouped[attachment.card_id].push(attachment);
+      }
+      return grouped;
+    },
+    enabled: cardIds.length > 0
+  });
+}
+
 export function useUploadAttachment() {
   const queryClient = useQueryClient();
 

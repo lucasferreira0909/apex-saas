@@ -192,3 +192,46 @@ export function useReorderCards() {
     }
   });
 }
+
+export function useToggleCardCompleted() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (data: { id: string; board_id: string; is_completed: boolean }) => {
+      const { error } = await supabase
+        .from('board_cards')
+        .update({ is_completed: data.is_completed })
+        .eq('id', data.id);
+      
+      if (error) throw error;
+      return data;
+    },
+    onMutate: async (newData) => {
+      await queryClient.cancelQueries({ queryKey: ['board', newData.board_id] });
+      const previousBoard = queryClient.getQueryData(['board', newData.board_id]);
+      
+      queryClient.setQueryData(['board', newData.board_id], (old: any) => {
+        if (!old) return old;
+        return {
+          ...old,
+          cards: old.cards.map((card: any) => 
+            card.id === newData.id 
+              ? { ...card, is_completed: newData.is_completed }
+              : card
+          )
+        };
+      });
+      
+      return { previousBoard };
+    },
+    onError: (err, newData, context) => {
+      if (context?.previousBoard) {
+        queryClient.setQueryData(['board', newData.board_id], context.previousBoard);
+      }
+      toast.error('Não foi possível atualizar o status');
+    },
+    onSettled: (_, __, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['board', variables.board_id] });
+    }
+  });
+}

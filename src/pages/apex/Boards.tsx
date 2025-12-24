@@ -18,8 +18,8 @@ import { DataGridTable } from '@/components/ui/data-grid-table';
 import { DataGridPagination } from '@/components/ui/data-grid-pagination';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
 import { useBoards, useBoard, useCreateBoard, useDeleteBoard } from '@/hooks/useBoards';
-import { useCreateCard, useUpdateCard, useDeleteCard, useReorderCards } from '@/hooks/useBoardCards';
-import { useUploadAttachment } from '@/hooks/useCardAttachments';
+import { useCreateCard, useUpdateCard, useDeleteCard, useReorderCards, useToggleCardCompleted } from '@/hooks/useBoardCards';
+import { useUploadAttachment, useBoardCardAttachments } from '@/hooks/useCardAttachments';
 import { useCreateColumn, useUpdateMultipleColumnsOrder, useUpdateColumnTitle, useDeleteColumn, useUpdateColumnIcon } from '@/hooks/useBoardColumns';
 import { Board, BoardCard, BoardTemplate } from '@/types/board';
 import { Plus, ArrowLeft, Trash2, Search, MoreHorizontal, Edit, Upload, X, FileText, Image, File, Loader2, LayoutGrid, List } from 'lucide-react';
@@ -56,6 +56,9 @@ export default function Boards() {
   const [isAddRowsCardSheetOpen, setIsAddRowsCardSheetOpen] = useState(false);
   const [rowsCardTitle, setRowsCardTitle] = useState('');
   const [rowsCardDescription, setRowsCardDescription] = useState('');
+  const [rowsCardPriority, setRowsCardPriority] = useState<'low' | 'medium' | 'high'>('medium');
+  const [pendingRowsFiles, setPendingRowsFiles] = useState<File[]>([]);
+  const rowsCardFileInputRef = useRef<HTMLInputElement>(null);
   
   // Read board ID from URL params
   const selectedBoardId = searchParams.get('board');
@@ -123,11 +126,26 @@ export default function Boards() {
   const deleteCard = useDeleteCard();
   const reorderCards = useReorderCards();
   const uploadAttachment = useUploadAttachment();
+  const toggleCardCompleted = useToggleCardCompleted();
   const updateColumnsOrder = useUpdateMultipleColumnsOrder();
   const updateColumnTitle = useUpdateColumnTitle();
   const updateColumnIcon = useUpdateColumnIcon();
   const deleteColumn = useDeleteColumn();
   const createColumn = useCreateColumn();
+  
+  // Get card attachments for rows board
+  const rowsCardIds = boardData?.board.template_type === 'rows' ? boardData.cards.map(c => c.id) : [];
+  const { data: cardAttachmentsMap } = useBoardCardAttachments(rowsCardIds);
+
+  // Toggle card completion handler
+  const handleToggleCompleted = (cardId: string, isCompleted: boolean) => {
+    if (!selectedBoardId) return;
+    toggleCardCompleted.mutate({
+      id: cardId,
+      board_id: selectedBoardId,
+      is_completed: isCompleted
+    });
+  };
 
   // Rows board reorder handler
   const handleReorderRowsCards = (cards: Array<{ id: string; order_index: number }>) => {
@@ -204,18 +222,31 @@ export default function Boards() {
       columnId = newColumn.id;
     }
     
-    await createCard.mutateAsync({
+    const newCard = await createCard.mutateAsync({
       board_id: selectedBoardId,
       column_id: columnId,
       title: rowsCardTitle,
       description: rowsCardDescription || undefined,
-      priority: 'medium',
+      priority: rowsCardPriority,
       order_index: maxOrderIndex + 1
     });
+    
+    // Upload pending attachments for rows card
+    if (pendingRowsFiles.length > 0 && newCard) {
+      try {
+        for (const file of pendingRowsFiles) {
+          await uploadAttachment.mutateAsync({ cardId: newCard.id, file });
+        }
+      } catch (error) {
+        console.error('Error uploading attachments:', error);
+      }
+    }
     
     setIsAddRowsCardSheetOpen(false);
     setRowsCardTitle('');
     setRowsCardDescription('');
+    setRowsCardPriority('medium');
+    setPendingRowsFiles([]);
   };
 
   const handleAddCard = async () => {
@@ -426,9 +457,12 @@ export default function Boards() {
     {
       accessorKey: 'template_type',
       header: 'Tipo',
-      cell: () => (
-        <Badge variant="secondary">Livre</Badge>
-      ),
+      cell: (info) => {
+        const type = info.getValue() as string;
+        if (type === 'kanban') return <Badge variant="secondary">Kanban</Badge>;
+        if (type === 'rows') return <Badge variant="outline">Linhas</Badge>;
+        return <Badge variant="secondary">Livre</Badge>;
+      },
       size: 120,
     },
     {
@@ -530,7 +564,10 @@ export default function Boards() {
               id: c.id,
               title: c.title,
               description: c.description,
-              order_index: c.order_index
+              priority: c.priority,
+              order_index: c.order_index,
+              is_completed: c.is_completed ?? false,
+              attachments: cardAttachmentsMap?.[c.id] || []
             }))}
             onAddCard={() => setIsAddRowsCardSheetOpen(true)}
             onEditCard={(card) => {
@@ -539,6 +576,7 @@ export default function Boards() {
             }}
             onDeleteCard={handleDeleteCard}
             onReorderCards={handleReorderRowsCards}
+            onToggleCompleted={handleToggleCompleted}
           />
         ) : (
           <KanbanBoard 
@@ -786,6 +824,8 @@ export default function Boards() {
           if (!open) {
             setRowsCardTitle('');
             setRowsCardDescription('');
+            setRowsCardPriority('medium');
+            setPendingRowsFiles([]);
           }
         }}>
           <SheetContent>
@@ -805,7 +845,7 @@ export default function Boards() {
                   />
                 </div>
                 <div className="flex flex-col gap-2">
-                  <Label htmlFor="rows-card-description">Descrição *</Label>
+                  <Label htmlFor="rows-card-description">Descrição</Label>
                   <Textarea 
                     id="rows-card-description" 
                     placeholder="Digite a descrição do elemento" 
@@ -814,14 +854,81 @@ export default function Boards() {
                     onChange={e => setRowsCardDescription(e.target.value)} 
                   />
                 </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Prioridade</Label>
+                  <Select value={rowsCardPriority} onValueChange={(val) => setRowsCardPriority(val as 'low' | 'medium' | 'high')}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a prioridade" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Baixa</SelectItem>
+                      <SelectItem value="medium">Média</SelectItem>
+                      <SelectItem value="high">Alta</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="flex flex-col gap-2">
+                  <Label>Anexos</Label>
+                  <div className="flex flex-col gap-2">
+                    <Button 
+                      type="button"
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => rowsCardFileInputRef.current?.click()}
+                      className="w-fit"
+                    >
+                      <Upload className="h-4 w-4 mr-1" />
+                      Anexar arquivo
+                    </Button>
+                    <input
+                      ref={rowsCardFileInputRef}
+                      type="file"
+                      multiple
+                      className="hidden"
+                      onChange={(e) => {
+                        const files = e.target.files;
+                        if (files) setPendingRowsFiles(prev => [...prev, ...Array.from(files)]);
+                        if (rowsCardFileInputRef.current) rowsCardFileInputRef.current.value = '';
+                      }}
+                      accept="image/*,.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv"
+                    />
+                    {pendingRowsFiles.length > 0 && (
+                      <div className="flex flex-col gap-1.5 mt-1">
+                        {pendingRowsFiles.map((file, index) => {
+                          const FileIcon = getFileIcon(file.type);
+                          return (
+                            <div 
+                              key={index}
+                              className="flex items-center gap-2 p-2 rounded-md border bg-muted/30 group"
+                            >
+                              <div className="h-8 w-8 flex items-center justify-center bg-muted rounded">
+                                <FileIcon className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                              <span className="flex-1 text-sm truncate">{file.name}</span>
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0"
+                                onClick={() => setPendingRowsFiles(prev => prev.filter((_, i) => i !== index))}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
               </div>
             </SheetBody>
             <SheetFooter>
               <SheetClose asChild>
                 <Button variant="outline">Cancelar</Button>
               </SheetClose>
-              <Button onClick={handleAddRowsCard} disabled={createCard.isPending}>
-                {createCard.isPending && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              <Button onClick={handleAddRowsCard} disabled={createCard.isPending || uploadAttachment.isPending}>
+                {(createCard.isPending || uploadAttachment.isPending) && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 Adicionar
               </Button>
             </SheetFooter>
