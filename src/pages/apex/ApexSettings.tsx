@@ -393,21 +393,21 @@ export default function ApexSettings() {
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="p-4 rounded-lg border border-border hover:border-primary/50 transition-colors cursor-pointer">
-                      <h3 className="font-semibold text-card-foreground">100 Créditos</h3>
-                      <p className="text-lg font-bold text-primary mt-1">R$ 17,90</p>
+                      <h3 className="font-semibold" style={{ color: '#999999' }}>100 Créditos</h3>
+                      <p className="text-lg font-bold mt-1" style={{ color: '#999999' }}>R$ 17,90</p>
                       <p className="text-xs text-muted-foreground mt-1">R$ 0,18 por crédito</p>
                     </div>
                     <div className="p-4 rounded-lg border-2 border-primary/50 bg-primary/5 cursor-pointer">
                       <div className="flex items-center gap-2 mb-1">
-                        <h3 className="font-semibold text-card-foreground">300 Créditos</h3>
+                        <h3 className="font-semibold" style={{ color: '#999999' }}>300 Créditos</h3>
                         <Badge variant="secondary" className="text-xs">Popular</Badge>
                       </div>
-                      <p className="text-lg font-bold text-primary mt-1">R$ 47,90</p>
+                      <p className="text-lg font-bold mt-1" style={{ color: '#999999' }}>R$ 47,90</p>
                       <p className="text-xs text-muted-foreground mt-1">R$ 0,16 por crédito</p>
                     </div>
                     <div className="p-4 rounded-lg border border-border hover:border-primary/50 transition-colors cursor-pointer">
-                      <h3 className="font-semibold text-card-foreground">500 Créditos</h3>
-                      <p className="text-lg font-bold text-primary mt-1">R$ 87,90</p>
+                      <h3 className="font-semibold" style={{ color: '#999999' }}>500 Créditos</h3>
+                      <p className="text-lg font-bold mt-1" style={{ color: '#999999' }}>R$ 87,90</p>
                       <p className="text-xs text-muted-foreground mt-1">R$ 0,18 por crédito</p>
                     </div>
                   </div>
