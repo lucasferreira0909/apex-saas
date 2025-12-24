@@ -32,3 +32,6 @@ verify_jwt = false
 
 [functions.generate-persona]
 verify_jwt = false
+
+[functions.sunize-checkout]
+verify_jwt = true
