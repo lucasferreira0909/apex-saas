@@ -4,12 +4,13 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Image, Download, ArrowLeft, Trash2, Clock, Pencil } from "lucide-react";
+import { Image, Download, ArrowLeft, Trash2, Clock, Pencil, Coins } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { useCredits, CREDIT_COSTS } from "@/hooks/useCredits";
 
 interface GeneratedImage {
   id: string;
@@ -42,13 +43,15 @@ export default function ImageGenerator() {
   
   const { toast } = useToast();
   const { user } = useAuth();
+  const { credits, refreshCredits, deductCredits } = useCredits();
 
   useEffect(() => {
     if (user) {
       fetchHistory();
       fetchTodayUsage();
+      refreshCredits();
     }
-  }, [user]);
+  }, [user, refreshCredits]);
 
   const fetchTodayUsage = async () => {
     if (!user) return;
@@ -101,6 +104,10 @@ export default function ImageGenerator() {
       });
       return;
     }
+
+    // Deduct credits before generating
+    const canProceed = await deductCredits("image_generation");
+    if (!canProceed) return;
 
     setIsGenerating(true);
     setGeneratedImage(null);

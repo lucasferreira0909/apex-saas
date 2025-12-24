@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Type, Copy, ArrowLeft, Sparkles, Instagram, Youtube } from "lucide-react";
+import { Type, Copy, ArrowLeft, Sparkles, Instagram, Youtube, Coins } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useCredits, CREDIT_COSTS } from "@/hooks/useCredits";
 interface HeadlineResult {
   text: string;
   tip: string;
@@ -18,9 +19,13 @@ export default function HeadlineGenerator() {
   const [style, setStyle] = useState("curiosidade");
   const [headlines, setHeadlines] = useState<HeadlineResult[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
+  const { credits, refreshCredits, deductCredits } = useCredits();
+
+  useEffect(() => {
+    refreshCredits();
+  }, [refreshCredits]);
+
   const generateHeadlines = async () => {
     if (!topic.trim()) {
       toast({
@@ -30,6 +35,11 @@ export default function HeadlineGenerator() {
       });
       return;
     }
+
+    // Deduct credits before generating
+    const canProceed = await deductCredits("headline");
+    if (!canProceed) return;
+
     setIsGenerating(true);
     setHeadlines([]);
     try {

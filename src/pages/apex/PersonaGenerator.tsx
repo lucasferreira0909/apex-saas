@@ -1,13 +1,14 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
-import { Users, ArrowLeft, Copy, Check, Briefcase, DollarSign, Heart, ShoppingBag, MessageCircle, AlertCircle, Zap, Quote } from "lucide-react";
+import { Users, ArrowLeft, Copy, Check, Briefcase, DollarSign, Heart, ShoppingBag, MessageCircle, AlertCircle, Zap, Quote, Coins } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useCredits, CREDIT_COSTS } from "@/hooks/useCredits";
 
 interface GeneratedPersona {
   name: string;
@@ -34,6 +35,11 @@ export default function PersonaGenerator() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
+  const { credits, refreshCredits, deductCredits } = useCredits();
+
+  useEffect(() => {
+    refreshCredits();
+  }, [refreshCredits]);
 
   const generatePersona = async () => {
     if (!business.trim() || !productDescription.trim()) {
@@ -44,6 +50,10 @@ export default function PersonaGenerator() {
       });
       return;
     }
+
+    // Deduct credits before generating
+    const canProceed = await deductCredits("persona");
+    if (!canProceed) return;
 
     setIsGenerating(true);
     setGeneratedPersona(null);
