@@ -96,7 +96,7 @@ export default function Upgrades() {
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     <div className="p-4 rounded-lg border border-border hover:border-primary/50 transition-colors cursor-pointer">
                       <h3 className="font-semibold text-card-foreground">100 Créditos</h3>
-                      <p className="text-lg font-bold text-primary mt-1">R$ 17,90</p>
+                      <p className="text-lg font-bold mt-1" style={{ color: '#999999' }}>R$ 17,90</p>
                       <p className="text-xs text-muted-foreground mt-1">R$ 0,18 por crédito</p>
                     </div>
                     <div className="p-4 rounded-lg border-2 border-primary/50 bg-primary/5 cursor-pointer">
