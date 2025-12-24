@@ -61,6 +61,37 @@ export function useDeleteFunnel() {
   });
 }
 
+export function useDeleteMultipleFunnels() {
+  const queryClient = useQueryClient();
+  
+  return useMutation({
+    mutationFn: async (funnelIds: string[]) => {
+      // Delete all funnel elements for these funnels
+      const { error: elementsError } = await supabase
+        .from('funnel_elements')
+        .delete()
+        .in('funnel_id', funnelIds);
+      
+      if (elementsError) throw elementsError;
+      
+      // Then delete the funnels
+      const { error } = await supabase
+        .from('funnels')
+        .delete()
+        .in('id', funnelIds);
+      
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['funnels'] });
+      toast.success(`${variables.length} funis excluídos com sucesso`);
+    },
+    onError: () => {
+      toast.error('Não foi possível excluir os funis');
+    }
+  });
+}
+
 export async function checkFunnelNameExists(name: string, userId: string): Promise<boolean> {
   const { data, error } = await supabase
     .from('funnels')

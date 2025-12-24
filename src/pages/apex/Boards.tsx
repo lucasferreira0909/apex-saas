@@ -17,7 +17,7 @@ import { DataGrid, DataGridContainer } from '@/components/ui/data-grid';
 import { DataGridTable } from '@/components/ui/data-grid-table';
 import { DataGridPagination } from '@/components/ui/data-grid-pagination';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { useBoards, useBoard, useCreateBoard, useDeleteBoard } from '@/hooks/useBoards';
+import { useBoards, useBoard, useCreateBoard, useDeleteBoard, useDeleteMultipleBoards } from '@/hooks/useBoards';
 import { useCreateCard, useUpdateCard, useDeleteCard, useReorderCards, useToggleCardCompleted } from '@/hooks/useBoardCards';
 import { useUploadAttachment, useBoardCardAttachments } from '@/hooks/useCardAttachments';
 import { useCreateColumn, useUpdateMultipleColumnsOrder, useUpdateColumnTitle, useDeleteColumn, useUpdateColumnIcon } from '@/hooks/useBoardColumns';
@@ -42,8 +42,10 @@ import {
   getSortedRowModel,
   PaginationState,
   SortingState,
+  RowSelectionState,
   useReactTable,
 } from '@tanstack/react-table';
+import { Checkbox } from '@/components/ui/checkbox';
 
 export default function Boards() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -79,6 +81,8 @@ export default function Boards() {
   const [cardPriority, setCardPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [boardToDelete, setBoardToDelete] = useState<string | null>(null);
+  const [bulkDeleteDialogOpen, setBulkDeleteDialogOpen] = useState(false);
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
   const [searchTerm, setSearchTerm] = useState('');
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -121,6 +125,7 @@ export default function Boards() {
   const { data: boardData, isLoading: loadingBoard } = useBoard(selectedBoardId);
   const createBoard = useCreateBoard();
   const deleteBoard = useDeleteBoard();
+  const deleteMultipleBoards = useDeleteMultipleBoards();
   const createCard = useCreateCard();
   const updateCard = useUpdateCard();
   const deleteCard = useDeleteCard();
@@ -400,6 +405,19 @@ export default function Boards() {
     setDeleteDialogOpen(true);
   };
 
+  // Get selected row IDs
+  const selectedBoardIds = useMemo(() => {
+    return Object.keys(rowSelection).filter(id => rowSelection[id]);
+  }, [rowSelection]);
+
+  const handleBulkDelete = async () => {
+    if (selectedBoardIds.length > 0) {
+      await deleteMultipleBoards.mutateAsync(selectedBoardIds);
+      setRowSelection({});
+    }
+    setBulkDeleteDialogOpen(false);
+  };
+
   // Column handlers
   const handleEditColumn = (columnId: string, currentName: string, currentIcon: string | null) => {
     setEditingColumnId(columnId);
@@ -448,6 +466,29 @@ export default function Boards() {
   }, [boards, searchTerm]);
 
   const columns = useMemo<ColumnDef<Board>[]>(() => [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <Checkbox
+          checked={table.getIsAllPageRowsSelected()}
+          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
+          aria-label="Selecionar todos"
+          className="translate-y-[2px]"
+        />
+      ),
+      cell: ({ row }) => (
+        <Checkbox
+          checked={row.getIsSelected()}
+          onCheckedChange={(value) => row.toggleSelected(!!value)}
+          aria-label="Selecionar linha"
+          className="translate-y-[2px]"
+          onClick={(e) => e.stopPropagation()}
+        />
+      ),
+      size: 40,
+      enableSorting: false,
+      enableHiding: false,
+    },
     {
       accessorKey: 'name',
       header: 'Nome',
@@ -521,9 +562,12 @@ export default function Boards() {
     state: {
       pagination,
       sorting,
+      rowSelection,
     },
     onPaginationChange: setPagination,
     onSortingChange: setSorting,
+    onRowSelectionChange: setRowSelection,
+    enableRowSelection: true,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -963,6 +1007,17 @@ export default function Boards() {
             onChange={e => setSearchTerm(e.target.value)} 
           />
         </div>
+        
+        {/* Bulk delete button */}
+        {selectedBoardIds.length > 0 && (
+          <Button 
+            variant="destructive" 
+            onClick={() => setBulkDeleteDialogOpen(true)}
+          >
+            <Trash2 className="h-4 w-4 mr-2" />
+            Excluir {selectedBoardIds.length} selecionado{selectedBoardIds.length > 1 ? 's' : ''}
+          </Button>
+        )}
       </div>
 
       {/* Boards List with DataGrid */}
@@ -1113,6 +1168,15 @@ export default function Boards() {
         onConfirm={handleDeleteBoard} 
         title="Excluir Quadro" 
         description="Tem certeza que deseja excluir este quadro? Todos os cards serão removidos. Esta ação não pode ser desfeita." 
+      />
+
+      {/* Bulk Delete Confirmation Dialog */}
+      <DeleteConfirmationDialog 
+        open={bulkDeleteDialogOpen} 
+        onOpenChange={setBulkDeleteDialogOpen} 
+        onConfirm={handleBulkDelete} 
+        title="Excluir Quadros Selecionados" 
+        description={`Tem certeza que deseja excluir ${selectedBoardIds.length} quadros? Todos os cards serão removidos. Esta ação não pode ser desfeita.`} 
       />
     </div>
   );
