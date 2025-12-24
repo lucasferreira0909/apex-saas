@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { HeadphonesIcon, Settings, Workflow, LogOut, Wrench, LayoutGrid } from "lucide-react";
+import { HeadphonesIcon, Settings, Workflow, LogOut, Wrench, LayoutGrid, Sparkles } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
@@ -26,6 +26,10 @@ const menuItems = [{
   title: "Suporte",
   url: "/support",
   icon: HeadphonesIcon
+}, {
+  title: "Upgrades",
+  url: "/upgrades",
+  icon: Sparkles
 }, {
   title: "Configurações",
   url: "/settings",
