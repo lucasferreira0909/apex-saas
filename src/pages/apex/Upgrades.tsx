@@ -8,8 +8,8 @@ export default function Upgrades() {
   const [activeTab, setActiveTab] = useState("credits");
 
   const tabs = [
-    { id: "credits", label: "Créditos", icon: CreditCard },
-    { id: "plans", label: "Planos", icon: Sparkles },
+    { id: "credits", label: "Créditos", icon: Sparkles },
+    { id: "plans", label: "Planos", icon: CreditCard },
   ];
 
   return (
