@@ -32,7 +32,7 @@ export default function Upgrades() {
   const navigate = useNavigate();
 
   const creditPackages = [
-    { id: "100", credits: 100, price: "R$ 17,90", perCredit: "R$ 0,18" },
+    { id: "100", credits: 100, price: "R$ 2,00", perCredit: "R$ 0,02" },
     { id: "300", credits: 300, price: "R$ 47,90", perCredit: "R$ 0,16", popular: true },
     { id: "500", credits: 500, price: "R$ 87,90", perCredit: "R$ 0,18" },
   ];
