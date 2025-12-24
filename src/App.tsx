@@ -27,7 +27,6 @@ import EmailGenerator from "./pages/apex/EmailGenerator";
 import ScriptGenerator from "./pages/apex/ScriptGenerator";
 import PersonaGenerator from "./pages/apex/PersonaGenerator";
 import Upgrades from "./pages/apex/Upgrades";
-import Checkout from "./pages/apex/Checkout";
 
 import NotFound from "./pages/NotFound";
 import Auth from "./pages/Auth";
@@ -50,7 +49,6 @@ const App = () => (
                   <Route path="/support" element={<Support />} />
                   <Route path="/settings" element={<ApexSettings />} />
                   <Route path="/upgrades" element={<Upgrades />} />
-                  <Route path="/checkout" element={<Checkout />} />
                   <Route path="/funnels" element={<Funnels />} />
                   <Route path="/funnel-editor/:id" element={<FunnelEditor />} />
                   <Route path="/tasks" element={<Boards />} />

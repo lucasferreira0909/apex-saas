@@ -1,23 +1,20 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { MessageSquareQuote, Copy, Star, ArrowLeft, User, Coins } from "lucide-react";
+import { MessageSquareQuote, Copy, Star, ArrowLeft, User } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useCredits, CREDIT_COSTS } from "@/hooks/useCredits";
-
 interface Testimonial {
   name: string;
   role: string;
   testimonial: string;
   rating: number;
 }
-
 export default function TestimonialGenerator() {
   const [productName, setProductName] = useState("");
   const [productDescription, setProductDescription] = useState("");
@@ -26,12 +23,9 @@ export default function TestimonialGenerator() {
   const [style, setStyle] = useState("informal");
   const [testimonials, setTestimonials] = useState<Testimonial[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
-  const { toast } = useToast();
-  const { credits, refreshCredits, deductCredits } = useCredits();
-
-  useEffect(() => {
-    refreshCredits();
-  }, [refreshCredits]);
+  const {
+    toast
+  } = useToast();
   const generateTestimonials = async () => {
     if (!productName.trim() || !productDescription.trim()) {
       toast({
@@ -41,15 +35,13 @@ export default function TestimonialGenerator() {
       });
       return;
     }
-
-    // Deduct credits before generating
-    const canProceed = await deductCredits("testimonial");
-    if (!canProceed) return;
-
     setIsGenerating(true);
     setTestimonials([]);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-testimonials', {
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('generate-testimonials', {
         body: {
           productName,
           productDescription,

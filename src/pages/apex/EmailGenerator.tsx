@@ -1,15 +1,14 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Mail, ArrowLeft, Copy, Check, Coins } from "lucide-react";
+import { Mail, ArrowLeft, Copy, Check } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useCredits, CREDIT_COSTS } from "@/hooks/useCredits";
 
 interface GeneratedEmail {
   subject: string;
@@ -27,11 +26,6 @@ export default function EmailGenerator() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const { toast } = useToast();
-  const { credits, refreshCredits, deductCredits } = useCredits();
-
-  useEffect(() => {
-    refreshCredits();
-  }, [refreshCredits]);
 
   const generateEmail = async () => {
     if (!productName.trim() || !productDescription.trim()) {
@@ -42,10 +36,6 @@ export default function EmailGenerator() {
       });
       return;
     }
-
-    // Deduct credits before generating
-    const canProceed = await deductCredits("email");
-    if (!canProceed) return;
 
     setIsGenerating(true);
     setGeneratedEmail(null);

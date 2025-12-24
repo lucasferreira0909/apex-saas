@@ -403,7 +403,6 @@ export type Database = {
         Row: {
           avatar_url: string | null
           created_at: string
-          credits: number
           email: string | null
           first_name: string | null
           id: string
@@ -415,7 +414,6 @@ export type Database = {
         Insert: {
           avatar_url?: string | null
           created_at?: string
-          credits?: number
           email?: string | null
           first_name?: string | null
           id?: string
@@ -427,7 +425,6 @@ export type Database = {
         Update: {
           avatar_url?: string | null
           created_at?: string
-          credits?: number
           email?: string | null
           first_name?: string | null
           id?: string
@@ -535,51 +532,6 @@ export type Database = {
           id?: string
           name?: string
           order_index?: number
-          user_id?: string
-        }
-        Relationships: []
-      }
-      transactions: {
-        Row: {
-          amount: number
-          card_last_four: string | null
-          created_at: string
-          credits_added: number | null
-          external_transaction_id: string | null
-          id: string
-          package_id: string
-          package_type: string
-          payment_method: string | null
-          status: string
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          amount: number
-          card_last_four?: string | null
-          created_at?: string
-          credits_added?: number | null
-          external_transaction_id?: string | null
-          id?: string
-          package_id: string
-          package_type: string
-          payment_method?: string | null
-          status?: string
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          amount?: number
-          card_last_four?: string | null
-          created_at?: string
-          credits_added?: number | null
-          external_transaction_id?: string | null
-          id?: string
-          package_id?: string
-          package_type?: string
-          payment_method?: string | null
-          status?: string
-          updated_at?: string
           user_id?: string
         }
         Relationships: []

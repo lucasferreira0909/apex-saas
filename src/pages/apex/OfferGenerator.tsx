@@ -1,15 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Tag, Copy, ArrowLeft, Sparkles, Check, Clock, Shield, Coins } from "lucide-react";
+import { Tag, Copy, ArrowLeft, Sparkles, Check, Clock, Shield } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useCredits, CREDIT_COSTS } from "@/hooks/useCredits";
-
 interface OfferResult {
   headline: string;
   subheadline: string;
@@ -20,7 +18,6 @@ interface OfferResult {
   guarantee: string;
   priceAnchor: string;
 }
-
 export default function OfferGenerator() {
   const [productName, setProductName] = useState("");
   const [originalPrice, setOriginalPrice] = useState("");
@@ -30,12 +27,9 @@ export default function OfferGenerator() {
   const [targetPain, setTargetPain] = useState("");
   const [offer, setOffer] = useState<OfferResult | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
-  const { toast } = useToast();
-  const { credits, refreshCredits, deductCredits } = useCredits();
-
-  useEffect(() => {
-    refreshCredits();
-  }, [refreshCredits]);
+  const {
+    toast
+  } = useToast();
   const generateOffer = async () => {
     if (!productName.trim() || !originalPrice || !offerPrice || !targetPain.trim()) {
       toast({
@@ -45,15 +39,13 @@ export default function OfferGenerator() {
       });
       return;
     }
-
-    // Deduct credits before generating
-    const canProceed = await deductCredits("offer");
-    if (!canProceed) return;
-
     setIsGenerating(true);
     setOffer(null);
     try {
-      const { data, error } = await supabase.functions.invoke('generate-offer', {
+      const {
+        data,
+        error
+      } = await supabase.functions.invoke('generate-offer', {
         body: {
           productName,
           originalPrice: parseFloat(originalPrice),

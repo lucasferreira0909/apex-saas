@@ -1,14 +1,13 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Video, ArrowLeft, Copy, Check, Lightbulb, Music, Sparkles, Coins } from "lucide-react";
+import { Video, ArrowLeft, Copy, Check, Lightbulb, Music, Sparkles } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { useCredits, CREDIT_COSTS } from "@/hooks/useCredits";
 
 interface GeneratedScript {
   hook: string;
@@ -28,11 +27,6 @@ export default function ScriptGenerator() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [copied, setCopied] = useState(false);
   const { toast } = useToast();
-  const { credits, refreshCredits, deductCredits } = useCredits();
-
-  useEffect(() => {
-    refreshCredits();
-  }, [refreshCredits]);
 
   const generateScript = async () => {
     if (!topic.trim()) {
@@ -43,10 +37,6 @@ export default function ScriptGenerator() {
       });
       return;
     }
-
-    // Deduct credits before generating
-    const canProceed = await deductCredits("script");
-    if (!canProceed) return;
 
     setIsGenerating(true);
     setGeneratedScript(null);
