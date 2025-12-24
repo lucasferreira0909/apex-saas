@@ -14,7 +14,7 @@ interface CheckoutRequest {
 }
 
 const creditPackages: Record<string, { credits: number; price: number; name: string }> = {
-  "100": { credits: 100, price: 200, name: "100 Créditos" },
+  "100": { credits: 100, price: 1790, name: "100 Créditos" },
   "300": { credits: 300, price: 4790, name: "300 Créditos" },
   "500": { credits: 500, price: 8790, name: "500 Créditos" },
 };
