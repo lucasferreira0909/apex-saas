@@ -56,7 +56,7 @@ export default function Upgrades() {
                   <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted/30">
                     <div className="flex items-center space-x-4">
                       <div className="p-3 rounded-full bg-primary/10">
-                        <CreditCard className="h-6 w-6" style={{ color: '#e8e8e8' }} />
+                        <Sparkles className="h-6 w-6" style={{ color: '#e8e8e8' }} />
                       </div>
                       <div>
                         <h3 className="font-semibold text-card-foreground">Créditos Disponíveis</h3>
