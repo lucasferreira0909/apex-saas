@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { FileText, Copy, ArrowLeft, Sparkles } from "lucide-react";
+import { FileText, Copy, ArrowLeft, Sparkles, Coins } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { useCredits, CREDIT_COSTS } from "@/hooks/useCredits";
 
 interface CopyResult {
   headline: string;
@@ -24,6 +25,11 @@ export default function CopyGenerator() {
   const [copy, setCopy] = useState<CopyResult | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const { toast } = useToast();
+  const { credits, refreshCredits, deductCredits } = useCredits();
+
+  useEffect(() => {
+    refreshCredits();
+  }, [refreshCredits]);
 
   const generateCopy = async () => {
     if (!productName.trim() || !productDescription.trim()) {
@@ -34,6 +40,10 @@ export default function CopyGenerator() {
       });
       return;
     }
+
+    // Deduct credits before generating
+    const canProceed = await deductCredits("copy");
+    if (!canProceed) return;
 
     setIsGenerating(true);
     setCopy(null);
@@ -95,6 +105,11 @@ export default function CopyGenerator() {
             </h1>
             <p className="text-muted-foreground">Crie copies persuasivas que convertem</p>
           </div>
+        </div>
+        <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 border border-primary/20">
+          <Coins className="h-4 w-4 text-primary" />
+          <span className="text-sm font-medium text-primary">{credits} créditos</span>
+          <span className="text-xs text-muted-foreground">({CREDIT_COSTS.copy} por uso)</span>
         </div>
       </div>
 
