@@ -25,8 +25,19 @@ export interface BoardCard {
   description: string | null;
   priority: 'low' | 'medium' | 'high' | null;
   order_index: number;
+  is_completed: boolean;
   created_at: string;
   updated_at: string;
+}
+
+export interface CardAttachment {
+  id: string;
+  card_id: string;
+  file_name: string;
+  file_url: string;
+  file_type: string | null;
+  file_size: number | null;
+  created_at: string;
 }
 
 export interface BoardTemplate {
@@ -44,7 +55,9 @@ export interface RowsCard {
   board_id: string;
   title: string;
   description: string | null;
+  priority: 'low' | 'medium' | 'high' | null;
   order_index: number;
+  is_completed: boolean;
   created_at: string;
   updated_at: string;
 }
