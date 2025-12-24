@@ -501,7 +501,7 @@ export default function Boards() {
       cell: (info) => {
         const type = info.getValue() as string;
         if (type === 'kanban') return <Badge variant="secondary">Kanban</Badge>;
-        if (type === 'rows') return <Badge variant="outline">Linhas</Badge>;
+        if (type === 'rows') return <Badge variant="outline">Checklist</Badge>;
         return <Badge variant="secondary">Livre</Badge>;
       },
       size: 120,
@@ -1091,7 +1091,7 @@ export default function Boards() {
                       <List className="h-5 w-5 text-foreground" />
                     </div>
                     <div>
-                      <CardTitle className="text-sm">Linhas</CardTitle>
+                      <CardTitle className="text-sm">Checklist</CardTitle>
                     </div>
                   </div>
                   <CardDescription className="text-xs">
@@ -1111,7 +1111,7 @@ export default function Boards() {
       }}>
         <SheetContent className="sm:max-w-xl md:max-w-2xl">
           <SheetHeader>
-            <SheetTitle>Novo Quadro {selectedBoardType === 'kanban' ? 'Kanban' : 'de Linhas'}</SheetTitle>
+            <SheetTitle>Novo Quadro {selectedBoardType === 'kanban' ? 'Kanban' : 'Checklist'}</SheetTitle>
             <SheetDescription>Preencha as informações do seu quadro</SheetDescription>
           </SheetHeader>
           <SheetBody>
