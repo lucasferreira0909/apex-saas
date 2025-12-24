@@ -104,7 +104,7 @@ export default function Upgrades() {
                         <h3 className="font-semibold text-card-foreground">300 Créditos</h3>
                         <Badge variant="secondary" className="text-xs">Popular</Badge>
                       </div>
-                      <p className="text-lg font-bold text-primary mt-1">R$ 47,90</p>
+                      <p className="text-lg font-bold mt-1" style={{ color: '#999999' }}>R$ 47,90</p>
                       <p className="text-xs text-muted-foreground mt-1">R$ 0,16 por crédito</p>
                     </div>
                     <div className="p-4 rounded-lg border border-border hover:border-primary/50 transition-colors cursor-pointer">
