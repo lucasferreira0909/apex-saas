@@ -37,7 +37,9 @@ export function CreateFunnelDialog({ open, onOpenChange }: CreateFunnelDialogPro
     try {
       const exists = await checkFunnelNameExists(name, user.id);
       if (exists) {
-        toast.error("Já existe um funil com este nome. Por favor, escolha outro nome.");
+        toast.error("Nome já existe", {
+          description: "Já existe um funil com este nome. Escolha outro nome.",
+        });
         setIsChecking(false);
         return;
       }
