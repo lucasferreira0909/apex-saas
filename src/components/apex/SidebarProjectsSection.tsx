@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronRight, Folder, Workflow, LayoutGrid, MoreHorizontal, Trash2, X, Settings, GripVertical, FolderPlus } from "lucide-react";
+import { ChevronRight, Folder, Workflow, LayoutGrid, Trash2, X, Settings, GripVertical, FolderPlus, Pencil } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSidebarFolders, SidebarFolder, SidebarFolderItem } from "@/hooks/useSidebarFolders";
 import { useFunnels } from "@/hooks/useFunnels";
@@ -517,13 +517,6 @@ function SortableFolderItem({
     <SidebarMenuItem ref={setNodeRef} style={style}>
       <Collapsible open={isExpanded} onOpenChange={onToggle}>
         <div className="flex items-center group/folder">
-          <div
-            {...attributes}
-            {...listeners}
-            className="p-1 cursor-grab opacity-0 group-hover/folder:opacity-100 transition-opacity"
-          >
-            <GripVertical className="h-3 w-3 text-muted-foreground" />
-          </div>
           <CollapsibleTrigger asChild>
             <SidebarMenuButton className="flex-1 justify-start">
               <ChevronRight className={cn(
@@ -533,6 +526,13 @@ function SortableFolderItem({
               <span className="truncate">{folder.name}</span>
             </SidebarMenuButton>
           </CollapsibleTrigger>
+          <div
+            {...attributes}
+            {...listeners}
+            className="p-1 cursor-grab opacity-0 group-hover/folder:opacity-100 transition-opacity"
+          >
+            <GripVertical className="h-3 w-3 text-muted-foreground" />
+          </div>
           <Popover open={menuOpen} onOpenChange={setMenuOpen}>
             <PopoverTrigger asChild>
               <Button
@@ -540,7 +540,7 @@ function SortableFolderItem({
                 size="icon"
                 className="h-7 w-7 opacity-0 group-hover/folder:opacity-100 transition-opacity"
               >
-                <MoreHorizontal className="h-4 w-4" />
+                <Pencil className="h-3.5 w-3.5" />
               </Button>
             </PopoverTrigger>
             <PopoverContent align="end" className="w-40 p-1">
