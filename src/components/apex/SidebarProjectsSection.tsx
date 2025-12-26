@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { useSidebarFolders, SidebarFolder, SidebarFolderItem } from "@/hooks/useSidebarFolders";
 import { useFunnels } from "@/hooks/useFunnels";
 import { useBoards } from "@/hooks/useBoards";
-import { SidebarGroup, SidebarGroupLabel, SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
+import { SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuItem, SidebarMenuButton } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetFooter } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
@@ -254,7 +254,6 @@ export function SidebarProjectsSection() {
   if (loading) {
     return (
       <SidebarGroup>
-        <SidebarGroupLabel className="text-sidebar-foreground/60">Projetos</SidebarGroupLabel>
         <SidebarGroupContent>
           <div className="px-3 py-2 text-sm text-muted-foreground">Carregando...</div>
         </SidebarGroupContent>
@@ -265,8 +264,7 @@ export function SidebarProjectsSection() {
   return (
     <>
       <SidebarGroup>
-        <div className="flex items-center justify-between pr-2">
-          <SidebarGroupLabel className="text-sidebar-foreground/60">Projetos</SidebarGroupLabel>
+        <div className="flex items-center justify-end pr-2 py-1">
           <Button
             variant="ghost"
             size="icon"
