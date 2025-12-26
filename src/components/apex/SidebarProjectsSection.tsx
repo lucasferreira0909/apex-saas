@@ -318,7 +318,7 @@ export function SidebarProjectsSection() {
           </SidebarMenu>
           <Button
             variant="ghost"
-            className="w-full justify-start gap-2 px-3 py-2 h-auto text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+            className="w-full justify-center gap-2 px-3 py-2 h-auto text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
             onClick={() => setCreateFolderOpen(true)}
           >
             <FolderPlus className="h-4 w-4" />
@@ -519,10 +519,7 @@ function SortableFolderItem({
         <div className="flex items-center group/folder">
           <CollapsibleTrigger asChild>
             <SidebarMenuButton className="flex-1 justify-start">
-              <Folder className={cn(
-                "h-4 w-4",
-                isExpanded && "text-primary"
-              )} />
+              <Folder className="h-4 w-4" />
               <span className="truncate">{folder.name}</span>
             </SidebarMenuButton>
           </CollapsibleTrigger>
