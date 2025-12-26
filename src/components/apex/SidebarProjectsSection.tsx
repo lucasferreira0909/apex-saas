@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 import { ChevronRight, Folder, Workflow, LayoutGrid, Trash2, X, Settings, GripVertical, FolderPlus, Pencil } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSidebarFolders, SidebarFolder, SidebarFolderItem } from "@/hooks/useSidebarFolders";
@@ -50,6 +51,7 @@ export function SidebarProjectsSection() {
   } = useSidebarFolders();
   const { data: funnels } = useFunnels();
   const { data: boards } = useBoards();
+  const { toast } = useToast();
 
   const [createFolderOpen, setCreateFolderOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
@@ -166,8 +168,23 @@ export function SidebarProjectsSection() {
   };
 
   const handleCreateFolder = async () => {
-    if (!newFolderName.trim()) return;
-    await createFolder(newFolderName.trim());
+    const trimmedName = newFolderName.trim();
+    if (!trimmedName) return;
+    
+    const nameExists = folders.some(
+      folder => folder.name.toLowerCase() === trimmedName.toLowerCase()
+    );
+    
+    if (nameExists) {
+      toast({
+        title: "Nome já existe",
+        description: "Já existe uma pasta com este nome. Escolha outro nome.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    await createFolder(trimmedName);
     setNewFolderName("");
     setCreateFolderOpen(false);
   };
