@@ -131,10 +131,10 @@ export function ApexSidebar() {
 
         <SidebarProjectsSection />
 
-        <SidebarSeparator />
-
-        <SidebarGroup className="mt-auto">
-          <SidebarGroupContent>
+        <div className="mt-auto">
+          <SidebarSeparator />
+          <SidebarGroup>
+            <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map(item => (
                 <SidebarMenuItem key={item.title}>
@@ -163,6 +163,7 @@ export function ApexSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+        </div>
       </SidebarContent>
     </Sidebar>;
 }
