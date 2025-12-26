@@ -10,6 +10,7 @@ import { AuthProvider } from "@/hooks/useAuth";
 // Apex Pages
 import Support from "./pages/apex/Support";
 import ApexSettings from "./pages/apex/ApexSettings";
+import General from "./pages/apex/General";
 import Funnels from "./pages/apex/Funnels";
 import FunnelEditor from "./pages/apex/FunnelEditor";
 import Boards from "./pages/apex/Boards";
@@ -45,7 +46,8 @@ const App = () => (
             <Route path="/*" element={
               <ApexLayout>
                 <Routes>
-                  <Route path="/" element={<Navigate to="/funnels" replace />} />
+                  <Route path="/" element={<Navigate to="/general" replace />} />
+                  <Route path="/general" element={<General />} />
                   <Route path="/support" element={<Support />} />
                   <Route path="/settings" element={<ApexSettings />} />
                   <Route path="/upgrades" element={<Upgrades />} />
