@@ -5,15 +5,21 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CreateFunnelDialog } from "@/components/apex/CreateFunnelDialog";
-import { useFunnels, useDeleteFunnel, useDeleteMultipleFunnels } from "@/hooks/useFunnels";
+import { useFunnels, useDeleteFunnel, useDeleteMultipleFunnels, checkFunnelNameExists } from "@/hooks/useFunnels";
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
 import { DataGrid, DataGridContainer } from "@/components/ui/data-grid";
 import { DataGridTable } from "@/components/ui/data-grid-table";
 import { DataGridPagination } from "@/components/ui/data-grid-pagination";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
-import { Plus, Search, Folder, MoreHorizontal, Edit, Trash2, X } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Plus, Search, Folder, MoreHorizontal, Edit, Trash2, X, Pencil } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 import {
   ColumnDef,
   getCoreRowModel,
@@ -25,6 +31,7 @@ import {
   RowSelectionState,
   useReactTable,
 } from '@tanstack/react-table';
+import { useQueryClient } from "@tanstack/react-query";
 
 interface FunnelItem {
   id: string;
@@ -48,7 +55,15 @@ export default function Funnels() {
   });
   const [sorting, setSorting] = useState<SortingState>([{ id: 'created_at', desc: true }]);
   
+  // Rename states
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [funnelToRename, setFunnelToRename] = useState<{ id: string; name: string } | null>(null);
+  const [newFunnelName, setNewFunnelName] = useState("");
+  const [isRenaming, setIsRenaming] = useState(false);
+  
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const queryClient = useQueryClient();
   const { data: funnels = [], isLoading } = useFunnels();
   const deleteFunnel = useDeleteFunnel();
   const deleteMultipleFunnels = useDeleteMultipleFunnels();
@@ -115,6 +130,64 @@ export default function Funnels() {
 
   const handleEditClick = (projectId: string) => {
     navigate(`/funnel-editor/${projectId}`);
+  };
+
+  // Rename handlers
+  const handleRenameClick = (funnel: { id: string; name: string }) => {
+    setFunnelToRename(funnel);
+    setNewFunnelName(funnel.name);
+    setRenameDialogOpen(true);
+  };
+
+  const handleConfirmRename = async () => {
+    if (!funnelToRename || !user) return;
+    
+    const trimmedName = newFunnelName.trim();
+    
+    if (!trimmedName) {
+      toast.error("Nome inválido", { description: "O nome do funil não pode estar vazio." });
+      return;
+    }
+    
+    if (trimmedName.length > 50) {
+      toast.error("Nome muito longo", { description: "O nome deve ter no máximo 50 caracteres." });
+      return;
+    }
+    
+    // Check if name changed
+    if (trimmedName.toLowerCase() === funnelToRename.name.toLowerCase()) {
+      setRenameDialogOpen(false);
+      setFunnelToRename(null);
+      return;
+    }
+    
+    setIsRenaming(true);
+    
+    try {
+      // Check if name already exists
+      const nameExists = await checkFunnelNameExists(trimmedName, user.id);
+      if (nameExists) {
+        toast.error("Nome já existe", { description: "Já existe um funil com este nome." });
+        setIsRenaming(false);
+        return;
+      }
+      
+      const { error } = await supabase
+        .from('funnels')
+        .update({ name: trimmedName, updated_at: new Date().toISOString() })
+        .eq('id', funnelToRename.id);
+      
+      if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ['funnels'] });
+      toast.success("Funil renomeado com sucesso");
+      setRenameDialogOpen(false);
+      setFunnelToRename(null);
+    } catch (error) {
+      toast.error("Erro ao renomear funil");
+    } finally {
+      setIsRenaming(false);
+    }
   };
 
   // Get selected row IDs
@@ -190,6 +263,13 @@ export default function Funnels() {
               }}>
                 <Edit className="mr-2 h-4 w-4" />
                 Editar
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={(e) => {
+                e.stopPropagation();
+                handleRenameClick({ id: row.original.id, name: row.original.name });
+              }}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Renomear
               </DropdownMenuItem>
               <DropdownMenuItem 
                 className="text-destructive" 
@@ -357,6 +437,52 @@ export default function Funnels() {
         title="Excluir Funis Selecionados" 
         description={`Tem certeza que deseja excluir ${selectedIds.length} funis? Esta ação não pode ser desfeita e todos os elementos dos funis serão perdidos.`} 
       />
+
+      {/* Rename Dialog */}
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Renomear Funil</DialogTitle>
+            <DialogDescription>
+              Digite um novo nome para o funil.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="funnel-name">Nome</Label>
+            <Input
+              id="funnel-name"
+              value={newFunnelName}
+              onChange={(e) => setNewFunnelName(e.target.value)}
+              placeholder="Nome do funil"
+              className={cn(
+                newFunnelName.length > 50 && "border-destructive focus-visible:ring-destructive"
+              )}
+            />
+            <div className="flex justify-between items-center">
+              <span className={cn(
+                "text-xs",
+                newFunnelName.length > 50 ? "text-destructive" : "text-muted-foreground"
+              )}>
+                {newFunnelName.length}/50 caracteres
+              </span>
+              {newFunnelName.length > 50 && (
+                <span className="text-xs text-destructive">Limite excedido</span>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenameDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleConfirmRename} 
+              disabled={isRenaming || !newFunnelName.trim() || newFunnelName.length > 50}
+            >
+              {isRenaming ? "Salvando..." : "Salvar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
