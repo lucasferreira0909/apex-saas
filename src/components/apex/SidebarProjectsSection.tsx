@@ -171,6 +171,15 @@ export function SidebarProjectsSection() {
     const trimmedName = newFolderName.trim();
     if (!trimmedName) return;
     
+    if (trimmedName.length > 50) {
+      toast({
+        title: "Nome muito longo",
+        description: "O nome da pasta deve ter no máximo 50 caracteres.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
     const nameExists = folders.some(
       folder => folder.name.toLowerCase() === trimmedName.toLowerCase()
     );
@@ -190,8 +199,33 @@ export function SidebarProjectsSection() {
   };
 
   const handleRenameFolder = async () => {
-    if (!selectedFolder || !folderName.trim()) return;
-    await renameFolder(selectedFolder.id, folderName.trim());
+    const trimmedName = folderName.trim();
+    if (!selectedFolder || !trimmedName) return;
+    
+    if (trimmedName.length > 50) {
+      toast({
+        title: "Nome muito longo",
+        description: "O nome da pasta deve ter no máximo 50 caracteres.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    // Check if another folder has the same name (excluding the current folder)
+    const nameExists = folders.some(
+      folder => folder.id !== selectedFolder.id && folder.name.toLowerCase() === trimmedName.toLowerCase()
+    );
+    
+    if (nameExists) {
+      toast({
+        title: "Nome já existe",
+        description: "Já existe uma pasta com este nome. Escolha outro nome.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    await renameFolder(selectedFolder.id, trimmedName);
   };
 
   const openManageDialog = (folder: SidebarFolder) => {

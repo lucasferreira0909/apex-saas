@@ -23,8 +23,16 @@ export function CreateFunnelDialog({ open, onOpenChange }: CreateFunnelDialogPro
   const queryClient = useQueryClient();
 
   const handleCreate = async () => {
-    if (!name.trim()) {
+    const trimmedName = name.trim();
+    if (!trimmedName) {
       toast.error("Por favor, insira um nome para o funil");
+      return;
+    }
+    
+    if (trimmedName.length > 50) {
+      toast.error("Nome muito longo", {
+        description: "O nome do funil deve ter no máximo 50 caracteres.",
+      });
       return;
     }
 
@@ -35,7 +43,7 @@ export function CreateFunnelDialog({ open, onOpenChange }: CreateFunnelDialogPro
 
     setIsChecking(true);
     try {
-      const exists = await checkFunnelNameExists(name, user.id);
+      const exists = await checkFunnelNameExists(trimmedName, user.id);
       if (exists) {
         toast.error("Nome já existe", {
           description: "Já existe um funil com este nome. Escolha outro nome.",
@@ -48,7 +56,7 @@ export function CreateFunnelDialog({ open, onOpenChange }: CreateFunnelDialogPro
         .from('funnels')
         .insert({
           user_id: user.id,
-          name: name.trim(),
+          name: trimmedName,
           description: 'Funil personalizado',
           template_type: null,
           status: 'draft'
