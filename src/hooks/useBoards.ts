@@ -73,8 +73,15 @@ export function useCreateBoard() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Usuário não autenticado');
       
+      const trimmedName = data.name.trim();
+      
+      // Verificar limite de caracteres
+      if (trimmedName.length > 50) {
+        throw new Error('O nome do quadro deve ter no máximo 50 caracteres');
+      }
+      
       // Verificar se já existe um quadro com o mesmo nome
-      const exists = await checkBoardNameExists(data.name, user.id);
+      const exists = await checkBoardNameExists(trimmedName, user.id);
       if (exists) {
         throw new Error('Já existe um quadro com este nome');
       }
@@ -82,7 +89,7 @@ export function useCreateBoard() {
       const { data: board, error: boardError } = await supabase
         .from('boards')
         .insert({
-          name: data.name,
+          name: trimmedName,
           description: data.description,
           template_type: data.template_type,
           user_id: user.id
@@ -117,6 +124,10 @@ export function useCreateBoard() {
       if (error.message === 'Já existe um quadro com este nome') {
         toast.error('Nome já existe', {
           description: 'Já existe um quadro com este nome. Escolha outro nome.',
+        });
+      } else if (error.message === 'O nome do quadro deve ter no máximo 50 caracteres') {
+        toast.error('Nome muito longo', {
+          description: 'O nome do quadro deve ter no máximo 50 caracteres.',
         });
       } else {
         toast.error('Não foi possível criar o quadro');
