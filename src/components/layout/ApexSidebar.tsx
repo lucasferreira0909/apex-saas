@@ -131,8 +131,9 @@ export function ApexSidebar() {
 
         <SidebarProjectsSection />
 
+        <SidebarSeparator />
+
         <SidebarGroup className="mt-auto">
-          <SidebarSeparator />
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map(item => (
