@@ -3,7 +3,7 @@ import { HeadphonesIcon, Settings, Workflow, LogOut, Wrench, LayoutGrid, Zap } f
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
-import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarGroupLabel, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader } from "@/components/ui/sidebar";
+import { Sidebar, SidebarContent, SidebarGroup, SidebarGroupContent, SidebarMenu, SidebarMenuButton, SidebarMenuItem, SidebarHeader, SidebarSeparator } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -113,7 +113,6 @@ export function ApexSidebar() {
 
       <SidebarContent>
         <SidebarGroup>
-          <SidebarGroupLabel className="text-sidebar-foreground/60">Ferramentas</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {projectItems.map(item => <SidebarMenuItem key={item.title}>
@@ -128,10 +127,13 @@ export function ApexSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
+        <SidebarSeparator />
+
         <SidebarProjectsSection />
 
+        <SidebarSeparator />
+
         <SidebarGroup className="mt-auto">
-          <SidebarGroupLabel className="text-sidebar-foreground/60">Menu</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               {menuItems.map(item => (
