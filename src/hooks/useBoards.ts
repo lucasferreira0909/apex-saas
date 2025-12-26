@@ -113,8 +113,14 @@ export function useCreateBoard() {
       queryClient.invalidateQueries({ queryKey: ['boards'] });
       toast.success('Quadro criado com sucesso');
     },
-    onError: () => {
-      toast.error('Não foi possível criar o quadro');
+    onError: (error: Error) => {
+      if (error.message === 'Já existe um quadro com este nome') {
+        toast.error('Nome já existe', {
+          description: 'Já existe um quadro com este nome. Escolha outro nome.',
+        });
+      } else {
+        toast.error('Não foi possível criar o quadro');
+      }
     }
   });
 }
