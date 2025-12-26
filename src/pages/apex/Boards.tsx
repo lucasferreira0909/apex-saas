@@ -9,6 +9,7 @@ import { Sheet, SheetBody, SheetClose, SheetContent, SheetDescription, SheetFoot
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 
 import { KanbanBoard } from '@/components/apex/KanbanBoard';
 import { RowsBoard } from '@/components/apex/RowsBoard';
@@ -17,17 +18,19 @@ import { DataGrid, DataGridContainer } from '@/components/ui/data-grid';
 import { DataGridTable } from '@/components/ui/data-grid-table';
 import { DataGridPagination } from '@/components/ui/data-grid-pagination';
 import { ScrollArea, ScrollBar } from '@/components/ui/scroll-area';
-import { useBoards, useBoard, useCreateBoard, useDeleteBoard, useDeleteMultipleBoards } from '@/hooks/useBoards';
+import { useBoards, useBoard, useCreateBoard, useDeleteBoard, useDeleteMultipleBoards, checkBoardNameExists } from '@/hooks/useBoards';
 import { useCreateCard, useUpdateCard, useDeleteCard, useReorderCards, useToggleCardCompleted } from '@/hooks/useBoardCards';
 import { useUploadAttachment, useBoardCardAttachments } from '@/hooks/useCardAttachments';
 import { useCreateColumn, useUpdateMultipleColumnsOrder, useUpdateColumnTitle, useDeleteColumn, useUpdateColumnIcon } from '@/hooks/useBoardColumns';
 import { Board, BoardCard, BoardTemplate } from '@/types/board';
-import { Plus, ArrowLeft, Trash2, Search, MoreHorizontal, Edit, Upload, X, FileText, Image, File, Loader2, LayoutGrid, List } from 'lucide-react';
+import { Plus, ArrowLeft, Trash2, Search, MoreHorizontal, Edit, Upload, X, FileText, Image, File, Loader2, LayoutGrid, List, Pencil } from 'lucide-react';
 import { icons } from 'lucide-react';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 import { IconPickerDialog } from '@/components/apex/IconPickerDialog';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { supabase } from '@/integrations/supabase/client';
+import { useQueryClient } from '@tanstack/react-query';
 
 // Helper component to preview column icon
 function ColumnIconPreview({ iconName }: { iconName: string }) {
@@ -91,6 +94,11 @@ export default function Boards() {
   });
   const [sorting, setSorting] = useState<SortingState>([{ id: 'created_at', desc: true }]);
   
+  // Rename states
+  const [renameDialogOpen, setRenameDialogOpen] = useState(false);
+  const [boardToRename, setBoardToRename] = useState<{ id: string; name: string } | null>(null);
+  const [newBoardName, setNewBoardName] = useState("");
+  
   // Column editing states
   const [isEditColumnSheetOpen, setIsEditColumnSheetOpen] = useState(false);
   const [editingColumnId, setEditingColumnId] = useState<string | null>(null);
@@ -122,6 +130,7 @@ export default function Boards() {
   const [isUploadingAttachments, setIsUploadingAttachments] = useState(false);
   const addCardFileInputRef = useRef<HTMLInputElement>(null);
   
+  const queryClient = useQueryClient();
   const { data: boards, isLoading: loadingBoards } = useBoards();
   const { data: boardData, isLoading: loadingBoard } = useBoard(selectedBoardId);
   const createBoard = useCreateBoard();
@@ -419,6 +428,67 @@ export default function Boards() {
     setBulkDeleteDialogOpen(false);
   };
 
+  // Rename handlers
+  const handleRenameClick = (board: { id: string; name: string }) => {
+    setBoardToRename(board);
+    setNewBoardName(board.name);
+    setRenameDialogOpen(true);
+  };
+
+  const handleConfirmRename = async () => {
+    if (!boardToRename) return;
+    
+    const trimmedName = newBoardName.trim();
+    
+    if (!trimmedName) {
+      toast.error("Nome inválido", { description: "O nome do quadro não pode estar vazio." });
+      return;
+    }
+    
+    if (trimmedName.length > 50) {
+      toast.error("Nome muito longo", { description: "O nome deve ter no máximo 50 caracteres." });
+      return;
+    }
+    
+    // Check if name changed
+    if (trimmedName.toLowerCase() === boardToRename.name.toLowerCase()) {
+      setRenameDialogOpen(false);
+      setBoardToRename(null);
+      return;
+    }
+    
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        toast.error("Usuário não autenticado");
+        return;
+      }
+      
+      // Check if name already exists
+      const nameExists = await checkBoardNameExists(trimmedName, user.id);
+      if (nameExists) {
+        toast.error("Nome já existe", { description: "Já existe um quadro com este nome." });
+        return;
+      }
+      
+      const { error } = await supabase
+        .from('boards')
+        .update({ name: trimmedName, updated_at: new Date().toISOString() })
+        .eq('id', boardToRename.id);
+      
+      if (error) throw error;
+      
+      queryClient.invalidateQueries({ queryKey: ['boards'] });
+      queryClient.invalidateQueries({ queryKey: ['board', boardToRename.id] });
+      toast.success("Quadro renomeado com sucesso");
+      setRenameDialogOpen(false);
+      setBoardToRename(null);
+    } catch (error) {
+      toast.error("Erro ao renomear quadro");
+    }
+  };
+
   // Column handlers
   const handleEditColumn = (columnId: string, currentName: string, currentIcon: string | null) => {
     setEditingColumnId(columnId);
@@ -531,6 +601,13 @@ export default function Boards() {
               }}>
                 <Edit className="mr-2 h-4 w-4" />
                 Abrir
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={(e) => {
+                e.stopPropagation();
+                handleRenameClick({ id: row.original.id, name: row.original.name });
+              }}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Renomear
               </DropdownMenuItem>
               <DropdownMenuItem 
                 className="text-destructive" 
@@ -1199,6 +1276,52 @@ export default function Boards() {
         title="Excluir Quadros Selecionados" 
         description={`Tem certeza que deseja excluir ${selectedBoardIds.length} quadros? Todos os cards serão removidos. Esta ação não pode ser desfeita.`} 
       />
+
+      {/* Rename Dialog */}
+      <Dialog open={renameDialogOpen} onOpenChange={setRenameDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Renomear Quadro</DialogTitle>
+            <DialogDescription>
+              Digite um novo nome para o quadro.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="board-name">Nome</Label>
+            <Input
+              id="board-name"
+              value={newBoardName}
+              onChange={(e) => setNewBoardName(e.target.value)}
+              placeholder="Nome do quadro"
+              className={cn(
+                newBoardName.length > 50 && "border-destructive focus-visible:ring-destructive"
+              )}
+            />
+            <div className="flex justify-between items-center">
+              <span className={cn(
+                "text-xs",
+                newBoardName.length > 50 ? "text-destructive" : "text-muted-foreground"
+              )}>
+                {newBoardName.length}/50 caracteres
+              </span>
+              {newBoardName.length > 50 && (
+                <span className="text-xs text-destructive">Limite excedido</span>
+              )}
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRenameDialogOpen(false)}>
+              Cancelar
+            </Button>
+            <Button 
+              onClick={handleConfirmRename} 
+              disabled={!newBoardName.trim() || newBoardName.length > 50}
+            >
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
