@@ -10,16 +10,19 @@ import { useFunnels } from "@/hooks/useFunnels";
 import { useBoards } from "@/hooks/useBoards";
 import { useNavigate } from "react-router-dom";
 import { toast } from "@/hooks/use-toast";
-
 export default function Dashboard() {
-  const { profile } = useAuth();
-  const { data: funnels } = useFunnels();
-  const { data: boards } = useBoards();
+  const {
+    profile
+  } = useAuth();
+  const {
+    data: funnels
+  } = useFunnels();
+  const {
+    data: boards
+  } = useBoards();
   const navigate = useNavigate();
-
   const firstName = profile?.first_name || profile?.email?.split("@")[0] || "User";
-
-  const activeFunnels = funnels?.filter((f) => f.status === "active").length || 0;
+  const activeFunnels = funnels?.filter(f => f.status === "active").length || 0;
   const totalFunnels = funnels?.length || 0;
   const activeBoards = boards?.length || 0;
   const availableCredits = 1000; // Default credits - can be fetched from profile if needed
@@ -27,25 +30,17 @@ export default function Dashboard() {
   // Calculate items expiring soon (items updated more than 30 days ago)
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  
-  const expiringSoon = [
-    ...(funnels || []).filter((f) => new Date(f.updated_at) < thirtyDaysAgo),
-    ...(boards || []).filter((b) => new Date(b.updated_at) < thirtyDaysAgo),
-  ].length;
-
+  const expiringSoon = [...(funnels || []).filter(f => new Date(f.updated_at) < thirtyDaysAgo), ...(boards || []).filter(b => new Date(b.updated_at) < thirtyDaysAgo)].length;
   const handleExport = () => {
     toast({
       title: "Exportando dados",
-      description: "Seus dados estão sendo preparados para download...",
+      description: "Seus dados estão sendo preparados para download..."
     });
   };
-
   const handleCreate = () => {
     navigate("/funnels");
   };
-
-  return (
-    <div className="space-y-6 animate-fade-in">
+  return <div className="space-y-6 animate-fade-in">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
@@ -57,10 +52,7 @@ export default function Dashboard() {
           </p>
         </div>
         <div className="flex gap-3">
-          <Button variant="outline" onClick={handleExport} className="gap-2">
-            <Download className="w-4 h-4" />
-            Export
-          </Button>
+          
           <Button onClick={handleCreate} className="gap-2">
             <Plus className="w-4 h-4" />
             Create New
@@ -70,27 +62,10 @@ export default function Dashboard() {
 
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <DashboardMetricCard
-          title="Active Funnels"
-          value={`${activeFunnels}/${totalFunnels}`}
-          icon={Workflow}
-        />
-        <DashboardMetricCard
-          title="Active Boards"
-          value={activeBoards}
-          icon={LayoutGrid}
-          verified={activeBoards > 0}
-        />
-        <DashboardMetricCard
-          title="Available Credits"
-          value={availableCredits.toLocaleString()}
-          icon={Coins}
-        />
-        <DashboardMetricCard
-          title="Expiring Soon"
-          value={expiringSoon}
-          icon={Clock}
-        />
+        <DashboardMetricCard title="Active Funnels" value={`${activeFunnels}/${totalFunnels}`} icon={Workflow} />
+        <DashboardMetricCard title="Active Boards" value={activeBoards} icon={LayoutGrid} verified={activeBoards > 0} />
+        <DashboardMetricCard title="Available Credits" value={availableCredits.toLocaleString()} icon={Coins} />
+        <DashboardMetricCard title="Expiring Soon" value={expiringSoon} icon={Clock} />
       </div>
 
       {/* Chart and Table */}
@@ -104,6 +79,5 @@ export default function Dashboard() {
 
       {/* Upgrade Modal */}
       <UpgradeModal />
-    </div>
-  );
+    </div>;
 }
