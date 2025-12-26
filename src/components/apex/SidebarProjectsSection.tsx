@@ -318,7 +318,7 @@ export function SidebarProjectsSection() {
           </SidebarMenu>
           <Button
             variant="ghost"
-            className="w-full justify-center gap-2 px-3 py-2 h-auto text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+            className="w-full justify-start gap-2 px-2 py-2 h-auto text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
             onClick={() => setCreateFolderOpen(true)}
           >
             <FolderPlus className="h-4 w-4" />
