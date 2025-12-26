@@ -62,7 +62,7 @@ export function TemplateCard({
             onClick={onShare}
           >
             <Share2 className="w-4 h-4" />
-            Share
+            Compartilhar
           </Button>
           <Button
             variant="outline"
@@ -71,7 +71,7 @@ export function TemplateCard({
             onClick={onEdit}
           >
             <Pencil className="w-4 h-4" />
-            Edit
+            Editar
           </Button>
         </div>
       </CardContent>

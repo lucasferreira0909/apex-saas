@@ -20,20 +20,20 @@ import { useState } from "react";
 
 const chartData = [
   { month: "Jan", consumption: 120, projected: 100 },
-  { month: "Feb", consumption: 180, projected: 150 },
+  { month: "Fev", consumption: 180, projected: 150 },
   { month: "Mar", consumption: 150, projected: 180 },
-  { month: "Apr", consumption: 280, projected: 220 },
-  { month: "May", consumption: 220, projected: 260 },
+  { month: "Abr", consumption: 280, projected: 220 },
+  { month: "Mai", consumption: 220, projected: 260 },
   { month: "Jun", consumption: 340, projected: 300 },
 ];
 
 const chartConfig = {
   consumption: {
-    label: "Consumption",
+    label: "Consumo",
     color: "hsl(var(--primary))",
   },
   projected: {
-    label: "Projected",
+    label: "Projetado",
     color: "hsl(var(--muted-foreground))",
   },
 };
@@ -45,7 +45,7 @@ export function CreditsChart() {
     <Card className="bg-card border-border rounded-xl">
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <CardTitle className="text-lg font-semibold text-foreground">
-          Credits Consumption Over Time
+          Consumo de Créditos ao Longo do Tempo
         </CardTitle>
         <Button variant="outline" size="sm" className="gap-2">
           <Calendar className="w-4 h-4" />

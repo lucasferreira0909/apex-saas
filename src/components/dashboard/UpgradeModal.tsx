@@ -46,17 +46,17 @@ export function UpgradeModal() {
           </div>
 
           <h3 className="font-bold text-lg text-foreground mb-2">
-            Upgrade to Premium!
+            Atualize para Premium!
           </h3>
           <p className="text-sm text-muted-foreground mb-4">
-            Unlock unlimited funnels, boards, and credits. Get access to all templates and priority support.
+            Desbloqueie funis, quadros e créditos ilimitados. Tenha acesso a todos os templates e suporte prioritário.
           </p>
 
           <Button
             onClick={handleUpgrade}
             className="w-full bg-warning hover:bg-warning/90 text-warning-foreground"
           >
-            Upgrade Now
+            Atualizar Agora
           </Button>
         </CardContent>
       </Card>

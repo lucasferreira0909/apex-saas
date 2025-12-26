@@ -45,27 +45,27 @@ export default function Dashboard() {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold text-foreground">
-            Welcome back, {firstName}!
+            Bem-vindo de volta, {firstName}!
           </h1>
           <p className="text-muted-foreground mt-1">
-            Here's an overview of your marketing performance
+            Aqui está uma visão geral do seu desempenho de marketing
           </p>
         </div>
         <div className="flex gap-3">
           
           <Button onClick={handleCreate} className="gap-2">
             <Plus className="w-4 h-4" />
-            Create New
+            Criar Novo
           </Button>
         </div>
       </div>
 
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        <DashboardMetricCard title="Active Funnels" value={`${activeFunnels}/${totalFunnels}`} icon={Workflow} />
-        <DashboardMetricCard title="Active Boards" value={activeBoards} icon={LayoutGrid} verified={activeBoards > 0} />
-        <DashboardMetricCard title="Available Credits" value={availableCredits.toLocaleString()} icon={Coins} />
-        <DashboardMetricCard title="Expiring Soon" value={expiringSoon} icon={Clock} />
+        <DashboardMetricCard title="Funis Ativos" value={`${activeFunnels}/${totalFunnels}`} icon={Workflow} />
+        <DashboardMetricCard title="Quadros Ativos" value={activeBoards} icon={LayoutGrid} verified={activeBoards > 0} />
+        <DashboardMetricCard title="Créditos Disponíveis" value={availableCredits.toLocaleString()} icon={Coins} />
+        <DashboardMetricCard title="Expirando em Breve" value={expiringSoon} icon={Clock} />
       </div>
 
       {/* Chart and Table */}
