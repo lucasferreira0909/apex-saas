@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { HeadphonesIcon, Settings, Workflow, LogOut, Wrench, LayoutGrid, Zap, BarChart3 } from "lucide-react";
+import { HeadphonesIcon, Settings, Workflow, LogOut, Wrench, LayoutGrid, Zap } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
@@ -10,10 +10,6 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { SidebarProjectsSection } from "@/components/apex/SidebarProjectsSection";
 import apexLogoFull from "@/assets/apex-logo-full.png";
 const projectItems = [{
-  title: "Geral",
-  url: "/general",
-  icon: BarChart3
-}, {
   title: "Funis",
   url: "/funnels",
   icon: Workflow
