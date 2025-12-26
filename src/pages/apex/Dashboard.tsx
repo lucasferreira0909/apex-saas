@@ -75,7 +75,7 @@ export default function Dashboard() {
       </div>
 
       {/* Templates Gallery */}
-      <TemplatesGallery />
+      
 
       {/* Upgrade Modal */}
       <UpgradeModal />
