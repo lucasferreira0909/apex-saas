@@ -5,32 +5,32 @@ import { toast } from "@/hooks/use-toast";
 const templates = [
   {
     id: "1",
-    title: "Sales Funnel Pro",
-    description: "Complete sales funnel template with landing page, email sequences, and checkout.",
+    title: "Funil de Vendas Pro",
+    description: "Template completo de funil de vendas com landing page, sequências de e-mail e checkout.",
     usageCount: 240,
   },
   {
     id: "2",
-    title: "Lead Generation",
-    description: "Capture leads with optimized forms and automated follow-up sequences.",
+    title: "Geração de Leads",
+    description: "Capture leads com formulários otimizados e sequências de follow-up automatizadas.",
     usageCount: 185,
   },
   {
     id: "3",
-    title: "Webinar Funnel",
-    description: "Host engaging webinars with registration, reminders, and replay pages.",
+    title: "Funil de Webinar",
+    description: "Hospede webinars envolventes com registro, lembretes e páginas de replay.",
     usageCount: 156,
   },
   {
     id: "4",
-    title: "Product Launch",
-    description: "Launch your product with pre-launch, launch, and post-launch sequences.",
+    title: "Lançamento de Produto",
+    description: "Lance seu produto com sequências de pré-lançamento, lançamento e pós-lançamento.",
     usageCount: 132,
   },
   {
     id: "5",
-    title: "Membership Site",
-    description: "Create a membership area with gated content and subscription management.",
+    title: "Site de Membros",
+    description: "Crie uma área de membros com conteúdo restrito e gerenciamento de assinaturas.",
     usageCount: 98,
   },
 ];
@@ -38,21 +38,21 @@ const templates = [
 export function TemplatesGallery() {
   const handleShare = (title: string) => {
     toast({
-      title: "Share Template",
-      description: `Sharing "${title}" template...`,
+      title: "Compartilhar Template",
+      description: `Compartilhando template "${title}"...`,
     });
   };
 
   const handleEdit = (title: string) => {
     toast({
-      title: "Edit Template",
-      description: `Opening "${title}" for editing...`,
+      title: "Editar Template",
+      description: `Abrindo "${title}" para edição...`,
     });
   };
 
   return (
     <div className="space-y-4">
-      <h2 className="text-lg font-semibold text-foreground">Templates</h2>
+      <h2 className="text-lg font-semibold text-foreground">Modelos</h2>
       <ScrollArea className="w-full whitespace-nowrap">
         <div className="flex gap-4 pb-4">
           {templates.map((template) => (
