@@ -386,21 +386,36 @@ export function SidebarProjectsSection() {
           </SheetHeader>
           <div className="space-y-4 py-6">
             <div className="space-y-2">
-              <Label htmlFor="folder-name">Nome da pasta</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="folder-name">Nome da pasta</Label>
+                <span className={cn(
+                  "text-xs",
+                  newFolderName.length > 50 ? "text-destructive" : "text-muted-foreground"
+                )}>
+                  {newFolderName.length}/50
+                </span>
+              </div>
               <Input
                 id="folder-name"
                 value={newFolderName}
                 onChange={(e) => setNewFolderName(e.target.value)}
                 placeholder="Minha Pasta"
-                onKeyDown={(e) => e.key === 'Enter' && handleCreateFolder()}
+                onKeyDown={(e) => e.key === 'Enter' && newFolderName.length <= 50 && handleCreateFolder()}
+                className={cn(
+                  newFolderName.length > 50 && "border-destructive focus-visible:ring-destructive"
+                )}
+                maxLength={60}
               />
+              {newFolderName.length > 50 && (
+                <p className="text-xs text-destructive">O nome deve ter no máximo 50 caracteres</p>
+              )}
             </div>
           </div>
           <SheetFooter className="flex gap-2">
             <Button variant="outline" onClick={() => setCreateFolderOpen(false)}>
               Cancelar
             </Button>
-            <Button onClick={handleCreateFolder} disabled={!newFolderName.trim()}>
+            <Button onClick={handleCreateFolder} disabled={!newFolderName.trim() || newFolderName.length > 50}>
               Criar
             </Button>
           </SheetFooter>
@@ -489,15 +504,32 @@ export function SidebarProjectsSection() {
             </TabsContent>
             <TabsContent value="settings" className="mt-4 space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="rename-folder">Nome da pasta</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="rename-folder">Nome da pasta</Label>
+                  <span className={cn(
+                    "text-xs",
+                    folderName.length > 50 ? "text-destructive" : "text-muted-foreground"
+                  )}>
+                    {folderName.length}/50
+                  </span>
+                </div>
                 <div className="flex gap-2">
-                  <Input
-                    id="rename-folder"
-                    value={folderName}
-                    onChange={(e) => setFolderName(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleRenameFolder()}
-                  />
-                  <Button onClick={handleRenameFolder} disabled={!folderName.trim()}>
+                  <div className="flex-1 space-y-1">
+                    <Input
+                      id="rename-folder"
+                      value={folderName}
+                      onChange={(e) => setFolderName(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && folderName.length <= 50 && handleRenameFolder()}
+                      className={cn(
+                        folderName.length > 50 && "border-destructive focus-visible:ring-destructive"
+                      )}
+                      maxLength={60}
+                    />
+                    {folderName.length > 50 && (
+                      <p className="text-xs text-destructive">O nome deve ter no máximo 50 caracteres</p>
+                    )}
+                  </div>
+                  <Button onClick={handleRenameFolder} disabled={!folderName.trim() || folderName.length > 50}>
                     Salvar
                   </Button>
                 </div>

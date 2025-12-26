@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { checkFunnelNameExists } from "@/hooks/useFunnels";
 import { useQueryClient } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
 
 interface CreateFunnelDialogProps {
   open: boolean;
@@ -103,14 +104,29 @@ export function CreateFunnelDialog({ open, onOpenChange }: CreateFunnelDialogPro
         <SheetBody>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="name">Nome do Funil</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="name">Nome do Funil</Label>
+                <span className={cn(
+                  "text-xs",
+                  name.length > 50 ? "text-destructive" : "text-muted-foreground"
+                )}>
+                  {name.length}/50
+                </span>
+              </div>
               <Input
                 id="name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Ex: Funil de Vendas Principal"
-                className="bg-input border-border"
+                className={cn(
+                  "bg-input border-border",
+                  name.length > 50 && "border-destructive focus-visible:ring-destructive"
+                )}
+                maxLength={60}
               />
+              {name.length > 50 && (
+                <p className="text-xs text-destructive">O nome deve ter no máximo 50 caracteres</p>
+              )}
             </div>
           </div>
         </SheetBody>
@@ -118,7 +134,7 @@ export function CreateFunnelDialog({ open, onOpenChange }: CreateFunnelDialogPro
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isChecking}>
             Cancelar
           </Button>
-          <Button onClick={handleCreate} disabled={!name.trim() || isChecking}>
+          <Button onClick={handleCreate} disabled={!name.trim() || name.length > 50 || isChecking}>
             {isChecking ? "Verificando..." : "Criar Funil"}
           </Button>
         </SheetFooter>

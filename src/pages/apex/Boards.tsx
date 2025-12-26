@@ -27,6 +27,7 @@ import { icons } from 'lucide-react';
 import { DeleteConfirmationDialog } from '@/components/ui/delete-confirmation-dialog';
 import { IconPickerDialog } from '@/components/apex/IconPickerDialog';
 import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 // Helper component to preview column icon
 function ColumnIconPreview({ iconName }: { iconName: string }) {
@@ -1117,8 +1118,28 @@ export default function Boards() {
           <SheetBody>
             <div className="grid gap-5">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="board-name">Nome do Quadro *</Label>
-                <Input id="board-name" placeholder="Digite o nome do quadro" value={boardName} onChange={e => setBoardName(e.target.value)} />
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="board-name">Nome do Quadro *</Label>
+                  <span className={cn(
+                    "text-xs",
+                    boardName.length > 50 ? "text-destructive" : "text-muted-foreground"
+                  )}>
+                    {boardName.length}/50
+                  </span>
+                </div>
+                <Input 
+                  id="board-name" 
+                  placeholder="Digite o nome do quadro" 
+                  value={boardName} 
+                  onChange={e => setBoardName(e.target.value)} 
+                  className={cn(
+                    boardName.length > 50 && "border-destructive focus-visible:ring-destructive"
+                  )}
+                  maxLength={60}
+                />
+                {boardName.length > 50 && (
+                  <p className="text-xs text-destructive">O nome deve ter no máximo 50 caracteres</p>
+                )}
               </div>
               
               {selectedBoardType === 'kanban' && (
@@ -1157,7 +1178,7 @@ export default function Boards() {
               setIsCreateSheetOpen(false);
               setIsTypeSelectSheetOpen(true);
             }}>Voltar</Button>
-            <Button onClick={handleCreateBoard}>Criar Quadro</Button>
+            <Button onClick={handleCreateBoard} disabled={!boardName.trim() || boardName.length > 50}>Criar Quadro</Button>
           </SheetFooter>
         </SheetContent>
       </Sheet>
