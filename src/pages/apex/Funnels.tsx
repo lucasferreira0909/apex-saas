@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { CreateFunnelDialog } from "@/components/apex/CreateFunnelDialog";
 import { useFunnels, useDeleteFunnel, useDeleteMultipleFunnels, checkFunnelNameExists } from "@/hooks/useFunnels";
+import { useBoards } from "@/hooks/useBoards";
 import { DeleteConfirmationDialog } from "@/components/ui/delete-confirmation-dialog";
 import { DataGrid, DataGridContainer } from "@/components/ui/data-grid";
 import { DataGridTable } from "@/components/ui/data-grid-table";
@@ -13,13 +14,16 @@ import { DataGridPagination } from "@/components/ui/data-grid-pagination";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
-import { Plus, Search, Folder, MoreHorizontal, Edit, Trash2, X, Pencil } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Plus, Search, Folder, MoreHorizontal, Edit, Trash2, X, Pencil, GitFork, LayoutGrid, Coins } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import {
   ColumnDef,
   getCoreRowModel,
@@ -31,7 +35,7 @@ import {
   RowSelectionState,
   useReactTable,
 } from '@tanstack/react-table';
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
 
 interface FunnelItem {
   id: string;
@@ -42,6 +46,8 @@ interface FunnelItem {
 }
 
 export default function Funnels() {
+  const [activeTab, setActiveTab] = useState("geral");
+  const [creditsPeriod, setCreditsPeriod] = useState<"daily" | "weekly" | "monthly">("daily");
   const [showCreateDialog, setShowCreateDialog] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedFolder, setSelectedFolder] = useState<string>("all");
@@ -65,8 +71,55 @@ export default function Funnels() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { data: funnels = [], isLoading } = useFunnels();
+  const { data: boards = [] } = useBoards();
   const deleteFunnel = useDeleteFunnel();
   const deleteMultipleFunnels = useDeleteMultipleFunnels();
+
+  // Fetch user profile for credits
+  const { data: profile } = useQuery({
+    queryKey: ['profile', user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('credits')
+        .eq('user_id', user.id)
+        .single();
+      if (error) throw error;
+      return data;
+    },
+    enabled: !!user
+  });
+
+  // Generate mock credit usage data based on period
+  const creditUsageData = useMemo(() => {
+    const now = new Date();
+    
+    if (creditsPeriod === "daily") {
+      return Array.from({ length: 7 }, (_, i) => {
+        const date = new Date(now);
+        date.setDate(date.getDate() - (6 - i));
+        return {
+          label: date.toLocaleDateString('pt-BR', { weekday: 'short' }),
+          credits: Math.floor(Math.random() * 15) + 2
+        };
+      });
+    } else if (creditsPeriod === "weekly") {
+      return Array.from({ length: 4 }, (_, i) => ({
+        label: `Semana ${i + 1}`,
+        credits: Math.floor(Math.random() * 50) + 10
+      }));
+    } else {
+      return Array.from({ length: 6 }, (_, i) => {
+        const date = new Date(now);
+        date.setMonth(date.getMonth() - (5 - i));
+        return {
+          label: date.toLocaleDateString('pt-BR', { month: 'short' }),
+          credits: Math.floor(Math.random() * 100) + 30
+        };
+      });
+    }
+  }, [creditsPeriod]);
 
   const getTypeBadge = (templateType: string | null) => {
     switch (templateType) {
@@ -322,100 +375,213 @@ export default function Funnels() {
           <h1 className="text-3xl font-bold text-foreground">Funis de Vendas</h1>
           <p className="text-muted-foreground">Crie e gerencie seus funis de conversão</p>
         </div>
-        <Button onClick={() => setShowCreateDialog(true)}>
-          <Plus className="h-4 w-4 mr-2" />
-          Criar Funil
-        </Button>
-      </div>
-
-      {/* Search and Filter */}
-      <div className="flex items-center space-x-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input 
-            placeholder="Buscar funis..." 
-            className="pl-10 bg-input border-border" 
-            value={searchTerm} 
-            onChange={e => {
-              setSearchTerm(e.target.value);
-              setPagination(prev => ({ ...prev, pageIndex: 0 }));
-            }} 
-          />
-        </div>
-        
-        {/* Bulk delete button */}
-        {selectedIds.length > 0 && (
-          <Button 
-            variant="destructive" 
-            onClick={() => setBulkDeleteDialogOpen(true)}
-          >
-            <Trash2 className="h-4 w-4 mr-2" />
-            Excluir {selectedIds.length} selecionado{selectedIds.length > 1 ? 's' : ''}
+        {activeTab === "funis" && (
+          <Button onClick={() => setShowCreateDialog(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            Criar Funil
           </Button>
         )}
       </div>
 
-      {/* Active Filters Display */}
-      {hasActiveFilters && (
-        <div className="flex items-center space-x-2 text-sm">
-          <span className="text-muted-foreground">Filtros ativos:</span>
-          {searchTerm && (
-            <Badge variant="secondary" className="flex items-center space-x-1">
-              <span>Busca: "{searchTerm}"</span>
-              <X 
-                className="h-3 w-3 cursor-pointer" 
-                onClick={() => {
-                  setSearchTerm("");
-                  setPagination(prev => ({ ...prev, pageIndex: 0 }));
-                }} 
-              />
-            </Badge>
-          )}
-          {selectedFolder !== "all" && (
-            <Badge variant="secondary" className="flex items-center space-x-1">
-              <span>Pasta: {selectedFolder === "no-folder" ? "Sem pasta" : selectedFolder}</span>
-              <X 
-                className="h-3 w-3 cursor-pointer" 
-                onClick={() => {
-                  setSelectedFolder("all");
-                  setPagination(prev => ({ ...prev, pageIndex: 0 }));
-                }} 
-              />
-            </Badge>
-          )}
-        </div>
-      )}
+      {/* Tabs */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="w-full max-w-md">
+          <TabsTrigger value="geral" className="flex-1">Geral</TabsTrigger>
+          <TabsTrigger value="funis" className="flex-1">Funis</TabsTrigger>
+        </TabsList>
 
-      {/* Funnels List with DataGrid */}
-      <Card className="bg-card border-border">
-        <CardHeader>
-          <CardTitle className="text-card-foreground">Meus Funis</CardTitle>
-          <CardDescription>Todos os seus funis organizados</CardDescription>
-        </CardHeader>
-        <CardContent className="p-0">
-          {filteredProjects.length === 0 ? (
-            <div className="text-center py-12 px-6">
-              <Folder className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium text-card-foreground mb-2">Nenhum funil encontrado</h3>
-              <p className="text-muted-foreground">
-                {hasActiveFilters ? "Tente ajustar os filtros ou criar um novo funil" : "Crie seu primeiro funil para começar"}
-              </p>
-            </div>
-          ) : (
-            <DataGrid table={table} recordCount={filteredProjects.length}>
-              <div className="w-full">
-                <DataGridContainer className="border-0 rounded-none">
-                  <ScrollArea>
-                    <DataGridTable />
-                    <ScrollBar orientation="horizontal" />
-                  </ScrollArea>
-                </DataGridContainer>
-                <DataGridPagination className="border-t px-4" />
+        {/* Geral Tab */}
+        <TabsContent value="geral" className="space-y-6 mt-6">
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="bg-card border-border">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total de Funis</CardTitle>
+                <GitFork className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-foreground">{funnels.length}</div>
+                <p className="text-xs text-muted-foreground mt-1">Funis criados</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border-border">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Total de Quadros</CardTitle>
+                <LayoutGrid className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-foreground">{boards.length}</div>
+                <p className="text-xs text-muted-foreground mt-1">Quadros criados</p>
+              </CardContent>
+            </Card>
+
+            <Card className="bg-card border-border">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium text-muted-foreground">Créditos Disponíveis</CardTitle>
+                <Coins className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-foreground">{profile?.credits ?? 0}</div>
+                <p className="text-xs text-muted-foreground mt-1">Créditos restantes</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Credits Usage Chart */}
+          <Card className="bg-card border-border">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-card-foreground">Consumo de Créditos</CardTitle>
+                <CardDescription>Visualize seu consumo de créditos ao longo do tempo</CardDescription>
               </div>
-            </DataGrid>
+              <Select value={creditsPeriod} onValueChange={(value: "daily" | "weekly" | "monthly") => setCreditsPeriod(value)}>
+                <SelectTrigger className="w-[140px]">
+                  <SelectValue placeholder="Período" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">Diário</SelectItem>
+                  <SelectItem value="weekly">Semanal</SelectItem>
+                  <SelectItem value="monthly">Mensal</SelectItem>
+                </SelectContent>
+              </Select>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={creditUsageData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="colorCredits" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis 
+                      dataKey="label" 
+                      className="text-xs fill-muted-foreground"
+                      tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                    />
+                    <YAxis 
+                      className="text-xs fill-muted-foreground"
+                      tick={{ fill: 'hsl(var(--muted-foreground))' }}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--card))', 
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '8px',
+                        color: 'hsl(var(--foreground))'
+                      }}
+                      formatter={(value: number) => [`${value} créditos`, 'Consumo']}
+                    />
+                    <Area 
+                      type="monotone" 
+                      dataKey="credits" 
+                      stroke="hsl(var(--primary))" 
+                      fillOpacity={1} 
+                      fill="url(#colorCredits)" 
+                      strokeWidth={2}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        {/* Funis Tab */}
+        <TabsContent value="funis" className="space-y-6 mt-6">
+          {/* Search and Filter */}
+          <div className="flex items-center space-x-4">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Buscar funis..." 
+                className="pl-10 bg-input border-border" 
+                value={searchTerm} 
+                onChange={e => {
+                  setSearchTerm(e.target.value);
+                  setPagination(prev => ({ ...prev, pageIndex: 0 }));
+                }} 
+              />
+            </div>
+            
+            {/* Bulk delete button */}
+            {selectedIds.length > 0 && (
+              <Button 
+                variant="destructive" 
+                onClick={() => setBulkDeleteDialogOpen(true)}
+              >
+                <Trash2 className="h-4 w-4 mr-2" />
+                Excluir {selectedIds.length} selecionado{selectedIds.length > 1 ? 's' : ''}
+              </Button>
+            )}
+          </div>
+
+          {/* Active Filters Display */}
+          {hasActiveFilters && (
+            <div className="flex items-center space-x-2 text-sm">
+              <span className="text-muted-foreground">Filtros ativos:</span>
+              {searchTerm && (
+                <Badge variant="secondary" className="flex items-center space-x-1">
+                  <span>Busca: "{searchTerm}"</span>
+                  <X 
+                    className="h-3 w-3 cursor-pointer" 
+                    onClick={() => {
+                      setSearchTerm("");
+                      setPagination(prev => ({ ...prev, pageIndex: 0 }));
+                    }} 
+                  />
+                </Badge>
+              )}
+              {selectedFolder !== "all" && (
+                <Badge variant="secondary" className="flex items-center space-x-1">
+                  <span>Pasta: {selectedFolder === "no-folder" ? "Sem pasta" : selectedFolder}</span>
+                  <X 
+                    className="h-3 w-3 cursor-pointer" 
+                    onClick={() => {
+                      setSelectedFolder("all");
+                      setPagination(prev => ({ ...prev, pageIndex: 0 }));
+                    }} 
+                  />
+                </Badge>
+              )}
+            </div>
           )}
-        </CardContent>
-      </Card>
+
+          {/* Funnels List with DataGrid */}
+          <Card className="bg-card border-border">
+            <CardHeader>
+              <CardTitle className="text-card-foreground">Meus Funis</CardTitle>
+              <CardDescription>Todos os seus funis organizados</CardDescription>
+            </CardHeader>
+            <CardContent className="p-0">
+              {filteredProjects.length === 0 ? (
+                <div className="text-center py-12 px-6">
+                  <Folder className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+                  <h3 className="text-lg font-medium text-card-foreground mb-2">Nenhum funil encontrado</h3>
+                  <p className="text-muted-foreground">
+                    {hasActiveFilters ? "Tente ajustar os filtros ou criar um novo funil" : "Crie seu primeiro funil para começar"}
+                  </p>
+                </div>
+              ) : (
+                <DataGrid table={table} recordCount={filteredProjects.length}>
+                  <div className="w-full">
+                    <DataGridContainer className="border-0 rounded-none">
+                      <ScrollArea>
+                        <DataGridTable />
+                        <ScrollBar orientation="horizontal" />
+                      </ScrollArea>
+                    </DataGridContainer>
+                    <DataGridPagination className="border-t px-4" />
+                  </div>
+                </DataGrid>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
 
       {/* Create Dialog */}
       <CreateFunnelDialog open={showCreateDialog} onOpenChange={setShowCreateDialog} />
