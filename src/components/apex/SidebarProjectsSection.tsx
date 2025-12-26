@@ -519,9 +519,9 @@ function SortableFolderItem({
         <div className="flex items-center group/folder">
           <CollapsibleTrigger asChild>
             <SidebarMenuButton className="flex-1 justify-start">
-              <ChevronRight className={cn(
-                "h-4 w-4 transition-transform",
-                isExpanded && "rotate-90"
+              <Folder className={cn(
+                "h-4 w-4",
+                isExpanded && "text-primary"
               )} />
               <span className="truncate">{folder.name}</span>
             </SidebarMenuButton>
