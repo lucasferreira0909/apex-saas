@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronRight, Folder, Workflow, LayoutGrid, MoreHorizontal, Trash2, Plus, X, Settings, GripVertical } from "lucide-react";
+import { ChevronRight, Folder, Workflow, LayoutGrid, MoreHorizontal, Trash2, X, Settings, GripVertical, FolderPlus } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSidebarFolders, SidebarFolder, SidebarFolderItem } from "@/hooks/useSidebarFolders";
 import { useFunnels } from "@/hooks/useFunnels";
@@ -264,16 +264,6 @@ export function SidebarProjectsSection() {
   return (
     <>
       <SidebarGroup>
-        <div className="flex items-center justify-end pr-2 py-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-6 w-6"
-            onClick={() => setCreateFolderOpen(true)}
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div>
         <SidebarGroupContent>
           <SidebarMenu>
             {folders.length === 0 ? (
@@ -326,6 +316,14 @@ export function SidebarProjectsSection() {
               </DndContext>
             )}
           </SidebarMenu>
+          <Button
+            variant="ghost"
+            className="w-full justify-start gap-2 px-3 py-2 h-auto text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/50"
+            onClick={() => setCreateFolderOpen(true)}
+          >
+            <FolderPlus className="h-4 w-4" />
+            <span className="text-sm">Criar pasta</span>
+          </Button>
         </SidebarGroupContent>
       </SidebarGroup>
 
