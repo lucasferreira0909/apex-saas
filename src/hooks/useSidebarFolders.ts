@@ -70,26 +70,27 @@ export function useSidebarFolders() {
           ? supabase.from('funnels').select('id, name, template_type').in('id', funnelIds)
           : { data: [], error: null },
         boardIds.length > 0 
-          ? supabase.from('boards').select('id, name').in('id', boardIds)
+          ? supabase.from('boards').select('id, name, template_type').in('id', boardIds)
           : { data: [], error: null }
       ]);
 
       const funnelData = new Map<string, { name: string; template_type: string | null }>();
-      const boardNames = new Map<string, string>();
+      const boardData = new Map<string, { name: string; template_type: string | null }>();
       
       funnelsResult.data?.forEach(f => funnelData.set(f.id, { name: f.name, template_type: f.template_type }));
-      boardsResult.data?.forEach(b => boardNames.set(b.id, b.name));
+      boardsResult.data?.forEach(b => boardData.set(b.id, { name: b.name, template_type: b.template_type }));
 
       // Map items with names and template_type
       const itemsWithNames: SidebarFolderItem[] = (itemsData || []).map(item => {
         const funnel = item.item_type === 'funnel' ? funnelData.get(item.item_id) : undefined;
+        const board = item.item_type === 'board' ? boardData.get(item.item_id) : undefined;
         return {
           ...item,
           item_type: item.item_type as 'funnel' | 'board',
           item_name: item.item_type === 'funnel' 
             ? funnel?.name || undefined
-            : boardNames.get(item.item_id) || undefined,
-          template_type: funnel?.template_type || null
+            : board?.name || undefined,
+          template_type: funnel?.template_type || board?.template_type || null
         };
       });
 
