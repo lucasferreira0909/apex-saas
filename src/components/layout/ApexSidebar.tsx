@@ -14,7 +14,7 @@ const projectItems = [{
   url: "/dashboard",
   icon: LayoutDashboard
 }, {
-  title: "Funis",
+  title: "Fluxos",
   url: "/funnels",
   icon: Workflow
 }, {

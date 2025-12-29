@@ -13,6 +13,7 @@ import ApexSettings from "./pages/apex/ApexSettings";
 import Dashboard from "./pages/apex/Dashboard";
 import Funnels from "./pages/apex/Funnels";
 import FunnelEditor from "./pages/apex/FunnelEditor";
+import AIFlowEditor from "./pages/apex/AIFlowEditor";
 import Boards from "./pages/apex/Boards";
 import Tools from "./pages/apex/Tools";
 import ROICalculator from "./pages/apex/ROICalculator";
@@ -53,6 +54,7 @@ const App = () => (
                   <Route path="/upgrades" element={<Upgrades />} />
                   <Route path="/funnels" element={<Funnels />} />
                   <Route path="/funnel-editor/:id" element={<FunnelEditor />} />
+                  <Route path="/ai-flow-editor/:id" element={<AIFlowEditor />} />
                   <Route path="/tasks" element={<Boards />} />
                   <Route path="/roi-calculator" element={<ROICalculator />} />
                   <Route path="/whatsapp-generator" element={<WhatsAppGenerator />} />
