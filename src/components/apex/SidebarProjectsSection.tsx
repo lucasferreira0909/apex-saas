@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronRight, Folder, Workflow, LayoutGrid, Trash2, X, Settings, GripVertical, FolderPlus, Pencil } from "lucide-react";
+import { ChevronRight, Folder, Workflow, LayoutGrid, Trash2, X, Settings, GripVertical, FolderPlus, Pencil, Sparkles, CheckSquare } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSidebarFolders, SidebarFolder, SidebarFolderItem } from "@/hooks/useSidebarFolders";
 import { useFunnels } from "@/hooks/useFunnels";
@@ -361,9 +361,13 @@ export function SidebarProjectsSection() {
                   {activeItem && activeItem.type === 'item' && (
                     <div className="bg-sidebar rounded-md border border-border shadow-lg p-2 flex items-center gap-2">
                       {(activeItem.data as SidebarFolderItem).item_type === 'funnel' ? (
-                        <Workflow className="h-3.5 w-3.5 text-primary" />
+                        (activeItem.data as SidebarFolderItem).template_type === 'ai_flow' ? (
+                          <Sparkles className="h-3.5 w-3.5 text-violet-400" />
+                        ) : (
+                          <Workflow className="h-3.5 w-3.5 text-primary" />
+                        )
                       ) : (
-                        <LayoutGrid className="h-3.5 w-3.5 text-blue-500" />
+                        <CheckSquare className="h-3.5 w-3.5 text-emerald-400" />
                       )}
                       <span className="text-sm">{(activeItem.data as SidebarFolderItem).item_name || 'Sem nome'}</span>
                     </div>
@@ -722,9 +726,13 @@ function SortableProjectItem({ item, onItemClick, onRemoveItem }: SortableProjec
           onClick={() => onItemClick(item)}
         >
           {item.item_type === 'funnel' ? (
-            <Workflow className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#e8e8e8' }} />
+            item.template_type === 'ai_flow' ? (
+              <Sparkles className="h-3.5 w-3.5 flex-shrink-0 text-violet-400" />
+            ) : (
+              <Workflow className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#e8e8e8' }} />
+            )
           ) : (
-            <LayoutGrid className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#e8e8e8' }} />
+            <CheckSquare className="h-3.5 w-3.5 flex-shrink-0 text-emerald-400" />
           )}
           <span className="truncate">{item.item_name || 'Sem nome'}</span>
         </button>
