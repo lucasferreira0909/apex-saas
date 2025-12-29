@@ -58,7 +58,7 @@ export default function Dashboard() {
 
       {/* Metrics Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-        <DashboardMetricCard title="Funis Ativos" value={`${activeFunnels}/${totalFunnels}`} icon={Workflow} />
+        <DashboardMetricCard title="Fluxos Ativos" value={`${activeFunnels}/${totalFunnels}`} icon={Workflow} />
         <DashboardMetricCard title="Quadros Ativos" value={activeBoards} icon={LayoutGrid} verified={activeBoards > 0} />
         <DashboardMetricCard title="Créditos Disponíveis" value={availableCredits.toLocaleString()} icon={Coins} />
       </div>
