@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -13,7 +13,9 @@ import { useAIFlowHistory } from "@/hooks/useAIFlowHistory";
 import { AIFlowSidebar } from "@/components/apex/AIFlowSidebar";
 import { AIFlowToolNode } from "@/components/apex/AIFlowToolNode";
 import { AIFlowChatNode } from "@/components/apex/AIFlowChatNode";
+import { AIFlowAttachmentNode } from "@/components/apex/AIFlowAttachmentNode";
 import { AIFlowHistorySheet } from "@/components/apex/AIFlowHistorySheet";
+import { AIFlowAttachmentSheet, AttachmentData } from "@/components/apex/AIFlowAttachmentSheet";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -28,6 +30,15 @@ import {
 const nodeTypes = {
   aiToolNode: AIFlowToolNode,
   aiChatNode: AIFlowChatNode,
+  attachmentNode: AIFlowAttachmentNode,
+};
+
+// Helper to get node type category
+const getNodeCategory = (node: Node): 'tool' | 'chat' | 'attachment' | 'unknown' => {
+  if (node.type === 'aiChatNode') return 'chat';
+  if (node.type === 'attachmentNode') return 'attachment';
+  if (node.type === 'aiToolNode') return 'tool';
+  return 'unknown';
 };
 
 export default function AIFlowEditor() {
@@ -39,28 +50,130 @@ export default function AIFlowEditor() {
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
+  const [showAttachmentSheet, setShowAttachmentSheet] = useState(false);
 
   const { funnel, loading: isLoadingProject } = useFunnelProject(id || '');
   const { elements, loading: isLoadingElements, saveAllElements } = useFunnelElements(id || '');
   const { edges: edgesData, loading: isLoadingEdges, saveAllEdges } = useFunnelEdges(id || '');
   const { logs, isLoading: isLoadingHistory, addLog, clearHistory, isClearing } = useAIFlowHistory(id || '');
 
+  // Function to send output to a tool node
+  const handleSendToTool = useCallback((targetNodeId: string, output: string) => {
+    setNodes((nds) => 
+      nds.map((node) => {
+        if (node.id === targetNodeId) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              output,
+              isProcessing: false,
+            },
+          };
+        }
+        return node;
+      })
+    );
+  }, [setNodes]);
+
+  // Get connected tools for a chat node
+  const getConnectedTools = useCallback((chatNodeId: string) => {
+    const connectedTools: { nodeId: string; toolId: string; label: string }[] = [];
+    
+    edges.forEach((edge) => {
+      // Tools connected TO the chat node (source -> chat)
+      if (edge.target === chatNodeId) {
+        const sourceNode = nodes.find(n => n.id === edge.source);
+        if (sourceNode && sourceNode.type === 'aiToolNode') {
+          connectedTools.push({
+            nodeId: sourceNode.id,
+            toolId: (sourceNode.data as any)?.toolId || '',
+            label: (sourceNode.data as any)?.label || 'Ferramenta',
+          });
+        }
+      }
+      // Chat connected TO tools (chat -> tools)
+      if (edge.source === chatNodeId) {
+        const targetNode = nodes.find(n => n.id === edge.target);
+        if (targetNode && targetNode.type === 'aiToolNode') {
+          // Check if not already added
+          if (!connectedTools.find(t => t.nodeId === targetNode.id)) {
+            connectedTools.push({
+              nodeId: targetNode.id,
+              toolId: (targetNode.data as any)?.toolId || '',
+              label: (targetNode.data as any)?.label || 'Ferramenta',
+            });
+          }
+        }
+      }
+    });
+    
+    return connectedTools;
+  }, [edges, nodes]);
+
+  // Get connected attachments for a chat node
+  const getConnectedAttachments = useCallback((chatNodeId: string) => {
+    const attachments: any[] = [];
+    
+    edges.forEach((edge) => {
+      if (edge.target === chatNodeId) {
+        const sourceNode = nodes.find(n => n.id === edge.source);
+        if (sourceNode && sourceNode.type === 'attachmentNode') {
+          attachments.push({
+            nodeId: sourceNode.id,
+            title: (sourceNode.data as any)?.title || 'Anexo',
+            type: (sourceNode.data as any)?.attachmentType || 'file',
+            url: (sourceNode.data as any)?.url || '',
+          });
+        }
+      }
+    });
+    
+    return attachments;
+  }, [edges, nodes]);
+
+  // Update nodes with connected data
+  useEffect(() => {
+    setNodes((nds) => 
+      nds.map((node) => {
+        if (node.type === 'aiChatNode') {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              connectedTools: getConnectedTools(node.id),
+              connectedAttachments: getConnectedAttachments(node.id),
+              onSendToTool: handleSendToTool,
+            },
+          };
+        }
+        return node;
+      })
+    );
+  }, [edges, getConnectedTools, getConnectedAttachments, handleSendToTool, setNodes]);
+
   // Load initial data
   useEffect(() => {
     if (elements.length > 0) {
-      const loadedNodes: Node[] = elements.map((el) => ({
-        id: el.id,
-        type: el.type === 'apex-chat' || el.type === 'apex-ai' ? 'aiChatNode' : 'aiToolNode',
-        position: el.position,
-        data: {
-          label: el.type === 'apex-chat' ? 'Apex AI' : el.type,
-          toolId: el.type === 'apex-chat' ? 'apex-ai' : el.type,
-          config: el.stats || {},
-          configured: el.configured,
-          funnelId: id,
-          addLog,
-        },
-      }));
+      const loadedNodes: Node[] = elements.map((el) => {
+        const isChat = el.type === 'apex-chat' || el.type === 'apex-ai';
+        const isAttachment = el.type.startsWith('attachment-');
+        
+        return {
+          id: el.id,
+          type: isChat ? 'aiChatNode' : isAttachment ? 'attachmentNode' : 'aiToolNode',
+          position: el.position,
+          data: {
+            label: isChat ? 'Apex AI' : el.type,
+            toolId: isChat ? 'apex-ai' : el.type,
+            config: el.stats || {},
+            configured: el.configured,
+            funnelId: id,
+            addLog,
+            ...(el.stats || {}),
+          },
+        };
+      });
       setNodes(loadedNodes);
     }
 
@@ -69,8 +182,48 @@ export default function AIFlowEditor() {
     }
   }, [elements, edgesData, setNodes, setEdges, id, addLog]);
 
+  // Validate connection
+  const isValidConnection = useCallback((source: Node, target: Node): { valid: boolean; message?: string } => {
+    const sourceCategory = getNodeCategory(source);
+    const targetCategory = getNodeCategory(target);
+
+    // Attachment to Attachment - blocked
+    if (sourceCategory === 'attachment' && targetCategory === 'attachment') {
+      return { valid: false, message: 'Não é possível conectar anexos entre si' };
+    }
+
+    // Tool to Tool - blocked
+    if (sourceCategory === 'tool' && targetCategory === 'tool') {
+      return { valid: false, message: 'Não é possível conectar ferramentas entre si' };
+    }
+
+    // Attachment to Tool - blocked
+    if (sourceCategory === 'attachment' && targetCategory === 'tool') {
+      return { valid: false, message: 'Anexos só podem ser conectados ao Apex AI' };
+    }
+
+    // Tool to Attachment - blocked
+    if (sourceCategory === 'tool' && targetCategory === 'attachment') {
+      return { valid: false, message: 'Ferramentas não podem se conectar a anexos' };
+    }
+
+    return { valid: true };
+  }, []);
+
   const onConnect = useCallback(
     (params: Connection) => {
+      const sourceNode = nodes.find(n => n.id === params.source);
+      const targetNode = nodes.find(n => n.id === params.target);
+
+      if (!sourceNode || !targetNode) return;
+
+      const validation = isValidConnection(sourceNode, targetNode);
+      
+      if (!validation.valid) {
+        toast.error(validation.message);
+        return;
+      }
+
       setEdges((eds) => addEdge({ 
         ...params, 
         style: { stroke: 'hsl(var(--primary))', strokeWidth: 2 },
@@ -78,7 +231,7 @@ export default function AIFlowEditor() {
       }, eds));
       setHasUnsavedChanges(true);
     },
-    [setEdges]
+    [setEdges, nodes, isValidConnection]
   );
 
   const handleNodesChangeWrapper = useCallback(
@@ -138,17 +291,44 @@ export default function AIFlowEditor() {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
+  const handleAddAttachment = useCallback((attachment: AttachmentData) => {
+    const newNode: Node = {
+      id: attachment.id,
+      type: 'attachmentNode',
+      position: { x: 200, y: 200 },
+      data: {
+        title: attachment.title,
+        attachmentType: attachment.type,
+        url: attachment.url,
+        thumbnailUrl: attachment.thumbnailUrl,
+        isVertical: attachment.isVertical,
+      },
+    };
+
+    setNodes((nds) => [...nds, newNode]);
+    setHasUnsavedChanges(true);
+  }, [setNodes]);
+
   const handleSave = async () => {
     if (!id) return;
 
     setIsSaving(true);
     try {
-      const elementsToSave = nodes.map((node, index) => ({
+      const elementsToSave = nodes.map((node) => ({
         id: node.id,
-        type: (node.data as any).toolId || (node.data as any).label,
+        type: node.type === 'attachmentNode' 
+          ? `attachment-${(node.data as any).attachmentType}`
+          : (node.data as any).toolId || (node.data as any).label,
         position: node.position,
         configured: (node.data as any).configured || false,
-        stats: (node.data as any).config || {},
+        stats: {
+          ...(node.data as any).config,
+          title: (node.data as any).title,
+          attachmentType: (node.data as any).attachmentType,
+          url: (node.data as any).url,
+          thumbnailUrl: (node.data as any).thumbnailUrl,
+          isVertical: (node.data as any).isVertical,
+        },
         icon: null,
       }));
 
@@ -252,7 +432,7 @@ export default function AIFlowEditor() {
             onDragOver={handleDragOver}
           >
             {/* Sidebar Island */}
-            <AIFlowSidebar />
+            <AIFlowSidebar onOpenAttachmentSheet={() => setShowAttachmentSheet(true)} />
 
             {/* ReactFlow Canvas */}
             <ReactFlow
@@ -285,6 +465,13 @@ export default function AIFlowEditor() {
         isLoading={isLoadingHistory}
         onClearHistory={handleClearHistory}
         isClearing={isClearing}
+      />
+
+      {/* Attachment Sheet */}
+      <AIFlowAttachmentSheet
+        open={showAttachmentSheet}
+        onOpenChange={setShowAttachmentSheet}
+        onAddAttachment={handleAddAttachment}
       />
 
       {/* Exit Confirmation Dialog */}

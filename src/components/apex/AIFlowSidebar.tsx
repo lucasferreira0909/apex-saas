@@ -16,7 +16,8 @@ import {
   Users,
   Hash,
   ShoppingBag,
-  Image
+  Image,
+  Paperclip
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -35,7 +36,11 @@ const tools = [
   { id: "whatsapp-generator", title: "Gerador de Link WhatsApp", icon: MessageSquare },
 ];
 
-export function AIFlowSidebar() {
+interface AIFlowSidebarProps {
+  onOpenAttachmentSheet?: () => void;
+}
+
+export function AIFlowSidebar({ onOpenAttachmentSheet }: AIFlowSidebarProps) {
   const [toolsPopoverOpen, setToolsPopoverOpen] = useState(false);
 
   const handleDragStart = (event: React.DragEvent, tool: typeof tools[0]) => {
@@ -111,7 +116,7 @@ export function AIFlowSidebar() {
             </PopoverContent>
           </Popover>
 
-          {/* Apex Chat Draggable */}
+          {/* Apex AI Draggable */}
           <Tooltip>
             <TooltipTrigger asChild>
               <Button
@@ -126,6 +131,23 @@ export function AIFlowSidebar() {
             </TooltipTrigger>
             <TooltipContent side="right">
               <p>Apex AI (arraste)</p>
+            </TooltipContent>
+          </Tooltip>
+
+          {/* Attachment Button - Clickable, not draggable */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="h-10 w-10 rounded-xl"
+                onClick={onOpenAttachmentSheet}
+              >
+                <Paperclip className="h-5 w-5" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent side="right">
+              <p>Anexos</p>
             </TooltipContent>
           </Tooltip>
         </div>
