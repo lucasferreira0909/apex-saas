@@ -12,6 +12,7 @@ export interface SidebarFolderItem {
   created_at: string;
   // Joined data
   item_name?: string;
+  template_type?: string | null;
 }
 
 export interface SidebarFolder {
@@ -66,27 +67,31 @@ export function useSidebarFolders() {
 
       const [funnelsResult, boardsResult] = await Promise.all([
         funnelIds.length > 0 
-          ? supabase.from('funnels').select('id, name').in('id', funnelIds)
+          ? supabase.from('funnels').select('id, name, template_type').in('id', funnelIds)
           : { data: [], error: null },
         boardIds.length > 0 
           ? supabase.from('boards').select('id, name').in('id', boardIds)
           : { data: [], error: null }
       ]);
 
-      const funnelNames = new Map<string, string>();
+      const funnelData = new Map<string, { name: string; template_type: string | null }>();
       const boardNames = new Map<string, string>();
       
-      funnelsResult.data?.forEach(f => funnelNames.set(f.id, f.name));
+      funnelsResult.data?.forEach(f => funnelData.set(f.id, { name: f.name, template_type: f.template_type }));
       boardsResult.data?.forEach(b => boardNames.set(b.id, b.name));
 
-      // Map items with names
-      const itemsWithNames: SidebarFolderItem[] = (itemsData || []).map(item => ({
-        ...item,
-        item_type: item.item_type as 'funnel' | 'board',
-        item_name: item.item_type === 'funnel' 
-          ? funnelNames.get(item.item_id) || undefined
-          : boardNames.get(item.item_id) || undefined
-      }));
+      // Map items with names and template_type
+      const itemsWithNames: SidebarFolderItem[] = (itemsData || []).map(item => {
+        const funnel = item.item_type === 'funnel' ? funnelData.get(item.item_id) : undefined;
+        return {
+          ...item,
+          item_type: item.item_type as 'funnel' | 'board',
+          item_name: item.item_type === 'funnel' 
+            ? funnel?.name || undefined
+            : boardNames.get(item.item_id) || undefined,
+          template_type: funnel?.template_type || null
+        };
+      });
 
       // Group items by folder
       const foldersWithItems: SidebarFolder[] = foldersData.map(folder => ({
