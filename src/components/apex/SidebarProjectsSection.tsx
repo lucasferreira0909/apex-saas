@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { ChevronRight, Folder, Workflow, LayoutGrid, Trash2, X, Settings, GripVertical, FolderPlus, Pencil, Sparkles, CheckSquare } from "lucide-react";
+import { ChevronRight, Folder, Workflow, LayoutGrid, Trash2, X, Settings, GripVertical, FolderPlus, Pencil, Sparkles, CheckSquare, Columns } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useSidebarFolders, SidebarFolder, SidebarFolderItem } from "@/hooks/useSidebarFolders";
 import { useFunnels } from "@/hooks/useFunnels";
@@ -367,7 +367,11 @@ export function SidebarProjectsSection() {
                           <Workflow className="h-3.5 w-3.5 text-primary" />
                         )
                       ) : (
-                        <CheckSquare className="h-3.5 w-3.5 text-emerald-400" />
+                        (activeItem.data as SidebarFolderItem).template_type === 'checklist' ? (
+                          <CheckSquare className="h-3.5 w-3.5 text-emerald-400" />
+                        ) : (
+                          <Columns className="h-3.5 w-3.5 text-blue-400" />
+                        )
                       )}
                       <span className="text-sm">{(activeItem.data as SidebarFolderItem).item_name || 'Sem nome'}</span>
                     </div>
@@ -732,7 +736,11 @@ function SortableProjectItem({ item, onItemClick, onRemoveItem }: SortableProjec
               <Workflow className="h-3.5 w-3.5 flex-shrink-0" style={{ color: '#e8e8e8' }} />
             )
           ) : (
-            <CheckSquare className="h-3.5 w-3.5 flex-shrink-0 text-emerald-400" />
+            item.template_type === 'checklist' ? (
+              <CheckSquare className="h-3.5 w-3.5 flex-shrink-0 text-emerald-400" />
+            ) : (
+              <Columns className="h-3.5 w-3.5 flex-shrink-0 text-blue-400" />
+            )
           )}
           <span className="truncate">{item.item_name || 'Sem nome'}</span>
         </button>
