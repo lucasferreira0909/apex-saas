@@ -18,9 +18,78 @@ const toolPrompts: Record<string, string> = {
   "persona-generator": "Você é um especialista em criação de personas de marketing. Crie personas detalhadas com demografia, dores, desejos e objeções baseado no negócio fornecido.",
   "hashtag-generator": "Você é um especialista em hashtags para redes sociais. Gere hashtags relevantes e estratégicas para aumentar o alcance baseado no tema fornecido.",
   "whatsapp-generator": "Você é um especialista em mensagens de WhatsApp para vendas. Crie mensagens persuasivas e conversacionais baseado no objetivo fornecido.",
-  "apex-ai": "Você é o Apex AI, um assistente de IA especializado em marketing digital, copywriting, vendas e automação. Ajude o usuário com suas dúvidas de forma clara, objetiva e profissional. Forneça insights valiosos e acionáveis.",
-  "apex-chat": "Você é o Apex AI, um assistente de IA especializado em marketing digital, copywriting e automação. Ajude o usuário com suas dúvidas de forma clara e objetiva."
+  "apex-ai": "Você é o Apex AI, um assistente de IA especializado em marketing digital, copywriting, vendas e automação. Você tem a capacidade de analisar imagens, vídeos e outros anexos que o usuário compartilhar. Quando o usuário perguntar sobre o conteúdo de um anexo (vídeo, imagem, link), analise-o detalhadamente e forneça informações úteis. Ajude o usuário com suas dúvidas de forma clara, objetiva e profissional. Forneça insights valiosos e acionáveis.",
+  "apex-chat": "Você é o Apex AI, um assistente de IA especializado em marketing digital, copywriting e automação. Você pode analisar imagens, vídeos e outros anexos. Ajude o usuário com suas dúvidas de forma clara e objetiva."
 };
+
+// Helper to determine media type from URL
+function getMediaType(url: string): string | null {
+  const lowercaseUrl = url.toLowerCase();
+  
+  // Video formats
+  if (lowercaseUrl.includes('youtube.com') || lowercaseUrl.includes('youtu.be')) {
+    return 'youtube';
+  }
+  if (lowercaseUrl.includes('vimeo.com')) {
+    return 'vimeo';
+  }
+  if (lowercaseUrl.match(/\.(mp4|webm|mov|avi|mkv)(\?|$)/)) {
+    return 'video';
+  }
+  
+  // Image formats
+  if (lowercaseUrl.match(/\.(jpg|jpeg|png|gif|webp|bmp|svg)(\?|$)/)) {
+    return 'image';
+  }
+  
+  // PDF
+  if (lowercaseUrl.match(/\.pdf(\?|$)/)) {
+    return 'pdf';
+  }
+  
+  return null;
+}
+
+// Build content array for multimodal messages
+function buildMultimodalContent(text: string, attachments: any[]): any[] {
+  const content: any[] = [];
+  
+  // Add text content first
+  content.push({ type: "text", text });
+  
+  // Process each attachment
+  for (const attachment of attachments) {
+    const url = attachment.url;
+    const mediaType = getMediaType(url);
+    
+    if (mediaType === 'image') {
+      // For images, add as image_url
+      content.push({
+        type: "image_url",
+        image_url: { url }
+      });
+    } else if (mediaType === 'video' || mediaType === 'youtube' || mediaType === 'vimeo') {
+      // For videos, add as video reference with metadata
+      content.push({
+        type: "text",
+        text: `\n[Vídeo anexado: "${attachment.title}" - URL: ${url}]\nPor favor, analise este vídeo e descreva seu conteúdo.`
+      });
+      // Also try to include as video_url if supported
+      content.push({
+        type: "video_url",
+        video_url: { url }
+      });
+    } else if (url) {
+      // For other types (links, files), include as text reference
+      content.push({
+        type: "text",
+        text: `\n[Anexo: "${attachment.title}" (${attachment.type}) - URL: ${url}]`
+      });
+    }
+  }
+  
+  return content;
+}
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -28,7 +97,7 @@ serve(async (req) => {
   }
 
   try {
-    const { toolId, input, messages } = await req.json();
+    const { toolId, input, messages, attachments } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 
     if (!LOVABLE_API_KEY) {
@@ -36,22 +105,43 @@ serve(async (req) => {
     }
 
     const systemPrompt = toolPrompts[toolId] || "Você é um assistente útil. Responda de forma clara e objetiva.";
+    const hasAttachments = attachments && Array.isArray(attachments) && attachments.length > 0;
 
-    let aiMessages = [
+    let aiMessages: any[] = [
       { role: "system", content: systemPrompt }
     ];
 
     if (messages && Array.isArray(messages)) {
       // For chat mode, include conversation history
+      const processedMessages = messages.map((m: any, index: number) => {
+        // For the last user message, include attachments if available
+        if (m.role === 'user' && index === messages.length - 1 && hasAttachments) {
+          return {
+            role: m.role,
+            content: buildMultimodalContent(m.content, attachments)
+          };
+        }
+        return { role: m.role, content: m.content };
+      });
+      
       aiMessages = [
         { role: "system", content: systemPrompt },
-        ...messages.map((m: any) => ({ role: m.role, content: m.content }))
+        ...processedMessages
       ];
+    } else if (hasAttachments) {
+      // Single input with attachments
+      aiMessages.push({
+        role: "user",
+        content: buildMultimodalContent(input, attachments)
+      });
     } else {
       aiMessages.push({ role: "user", content: input });
     }
 
-    console.log(`Processing tool: ${toolId}, input length: ${input?.length || 0}`);
+    console.log(`Processing tool: ${toolId}, input length: ${input?.length || 0}, attachments: ${attachments?.length || 0}`);
+
+    // Use gemini-2.5-pro for better multimodal understanding when attachments are present
+    const model = hasAttachments ? "google/gemini-2.5-pro" : "google/gemini-2.5-flash";
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -60,7 +150,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model,
         messages: aiMessages,
       }),
     });
@@ -89,7 +179,7 @@ serve(async (req) => {
     const data = await response.json();
     const result = data.choices?.[0]?.message?.content || "Sem resposta da IA.";
 
-    console.log(`Tool ${toolId} processed successfully`);
+    console.log(`Tool ${toolId} processed successfully with model ${model}`);
 
     return new Response(
       JSON.stringify({ result }),
