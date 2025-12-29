@@ -134,19 +134,21 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
     setIsLoading(true);
 
     try {
-      // Build context from attachments
-      let contextInfo = '';
-      if (connectedAttachments.length > 0) {
-        contextInfo = '\n\nAnexos conectados:\n' + connectedAttachments.map(a => 
-          `- ${a.title} (${a.type}): ${a.url}`
-        ).join('\n');
-      }
+      // Build attachments data for the AI
+      const attachmentsData = connectedAttachments.length > 0 
+        ? connectedAttachments.map(a => ({
+            title: a.title,
+            type: a.type,
+            url: a.url,
+          }))
+        : undefined;
 
       const { data: responseData, error } = await supabase.functions.invoke('process-tool-input', {
         body: { 
           toolId: 'apex-ai', 
-          input: currentInput + contextInfo, 
-          messages: [...messages, userMessage] 
+          input: currentInput, 
+          messages: [...messages, userMessage],
+          attachments: attachmentsData,
         }
       });
 
