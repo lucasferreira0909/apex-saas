@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { HeadphonesIcon, Settings, Workflow, LogOut, Wrench, LayoutGrid, Zap, House } from "lucide-react";
+import { useState, useEffect } from "react";
+import { HeadphonesIcon, Settings, Workflow, LogOut, Wrench, LayoutGrid, Zap, House, Search } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { SidebarProjectsSection } from "@/components/apex/SidebarProjectsSection";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Input } from "@/components/ui/input";
 import apexLogoFull from "@/assets/apex-logo-full.png";
 const projectItems = [{
   title: "Visão Geral",
@@ -43,10 +45,27 @@ export function ApexSidebar() {
   const location = useLocation();
   const navigate = useNavigate();
   const [popoverOpen, setPopoverOpen] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const {
     profile,
     signOut
   } = useAuth();
+
+  // Keyboard shortcut for search
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "/" && !e.ctrlKey && !e.metaKey && !e.altKey) {
+        const target = e.target as HTMLElement;
+        if (target.tagName !== "INPUT" && target.tagName !== "TEXTAREA") {
+          e.preventDefault();
+          setSearchOpen(true);
+        }
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, []);
   const handleSignOut = async () => {
     try {
       await signOut();
@@ -116,6 +135,22 @@ export function ApexSidebar() {
       </SidebarHeader>
 
       <SidebarContent>
+        {/* Search Bar */}
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <button
+              onClick={() => setSearchOpen(true)}
+              className="flex items-center gap-3 w-full px-3 py-2 rounded-lg border border-border bg-muted/30 text-muted-foreground hover:bg-muted/50 transition-colors"
+            >
+              <Search className="h-4 w-4" />
+              <span className="flex-1 text-left text-sm">Pesquisar...</span>
+              <kbd className="pointer-events-none inline-flex h-5 select-none items-center gap-1 rounded border border-border bg-muted px-1.5 font-mono text-[10px] font-medium text-muted-foreground">
+                /
+              </kbd>
+            </button>
+          </SidebarGroupContent>
+        </SidebarGroup>
+
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -169,5 +204,25 @@ export function ApexSidebar() {
         </SidebarGroup>
         </div>
       </SidebarContent>
+
+      {/* Search Dialog */}
+      <Dialog open={searchOpen} onOpenChange={setSearchOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Pesquisar</DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4">
+            <Input
+              placeholder="Digite para pesquisar..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              autoFocus
+            />
+            <div className="text-sm text-muted-foreground">
+              Pesquise por fluxos, quadros e ferramentas.
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </Sidebar>;
 }
