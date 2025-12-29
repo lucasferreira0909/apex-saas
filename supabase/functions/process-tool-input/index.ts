@@ -18,7 +18,8 @@ const toolPrompts: Record<string, string> = {
   "persona-generator": "Você é um especialista em criação de personas de marketing. Crie personas detalhadas com demografia, dores, desejos e objeções baseado no negócio fornecido.",
   "hashtag-generator": "Você é um especialista em hashtags para redes sociais. Gere hashtags relevantes e estratégicas para aumentar o alcance baseado no tema fornecido.",
   "whatsapp-generator": "Você é um especialista em mensagens de WhatsApp para vendas. Crie mensagens persuasivas e conversacionais baseado no objetivo fornecido.",
-  "apex-chat": "Você é o Apex Chat, um assistente de IA especializado em marketing digital, copywriting e automação. Ajude o usuário com suas dúvidas de forma clara e objetiva."
+  "apex-ai": "Você é o Apex AI, um assistente de IA especializado em marketing digital, copywriting, vendas e automação. Ajude o usuário com suas dúvidas de forma clara, objetiva e profissional. Forneça insights valiosos e acionáveis.",
+  "apex-chat": "Você é o Apex AI, um assistente de IA especializado em marketing digital, copywriting e automação. Ajude o usuário com suas dúvidas de forma clara e objetiva."
 };
 
 serve(async (req) => {

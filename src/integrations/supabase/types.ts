@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_flow_execution_logs: {
+        Row: {
+          created_at: string
+          funnel_id: string
+          id: string
+          input: string
+          node_id: string
+          node_type: string
+          output: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          funnel_id: string
+          id?: string
+          input: string
+          node_id: string
+          node_type: string
+          output: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          funnel_id?: string
+          id?: string
+          input?: string
+          node_id?: string
+          node_type?: string
+          output?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_flow_execution_logs_funnel_id_fkey"
+            columns: ["funnel_id"]
+            isOneToOne: false
+            referencedRelation: "funnels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       apex_conversations: {
         Row: {
           created_at: string
