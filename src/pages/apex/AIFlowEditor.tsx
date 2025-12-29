@@ -380,31 +380,66 @@ export default function AIFlowEditor() {
     setHasUnsavedChanges(true);
   }, [setNodes]);
 
+  // Helper to validate if string is a valid UUID
+  const isValidUUID = (str: string): boolean => {
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+    return uuidRegex.test(str);
+  };
+
   const handleSave = async () => {
     if (!id) return;
 
     setIsSaving(true);
     try {
-      const elementsToSave = nodes.map((node) => ({
-        id: node.id,
-        type: node.type === 'attachmentNode' 
-          ? `attachment-${(node.data as any).attachmentType}`
-          : (node.data as any).toolId || (node.data as any).label,
-        position: node.position,
-        configured: (node.data as any).configured || false,
-        stats: {
-          ...(node.data as any).config,
-          title: (node.data as any).title,
-          attachmentType: (node.data as any).attachmentType,
-          url: (node.data as any).url,
-          thumbnailUrl: (node.data as any).thumbnailUrl,
-          isVertical: (node.data as any).isVertical,
-        },
-        icon: null,
+      // Create a mapping of old IDs to new UUIDs for invalid IDs
+      const idMapping: Record<string, string> = {};
+      
+      const elementsToSave = nodes.map((node) => {
+        // Generate new UUID if current ID is not valid
+        const validId = isValidUUID(node.id) ? node.id : crypto.randomUUID();
+        if (!isValidUUID(node.id)) {
+          idMapping[node.id] = validId;
+        }
+
+        return {
+          id: validId,
+          type: node.type === 'attachmentNode' 
+            ? `attachment-${(node.data as any).attachmentType}`
+            : (node.data as any).toolId || (node.data as any).label,
+          position: node.position,
+          configured: (node.data as any).configured || false,
+          stats: {
+            ...(node.data as any).config,
+            title: (node.data as any).title,
+            attachmentType: (node.data as any).attachmentType,
+            url: (node.data as any).url,
+            thumbnailUrl: (node.data as any).thumbnailUrl,
+            isVertical: (node.data as any).isVertical,
+          },
+          icon: null,
+        };
+      });
+
+      // Update edges with new IDs if needed
+      const updatedEdges = edges.map((edge) => ({
+        ...edge,
+        source: idMapping[edge.source] || edge.source,
+        target: idMapping[edge.target] || edge.target,
       }));
 
       await saveAllElements(elementsToSave);
-      await saveAllEdges(edges);
+      await saveAllEdges(updatedEdges);
+
+      // Update local nodes with new IDs
+      if (Object.keys(idMapping).length > 0) {
+        setNodes((nds) => 
+          nds.map((node) => ({
+            ...node,
+            id: idMapping[node.id] || node.id,
+          }))
+        );
+        setEdges(updatedEdges);
+      }
 
       setHasUnsavedChanges(false);
       toast.success("Fluxo salvo com sucesso!");
