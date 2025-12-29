@@ -1,8 +1,6 @@
-import { memo, useState } from "react";
+import { memo, useEffect, useState } from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { 
   Calculator, 
@@ -18,11 +16,10 @@ import {
   ShoppingBag,
   Image,
   Box,
-  Send,
-  Loader2
+  Loader2,
+  Plug
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
 
 const iconMap: Record<string, React.ComponentType<any>> = {
   "roi-calculator": Calculator,
@@ -39,45 +36,27 @@ const iconMap: Record<string, React.ComponentType<any>> = {
   "whatsapp-generator": MessageSquare,
 };
 
-function AIFlowToolNodeComponent({ data, selected }: NodeProps) {
+function AIFlowToolNodeComponent({ data, selected, id }: NodeProps) {
   const nodeData = data as Record<string, any>;
   const label = nodeData?.label || 'Ferramenta';
   const toolId = nodeData?.toolId || '';
+  const externalOutput = nodeData?.output || '';
+  const isProcessing = nodeData?.isProcessing || false;
   
   const IconComponent = (toolId && iconMap[toolId]) || Box;
 
-  const [inputValue, setInputValue] = useState("");
-  const [output, setOutput] = useState("");
-  const [isLoading, setIsLoading] = useState(false);
+  const [output, setOutput] = useState(externalOutput);
 
-  const handleSubmit = async () => {
-    if (!inputValue.trim() || isLoading) return;
-
-    setIsLoading(true);
-    setOutput("");
-
-    try {
-      const { data, error } = await supabase.functions.invoke('process-tool-input', {
-        body: { toolId, input: inputValue }
-      });
-
-      if (error) {
-        console.error('Error processing tool input:', error);
-        setOutput("Erro ao processar. Tente novamente.");
-      } else {
-        setOutput(data?.result || "Sem resultado.");
-      }
-    } catch (err) {
-      console.error('Error:', err);
-      setOutput("Erro de conexão. Tente novamente.");
-    } finally {
-      setIsLoading(false);
+  // Update output when received from Apex AI
+  useEffect(() => {
+    if (externalOutput) {
+      setOutput(externalOutput);
     }
-  };
+  }, [externalOutput]);
 
   return (
     <Card className={cn(
-      "w-[300px] h-[300px] shadow-md transition-all flex flex-col",
+      "w-[300px] h-[250px] shadow-md transition-all flex flex-col",
       selected && "ring-2 ring-primary",
       "border-border"
     )}>
@@ -92,52 +71,34 @@ function AIFlowToolNodeComponent({ data, selected }: NodeProps) {
       {/* Output Area */}
       <CardContent className="flex-1 p-3 overflow-hidden">
         <ScrollArea className="h-full w-full">
-          {output ? (
+          {isProcessing ? (
+            <div className="h-full flex flex-col items-center justify-center gap-2">
+              <Loader2 className="h-6 w-6 animate-spin text-primary" />
+              <p className="text-xs text-muted-foreground">Processando...</p>
+            </div>
+          ) : output ? (
             <div className="text-sm text-foreground whitespace-pre-wrap">
               {output}
             </div>
           ) : (
-            <div className="h-full flex items-center justify-center">
-              <p className="text-xs text-muted-foreground text-center">
-                Digite um prompt e clique em enviar
+            <div className="h-full flex flex-col items-center justify-center gap-2 text-center">
+              <Plug className="h-8 w-8 text-muted-foreground/50" />
+              <p className="text-xs text-muted-foreground">
+                Conecte ao Apex AI para<br />receber resultados
               </p>
             </div>
           )}
         </ScrollArea>
       </CardContent>
 
-      {/* Input Area */}
-      <div className="p-3 border-t border-border flex gap-2">
-        <Input
-          placeholder="Digite seu prompt..."
-          value={inputValue}
-          onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-          className="text-xs h-8 flex-1"
-          disabled={isLoading}
-        />
-        <Button 
-          size="sm" 
-          className="h-8 px-2"
-          onClick={handleSubmit}
-          disabled={isLoading || !inputValue.trim()}
-        >
-          {isLoading ? (
-            <Loader2 className="h-3 w-3 animate-spin" />
-          ) : (
-            <Send className="h-3 w-3" />
-          )}
-        </Button>
-      </div>
-
-      {/* Input Handle */}
+      {/* Input Handle - receives from Apex AI */}
       <Handle
         type="target"
         position={Position.Left}
         className="w-3 h-3 bg-primary border-2 border-background"
       />
 
-      {/* Output Handle */}
+      {/* Output Handle - can connect to Apex AI */}
       <Handle
         type="source"
         position={Position.Right}
