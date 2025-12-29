@@ -1,11 +1,12 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FileText, Search } from "lucide-react";
+import { FileText, Search, Workflow, LayoutGrid, Sparkles, CheckSquare, Columns } from "lucide-react";
 import { useState } from "react";
 import { useFunnels } from "@/hooks/useFunnels";
 import { useBoards } from "@/hooks/useBoards";
 import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -13,6 +14,7 @@ interface RecentItem {
   id: string;
   name: string;
   type: "funnel" | "board";
+  templateType?: string | null;
   updatedAt: string;
   owner: {
     name: string;
@@ -25,6 +27,7 @@ export function RecentItemsTable() {
   const { data: funnels } = useFunnels();
   const { data: boards } = useBoards();
   const { profile } = useAuth();
+  const navigate = useNavigate();
 
   const ownerName = profile?.first_name 
     ? `${profile.first_name} ${profile.last_name || ""}`.trim()
@@ -36,6 +39,7 @@ export function RecentItemsTable() {
       id: funnel.id,
       name: funnel.name,
       type: "funnel" as const,
+      templateType: funnel.template_type,
       updatedAt: funnel.updated_at,
       owner: {
         name: ownerName,
@@ -46,6 +50,7 @@ export function RecentItemsTable() {
       id: board.id,
       name: board.name,
       type: "board" as const,
+      templateType: board.template_type,
       updatedAt: board.updated_at,
       owner: {
         name: ownerName,
@@ -59,6 +64,32 @@ export function RecentItemsTable() {
   const filteredItems = recentItems.filter((item) =>
     item.name.toLowerCase().includes(searchQuery.toLowerCase())
   );
+
+  const handleItemClick = (item: RecentItem) => {
+    if (item.type === "funnel") {
+      if (item.templateType === "ai_flow") {
+        navigate(`/ai-flow-editor/${item.id}`);
+      } else {
+        navigate(`/funnel-editor/${item.id}`);
+      }
+    } else {
+      navigate(`/tasks?board=${item.id}`);
+    }
+  };
+
+  const getItemIcon = (item: RecentItem) => {
+    if (item.type === "funnel") {
+      if (item.templateType === "ai_flow") {
+        return <Sparkles className="w-4 h-4 text-violet-400" />;
+      }
+      return <Workflow className="w-4 h-4 text-muted-foreground" />;
+    }
+    if (item.templateType === "checklist") {
+      return <CheckSquare className="w-4 h-4 text-emerald-400" />;
+    }
+    return <Columns className="w-4 h-4 text-blue-400" />;
+  };
+
 
   return (
     <Card className="bg-card border-border rounded-xl h-full">
@@ -85,14 +116,15 @@ export function RecentItemsTable() {
             </div>
           ) : (
             filteredItems.map((item, index) => (
-              <div
+              <button
                 key={item.id}
-                className={`flex items-center justify-between p-3 rounded-lg transition-colors hover:bg-muted/50 ${
+                onClick={() => handleItemClick(item)}
+                className={`flex items-center justify-between p-3 rounded-lg transition-colors hover:bg-muted/50 w-full text-left cursor-pointer ${
                   index % 2 === 0 ? "bg-transparent" : "bg-muted/20"
                 }`}
               >
                 <div className="flex items-center gap-3">
-                  <FileText className="w-4 h-4 text-muted-foreground" />
+                  {getItemIcon(item)}
                   <span className="font-medium text-foreground">{item.name}</span>
                 </div>
                 <div className="flex items-center gap-4">
@@ -106,7 +138,7 @@ export function RecentItemsTable() {
                     {format(new Date(item.updatedAt), "dd MMM yyyy", { locale: ptBR })}
                   </span>
                 </div>
-              </div>
+              </button>
             ))
           )}
         </div>

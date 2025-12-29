@@ -48,10 +48,6 @@ const chartConfig = {
     label: "Consumo",
     color: "hsl(var(--primary))",
   },
-  projected: {
-    label: "Projetado",
-    color: "hsl(var(--muted-foreground))",
-  },
 };
 
 type PeriodOption = "7" | "30" | "90";
@@ -64,7 +60,7 @@ export function CreditsChart() {
   }, [period]);
 
   const maxValue = useMemo(() => {
-    const max = Math.max(...chartData.map(d => Math.max(d.consumption, d.projected)));
+    const max = Math.max(...chartData.map(d => d.consumption));
     return Math.ceil(max / 50) * 50 + 50;
   }, [chartData]);
 
@@ -119,14 +115,6 @@ export function CreditsChart() {
               stroke="hsl(var(--foreground))"
               strokeWidth={2}
               fill="url(#consumptionGradient)"
-            />
-            <Line
-              type="monotone"
-              dataKey="projected"
-              stroke="hsl(var(--muted-foreground))"
-              strokeWidth={2}
-              strokeDasharray="5 5"
-              dot={false}
             />
           </ComposedChart>
         </ChartContainer>
