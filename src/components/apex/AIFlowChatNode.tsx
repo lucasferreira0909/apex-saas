@@ -1,4 +1,4 @@
-import { memo, useState } from "react";
+import { memo, useState, useMemo, useCallback } from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { MessageSquare, Send, Loader2, MoreVertical, Trash2, Copy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { useAIFlowContext } from "@/contexts/AIFlowContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,14 +33,20 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
   const [pendingToolSelection, setPendingToolSelection] = useState<ConnectedTool[] | null>(null);
   const [pendingInput, setPendingInput] = useState<string>("");
 
-  const addLog = (data as any)?.addLog;
-  const connectedTools: ConnectedTool[] = (data as any)?.connectedTools || [];
-  const connectedAttachments: any[] = (data as any)?.connectedAttachments || [];
-  const onSendToTool = (data as any)?.onSendToTool;
-  const onDelete = (data as any)?.onDelete;
-  const onDuplicate = (data as any)?.onDuplicate;
+  const { 
+    handleDeleteNode, 
+    handleDuplicateNode, 
+    handleSendToTool, 
+    getConnectedTools, 
+    getConnectedAttachments,
+    addLog 
+  } = useAIFlowContext();
 
-  const processWithTool = async (tool: ConnectedTool, input: string) => {
+  // Get connected data using useMemo to avoid recalculation
+  const connectedTools = useMemo(() => getConnectedTools(id), [getConnectedTools, id]);
+  const connectedAttachments = useMemo(() => getConnectedAttachments(id), [getConnectedAttachments, id]);
+
+  const processWithTool = useCallback(async (tool: ConnectedTool, input: string) => {
     setIsLoading(true);
     
     try {
@@ -54,12 +61,8 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
         const result = responseData?.result || 'Sem resposta.';
         setMessages(prev => [...prev, { role: 'assistant', content: `Resultado enviado para ${tool.label}!` }]);
         
-        // Send result to the tool node
-        if (onSendToTool) {
-          onSendToTool(tool.nodeId, result);
-        }
+        handleSendToTool(tool.nodeId, result);
         
-        // Log the execution
         if (addLog) {
           addLog({
             node_id: tool.nodeId,
@@ -77,9 +80,9 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
       setPendingToolSelection(null);
       setPendingInput("");
     }
-  };
+  }, [handleSendToTool, addLog]);
 
-  const handleToolSelection = (toolLabel: string) => {
+  const handleToolSelection = useCallback((toolLabel: string) => {
     if (!pendingToolSelection || !pendingInput) return;
     
     const selectedTool = pendingToolSelection.find(t => 
@@ -95,9 +98,9 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
         content: `Não encontrei essa ferramenta. Por favor, escolha entre: ${pendingToolSelection.map(t => t.label).join(', ')}`
       }]);
     }
-  };
+  }, [pendingToolSelection, pendingInput, processWithTool]);
 
-  const handleSendMessage = async () => {
+  const handleSendMessage = useCallback(async () => {
     if (!inputValue.trim() || isLoading) return;
 
     const userMessage: Message = { role: 'user', content: inputValue };
@@ -111,20 +114,22 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
       return;
     }
 
+    // Get fresh connected data
+    const currentConnectedTools = getConnectedTools(id);
+    const currentConnectedAttachments = getConnectedAttachments(id);
+
     // If connected to tools, route to them
-    if (connectedTools.length > 0) {
-      if (connectedTools.length === 1) {
-        // Single tool connected - use it directly
-        processWithTool(connectedTools[0], currentInput);
+    if (currentConnectedTools.length > 0) {
+      if (currentConnectedTools.length === 1) {
+        processWithTool(currentConnectedTools[0], currentInput);
         return;
       } else {
-        // Multiple tools connected - ask which one to use
-        const toolList = connectedTools.map(t => t.label).join(', ');
+        const toolList = currentConnectedTools.map(t => t.label).join(', ');
         setMessages(prev => [...prev, { 
           role: 'assistant', 
-          content: `Você tem ${connectedTools.length} ferramentas conectadas: ${toolList}. Qual delas deseja usar para processar esta solicitação?`
+          content: `Você tem ${currentConnectedTools.length} ferramentas conectadas: ${toolList}. Qual delas deseja usar para processar esta solicitação?`
         }]);
-        setPendingToolSelection(connectedTools);
+        setPendingToolSelection(currentConnectedTools);
         setPendingInput(currentInput);
         return;
       }
@@ -134,9 +139,8 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
     setIsLoading(true);
 
     try {
-      // Build attachments data for the AI
-      const attachmentsData = connectedAttachments.length > 0 
-        ? connectedAttachments.map(a => ({
+      const attachmentsData = currentConnectedAttachments.length > 0 
+        ? currentConnectedAttachments.map(a => ({
             title: a.title,
             type: a.type,
             url: a.url,
@@ -159,7 +163,6 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
         const result = responseData?.result || 'Sem resposta.';
         setMessages(prev => [...prev, { role: 'assistant', content: result }]);
         
-        // Log the execution
         if (addLog) {
           addLog({
             node_id: id,
@@ -175,7 +178,21 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [inputValue, isLoading, pendingToolSelection, handleToolSelection, id, getConnectedTools, getConnectedAttachments, processWithTool, messages, addLog]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleSendMessage();
+    }
+  }, [handleSendMessage]);
+
+  const handleDelete = useCallback(() => {
+    handleDeleteNode(id);
+  }, [handleDeleteNode, id]);
+
+  const handleDuplicate = useCallback(() => {
+    handleDuplicateNode(id);
+  }, [handleDuplicateNode, id]);
 
   return (
     <Card className={cn(
@@ -192,11 +209,11 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="bg-popover border-border z-50">
-            <DropdownMenuItem onClick={() => onDuplicate?.(id)}>
+            <DropdownMenuItem onClick={handleDuplicate}>
               <Copy className="h-4 w-4 mr-2" />
               Duplicar
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onDelete?.(id)} className="text-destructive focus:text-destructive">
+            <DropdownMenuItem onClick={handleDelete} className="text-destructive focus:text-destructive">
               <Trash2 className="h-4 w-4 mr-2" />
               Excluir
             </DropdownMenuItem>
@@ -261,7 +278,7 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
           placeholder={pendingToolSelection ? "Digite o nome da ferramenta..." : "Digite sua mensagem..."}
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+          onKeyDown={handleKeyDown}
           className="text-xs h-8 flex-1"
           disabled={isLoading}
         />

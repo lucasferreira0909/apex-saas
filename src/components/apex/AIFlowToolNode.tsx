@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useEffect, useState, useCallback } from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import { Card, CardContent } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -23,6 +23,7 @@ import {
   Copy
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAIFlowContext } from "@/contexts/AIFlowContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -52,8 +53,8 @@ function AIFlowToolNodeComponent({ data, selected, id }: NodeProps) {
   const toolId = nodeData?.toolId || '';
   const externalOutput = nodeData?.output || '';
   const isProcessing = nodeData?.isProcessing || false;
-  const onDelete = nodeData?.onDelete;
-  const onDuplicate = nodeData?.onDuplicate;
+  
+  const { handleDeleteNode, handleDuplicateNode } = useAIFlowContext();
   
   const IconComponent = (toolId && iconMap[toolId]) || Box;
 
@@ -65,6 +66,14 @@ function AIFlowToolNodeComponent({ data, selected, id }: NodeProps) {
       setOutput(externalOutput);
     }
   }, [externalOutput]);
+
+  const handleDelete = useCallback(() => {
+    handleDeleteNode(id);
+  }, [handleDeleteNode, id]);
+
+  const handleDuplicate = useCallback(() => {
+    handleDuplicateNode(id);
+  }, [handleDuplicateNode, id]);
 
   return (
     <Card className={cn(
@@ -81,11 +90,11 @@ function AIFlowToolNodeComponent({ data, selected, id }: NodeProps) {
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="bg-popover border-border z-50">
-            <DropdownMenuItem onClick={() => onDuplicate?.(id)}>
+            <DropdownMenuItem onClick={handleDuplicate}>
               <Copy className="h-4 w-4 mr-2" />
               Duplicar
             </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => onDelete?.(id)} className="text-destructive focus:text-destructive">
+            <DropdownMenuItem onClick={handleDelete} className="text-destructive focus:text-destructive">
               <Trash2 className="h-4 w-4 mr-2" />
               Excluir
             </DropdownMenuItem>

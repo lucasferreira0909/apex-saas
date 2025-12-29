@@ -1,8 +1,9 @@
-import { memo, useState } from "react";
+import { memo, useState, useCallback } from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import { Card } from "@/components/ui/card";
-import { Video, FileText, Image, Play, MoreVertical, Trash2, Copy, Pencil } from "lucide-react";
+import { Video, FileText, Image, MoreVertical, Trash2, Copy, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAIFlowContext } from "@/contexts/AIFlowContext";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -25,9 +26,8 @@ function AIFlowAttachmentNodeComponent({ data, selected, id }: NodeProps) {
   const title = nodeData?.title || 'Anexo';
   const thumbnailUrl = nodeData?.thumbnailUrl;
   const isVertical = nodeData?.isVertical || false;
-  const onDelete = nodeData?.onDelete;
-  const onDuplicate = nodeData?.onDuplicate;
-  const onRename = nodeData?.onRename;
+
+  const { handleDeleteNode, handleDuplicateNode, handleRenameNode } = useAIFlowContext();
 
   const [showRenameDialog, setShowRenameDialog] = useState(false);
   const [newTitle, setNewTitle] = useState(title);
@@ -50,12 +50,26 @@ function AIFlowAttachmentNodeComponent({ data, selected, id }: NodeProps) {
   const cardHeight = isVertical ? 320 : 200;
   const thumbnailHeight = isVertical ? 240 : 140;
 
-  const handleRename = () => {
-    if (onRename && newTitle.trim()) {
-      onRename(id, newTitle.trim());
+  const handleRename = useCallback(() => {
+    if (newTitle.trim()) {
+      handleRenameNode(id, newTitle.trim());
       setShowRenameDialog(false);
     }
-  };
+  }, [handleRenameNode, id, newTitle]);
+
+  const handleDelete = useCallback(() => {
+    handleDeleteNode(id);
+  }, [handleDeleteNode, id]);
+
+  const handleDuplicate = useCallback(() => {
+    handleDuplicateNode(id);
+  }, [handleDuplicateNode, id]);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      handleRename();
+    }
+  }, [handleRename]);
 
   return (
     <>
@@ -80,24 +94,24 @@ function AIFlowAttachmentNodeComponent({ data, selected, id }: NodeProps) {
                 <Pencil className="h-4 w-4 mr-2" />
                 Renomear
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onDuplicate?.(id)}>
+              <DropdownMenuItem onClick={handleDuplicate}>
                 <Copy className="h-4 w-4 mr-2" />
                 Duplicar
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onDelete?.(id)} className="text-destructive focus:text-destructive">
+              <DropdownMenuItem onClick={handleDelete} className="text-destructive focus:text-destructive">
                 <Trash2 className="h-4 w-4 mr-2" />
                 Excluir
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-      {/* Thumbnail Area */}
-      <div 
-        className="relative bg-muted flex items-center justify-center overflow-hidden"
-        style={{ height: thumbnailHeight }}
-      >
-        {thumbnailUrl ? (
-          <>
+
+        {/* Thumbnail Area */}
+        <div 
+          className="relative bg-muted flex items-center justify-center overflow-hidden"
+          style={{ height: thumbnailHeight }}
+        >
+          {thumbnailUrl ? (
             <img 
               src={thumbnailUrl} 
               alt={title}
@@ -106,26 +120,25 @@ function AIFlowAttachmentNodeComponent({ data, selected, id }: NodeProps) {
                 (e.target as HTMLImageElement).style.display = 'none';
               }}
             />
-          </>
-        ) : (
-          <div className="flex flex-col items-center gap-2 text-muted-foreground">
-            <IconComponent className="h-10 w-10" />
-            {attachmentType === 'video' && (
-              <span className="text-xs">Vídeo</span>
-            )}
-          </div>
-        )}
-      </div>
-
-      {/* Footer */}
-      <div className="p-2 border-t border-border bg-card">
-        <div className="flex items-center gap-2">
-          <div className="p-1.5 rounded bg-primary/10">
-            <IconComponent className="h-3 w-3 text-primary" />
-          </div>
-          <p className="text-xs font-medium truncate flex-1">{title}</p>
+          ) : (
+            <div className="flex flex-col items-center gap-2 text-muted-foreground">
+              <IconComponent className="h-10 w-10" />
+              {attachmentType === 'video' && (
+                <span className="text-xs">Vídeo</span>
+              )}
+            </div>
+          )}
         </div>
-      </div>
+
+        {/* Footer */}
+        <div className="p-2 border-t border-border bg-card">
+          <div className="flex items-center gap-2">
+            <div className="p-1.5 rounded bg-primary/10">
+              <IconComponent className="h-3 w-3 text-primary" />
+            </div>
+            <p className="text-xs font-medium truncate flex-1">{title}</p>
+          </div>
+        </div>
 
         {/* Output Handle Only - attachments can only connect TO Apex AI */}
         <Handle
@@ -145,7 +158,7 @@ function AIFlowAttachmentNodeComponent({ data, selected, id }: NodeProps) {
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
             placeholder="Nome do anexo"
-            onKeyDown={(e) => e.key === 'Enter' && handleRename()}
+            onKeyDown={handleKeyDown}
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => setShowRenameDialog(false)}>
