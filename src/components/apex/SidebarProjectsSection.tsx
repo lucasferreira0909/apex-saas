@@ -261,7 +261,12 @@ export function SidebarProjectsSection() {
 
   const handleItemClick = (item: SidebarFolderItem) => {
     if (item.item_type === 'funnel') {
-      navigate(`/funnel-editor/${item.item_id}`);
+      // Check if it's an AI flow based on template_type
+      if (item.template_type === 'ai_flow') {
+        navigate(`/ai-flow-editor/${item.item_id}`);
+      } else {
+        navigate(`/funnel-editor/${item.item_id}`);
+      }
     } else {
       navigate(`/tasks?board=${item.item_id}`);
     }
