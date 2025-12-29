@@ -66,7 +66,7 @@ export function AIFlowAttachmentSheet({ open, onOpenChange, onAddAttachment }: A
       
       if (videoInfo) {
         onAddAttachment({
-          id: `attachment-${Date.now()}`,
+          id: crypto.randomUUID(),
           type: 'video',
           title: videoInfo.title,
           url: linkUrl,
@@ -77,7 +77,7 @@ export function AIFlowAttachmentSheet({ open, onOpenChange, onAddAttachment }: A
       } else {
         // Treat as generic link/file
         onAddAttachment({
-          id: `attachment-${Date.now()}`,
+          id: crypto.randomUUID(),
           type: 'file',
           title: 'Link externo',
           url: linkUrl,
@@ -107,7 +107,7 @@ export function AIFlowAttachmentSheet({ open, onOpenChange, onAddAttachment }: A
       const dataUrl = e.target?.result as string;
       
       onAddAttachment({
-        id: `attachment-${Date.now()}`,
+        id: crypto.randomUUID(),
         type: isImage ? 'image' : isVideo ? 'video' : 'file',
         title: file.name,
         url: dataUrl,

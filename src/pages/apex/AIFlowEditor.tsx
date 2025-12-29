@@ -338,7 +338,7 @@ export default function AIFlowEditor() {
       const isChat = tool.type === 'chat' || tool.id === 'apex-ai' || tool.id === 'apex-chat';
 
       const newNode: Node = {
-        id: `${tool.id}-${Date.now()}`,
+        id: crypto.randomUUID(),
         type: isChat ? 'aiChatNode' : 'aiToolNode',
         position,
         data: {
