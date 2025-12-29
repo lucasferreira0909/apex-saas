@@ -70,6 +70,10 @@ export default function Funnels() {
 
   const getTypeBadge = (templateType: string | null) => {
     switch (templateType) {
+      case 'ai_flow':
+        return <Badge variant="secondary" className="bg-primary/10 text-primary capitalize">Fluxo de IA</Badge>;
+      case 'funnel':
+        return <Badge variant="secondary" className="capitalize">Funil</Badge>;
       case 'ltv':
         return <Badge variant="secondary" className="capitalize">LTV</Badge>;
       case 'vendas':
@@ -128,8 +132,12 @@ export default function Funnels() {
     setDeleteDialogOpen(false);
   };
 
-  const handleEditClick = (projectId: string) => {
-    navigate(`/funnel-editor/${projectId}`);
+  const handleEditClick = (projectId: string, templateType: string | null) => {
+    if (templateType === 'ai_flow') {
+      navigate(`/ai-flow-editor/${projectId}`);
+    } else {
+      navigate(`/funnel-editor/${projectId}`);
+    }
   };
 
   // Rename handlers
@@ -259,7 +267,7 @@ export default function Funnels() {
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={(e) => {
                 e.stopPropagation();
-                handleEditClick(row.original.id);
+                handleEditClick(row.original.id, row.original.template_type);
               }}>
                 <Edit className="mr-2 h-4 w-4" />
                 Editar
@@ -319,12 +327,12 @@ export default function Funnels() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-foreground">Funis de Vendas</h1>
-          <p className="text-muted-foreground">Crie e gerencie seus funis de conversão</p>
+          <h1 className="text-3xl font-bold text-foreground">Fluxos</h1>
+          <p className="text-muted-foreground">Crie e gerencie seus fluxos de IA e funis de vendas</p>
         </div>
         <Button onClick={() => setShowCreateDialog(true)}>
           <Plus className="h-4 w-4 mr-2" />
-          Criar Funil
+          Criar Fluxo
         </Button>
       </div>
 
@@ -333,8 +341,8 @@ export default function Funnels() {
         <div className="relative flex-1 max-w-md">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input 
-            placeholder="Buscar funis..." 
-            className="pl-10 bg-input border-border" 
+            placeholder="Buscar fluxos..." 
+            className="pl-10 bg-input border-border"
             value={searchTerm} 
             onChange={e => {
               setSearchTerm(e.target.value);
@@ -386,19 +394,19 @@ export default function Funnels() {
         </div>
       )}
 
-      {/* Funnels List with DataGrid */}
+      {/* Flows List with DataGrid */}
       <Card className="bg-card border-border">
         <CardHeader>
-          <CardTitle className="text-card-foreground">Meus Funis</CardTitle>
-          <CardDescription>Todos os seus funis organizados</CardDescription>
+          <CardTitle className="text-card-foreground">Meus Fluxos</CardTitle>
+          <CardDescription>Todos os seus fluxos organizados</CardDescription>
         </CardHeader>
         <CardContent className="p-0">
           {filteredProjects.length === 0 ? (
             <div className="text-center py-12 px-6">
               <Folder className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium text-card-foreground mb-2">Nenhum funil encontrado</h3>
+              <h3 className="text-lg font-medium text-card-foreground mb-2">Nenhum fluxo encontrado</h3>
               <p className="text-muted-foreground">
-                {hasActiveFilters ? "Tente ajustar os filtros ou criar um novo funil" : "Crie seu primeiro funil para começar"}
+                {hasActiveFilters ? "Tente ajustar os filtros ou criar um novo fluxo" : "Crie seu primeiro fluxo para começar"}
               </p>
             </div>
           ) : (
