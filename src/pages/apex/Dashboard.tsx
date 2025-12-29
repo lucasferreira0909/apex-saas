@@ -1,4 +1,4 @@
-import { Workflow, LayoutGrid, Coins, Clock, Download, Plus } from "lucide-react";
+import { Workflow, LayoutGrid, Coins, Download, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DashboardMetricCard } from "@/components/dashboard/DashboardMetricCard";
 import { CreditsChart } from "@/components/dashboard/CreditsChart";
@@ -27,10 +27,6 @@ export default function Dashboard() {
   const activeBoards = boards?.length || 0;
   const availableCredits = 1000; // Default credits - can be fetched from profile if needed
 
-  // Calculate items expiring soon (items updated more than 30 days ago)
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const expiringSoon = [...(funnels || []).filter(f => new Date(f.updated_at) < thirtyDaysAgo), ...(boards || []).filter(b => new Date(b.updated_at) < thirtyDaysAgo)].length;
   const handleExport = () => {
     toast({
       title: "Exportando dados",
@@ -61,11 +57,10 @@ export default function Dashboard() {
       </div>
 
       {/* Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <DashboardMetricCard title="Funis Ativos" value={`${activeFunnels}/${totalFunnels}`} icon={Workflow} />
         <DashboardMetricCard title="Quadros Ativos" value={activeBoards} icon={LayoutGrid} verified={activeBoards > 0} />
         <DashboardMetricCard title="Créditos Disponíveis" value={availableCredits.toLocaleString()} icon={Coins} />
-        <DashboardMetricCard title="Expirando em Breve" value={expiringSoon} icon={Clock} />
       </div>
 
       {/* Chart and Table */}
