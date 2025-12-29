@@ -31,6 +31,8 @@ function AIFlowAttachmentNodeComponent({ data, selected, id }: NodeProps) {
 
   const [showRenameDialog, setShowRenameDialog] = useState(false);
   const [newTitle, setNewTitle] = useState(title);
+  const [imageLoaded, setImageLoaded] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
   const getIcon = () => {
     switch (attachmentType) {
@@ -96,17 +98,29 @@ function AIFlowAttachmentNodeComponent({ data, selected, id }: NodeProps) {
         className="relative bg-muted flex items-center justify-center overflow-hidden"
         style={{ height: thumbnailHeight }}
       >
-        {thumbnailUrl ? (
+        {thumbnailUrl && !imageError ? (
           <>
             <img 
               src={thumbnailUrl} 
               alt={title}
-              className="w-full h-full object-cover"
-              onError={(e) => {
-                (e.target as HTMLImageElement).style.display = 'none';
+              className={cn(
+                "w-full h-full object-cover transition-opacity duration-200",
+                imageLoaded ? "opacity-100" : "opacity-0"
+              )}
+              onLoad={() => setImageLoaded(true)}
+              onError={() => {
+                setImageError(true);
+                setImageLoaded(false);
               }}
             />
-            {attachmentType === 'video' && (
+            {/* Show loading placeholder while image loads */}
+            {!imageLoaded && (
+              <div className="absolute inset-0 flex items-center justify-center">
+                <IconComponent className="h-10 w-10 text-muted-foreground animate-pulse" />
+              </div>
+            )}
+            {/* Play button - only show after image loads */}
+            {attachmentType === 'video' && imageLoaded && (
               <div className="absolute inset-0 flex items-center justify-center bg-black/30">
                 <div className="p-3 rounded-full bg-white/90">
                   <Play className="h-6 w-6 text-foreground fill-foreground" />
