@@ -57,6 +57,54 @@ export default function AIFlowEditor() {
   const { edges: edgesData, loading: isLoadingEdges, saveAllEdges } = useFunnelEdges(id || '');
   const { logs, isLoading: isLoadingHistory, addLog, clearHistory, isClearing } = useAIFlowHistory(id || '');
 
+  // Delete a node
+  const handleDeleteNode = useCallback((nodeId: string) => {
+    setNodes((nds) => nds.filter((node) => node.id !== nodeId));
+    setEdges((eds) => eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId));
+    setHasUnsavedChanges(true);
+  }, [setNodes, setEdges]);
+
+  // Duplicate a node
+  const handleDuplicateNode = useCallback((nodeId: string) => {
+    setNodes((nds) => {
+      const nodeToClone = nds.find((node) => node.id === nodeId);
+      if (!nodeToClone) return nds;
+
+      const newNode: Node = {
+        ...nodeToClone,
+        id: `${nodeToClone.id}-copy-${Date.now()}`,
+        position: {
+          x: nodeToClone.position.x + 50,
+          y: nodeToClone.position.y + 50,
+        },
+        data: { ...nodeToClone.data },
+        selected: false,
+      };
+
+      return [...nds, newNode];
+    });
+    setHasUnsavedChanges(true);
+  }, [setNodes]);
+
+  // Rename an attachment node
+  const handleRenameNode = useCallback((nodeId: string, newTitle: string) => {
+    setNodes((nds) => 
+      nds.map((node) => {
+        if (node.id === nodeId) {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              title: newTitle,
+            },
+          };
+        }
+        return node;
+      })
+    );
+    setHasUnsavedChanges(true);
+  }, [setNodes]);
+
   // Function to send output to a tool node
   const handleSendToTool = useCallback((targetNodeId: string, output: string) => {
     setNodes((nds) => 
@@ -132,25 +180,48 @@ export default function AIFlowEditor() {
     return attachments;
   }, [edges, nodes]);
 
-  // Update nodes with connected data
+  // Update nodes with connected data and callbacks
   useEffect(() => {
     setNodes((nds) => 
       nds.map((node) => {
+        const baseCallbacks = {
+          onDelete: handleDeleteNode,
+          onDuplicate: handleDuplicateNode,
+        };
+
         if (node.type === 'aiChatNode') {
           return {
             ...node,
             data: {
               ...node.data,
+              ...baseCallbacks,
               connectedTools: getConnectedTools(node.id),
               connectedAttachments: getConnectedAttachments(node.id),
               onSendToTool: handleSendToTool,
             },
           };
         }
-        return node;
+        if (node.type === 'attachmentNode') {
+          return {
+            ...node,
+            data: {
+              ...node.data,
+              ...baseCallbacks,
+              onRename: handleRenameNode,
+            },
+          };
+        }
+        // aiToolNode
+        return {
+          ...node,
+          data: {
+            ...node.data,
+            ...baseCallbacks,
+          },
+        };
       })
     );
-  }, [edges, getConnectedTools, getConnectedAttachments, handleSendToTool, setNodes]);
+  }, [edges, getConnectedTools, getConnectedAttachments, handleSendToTool, handleDeleteNode, handleDuplicateNode, handleRenameNode, setNodes]);
 
   // Load initial data
   useEffect(() => {
