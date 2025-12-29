@@ -1,5 +1,11 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   ChartContainer,
   ChartTooltip,
@@ -11,21 +17,31 @@ import {
   CartesianGrid,
   XAxis,
   YAxis,
-  ResponsiveContainer,
   Line,
   ComposedChart,
 } from "recharts";
-import { Calendar } from "lucide-react";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
-const chartData = [
-  { month: "Jan", consumption: 120, projected: 100 },
-  { month: "Fev", consumption: 180, projected: 150 },
-  { month: "Mar", consumption: 150, projected: 180 },
-  { month: "Abr", consumption: 280, projected: 220 },
-  { month: "Mai", consumption: 220, projected: 260 },
-  { month: "Jun", consumption: 340, projected: 300 },
-];
+const generateChartData = (days: number) => {
+  const data = [];
+  const now = new Date();
+  
+  for (let i = days - 1; i >= 0; i--) {
+    const date = new Date(now);
+    date.setDate(date.getDate() - i);
+    
+    const baseConsumption = Math.floor(Math.random() * 30) + 10;
+    const projected = Math.floor(baseConsumption * 0.9 + Math.random() * 10);
+    
+    data.push({
+      date: date.toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' }),
+      consumption: baseConsumption,
+      projected: projected,
+    });
+  }
+  
+  return data;
+};
 
 const chartConfig = {
   consumption: {
@@ -38,8 +54,19 @@ const chartConfig = {
   },
 };
 
+type PeriodOption = "7" | "30" | "90";
+
 export function CreditsChart() {
-  const [dateRange, setDateRange] = useState("Jan - Jun");
+  const [period, setPeriod] = useState<PeriodOption>("30");
+
+  const chartData = useMemo(() => {
+    return generateChartData(parseInt(period));
+  }, [period]);
+
+  const maxValue = useMemo(() => {
+    const max = Math.max(...chartData.map(d => Math.max(d.consumption, d.projected)));
+    return Math.ceil(max / 50) * 50 + 50;
+  }, [chartData]);
 
   return (
     <Card className="bg-card border-border rounded-xl">
@@ -47,10 +74,16 @@ export function CreditsChart() {
         <CardTitle className="text-lg font-semibold text-foreground">
           Consumo de Créditos ao Longo do Tempo
         </CardTitle>
-        <Button variant="outline" size="sm" className="gap-2">
-          <Calendar className="w-4 h-4" />
-          {dateRange}
-        </Button>
+        <Select value={period} onValueChange={(value: PeriodOption) => setPeriod(value)}>
+          <SelectTrigger className="w-[140px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="7">Últimos 7 dias</SelectItem>
+            <SelectItem value="30">Últimos 30 dias</SelectItem>
+            <SelectItem value="90">Últimos 90 dias</SelectItem>
+          </SelectContent>
+        </Select>
       </CardHeader>
       <CardContent className="pt-4">
         <ChartContainer config={chartConfig} className="h-[280px] w-full">
@@ -67,17 +100,17 @@ export function CreditsChart() {
               vertical={false}
             />
             <XAxis
-              dataKey="month"
+              dataKey="date"
               axisLine={false}
               tickLine={false}
               tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
+              interval={period === "7" ? 0 : period === "30" ? 4 : 14}
             />
             <YAxis
               axisLine={false}
               tickLine={false}
               tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }}
-              domain={[0, 400]}
-              ticks={[0, 100, 200, 300, 400]}
+              domain={[0, maxValue]}
             />
             <ChartTooltip content={<ChartTooltipContent />} />
             <Area
