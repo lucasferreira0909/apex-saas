@@ -64,7 +64,7 @@ export function RecentItemsTable() {
     <Card className="bg-card border-border rounded-xl h-full">
       <CardHeader className="flex flex-row items-center justify-between pb-4">
         <CardTitle className="text-lg font-semibold text-foreground">
-          Funis/Quadros Recentes
+          Projetos Recentes
         </CardTitle>
         <div className="relative w-48">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
