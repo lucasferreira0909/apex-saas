@@ -277,6 +277,36 @@ export type Database = {
           },
         ]
       }
+      credit_transactions: {
+        Row: {
+          amount: number
+          created_at: string
+          description: string
+          id: string
+          tool_name: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          description: string
+          id?: string
+          tool_name?: string | null
+          transaction_type: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          description?: string
+          id?: string
+          tool_name?: string | null
+          transaction_type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       funnel_edges: {
         Row: {
           created_at: string
@@ -450,6 +480,9 @@ export type Database = {
           id: string
           last_name: string | null
           phone: string | null
+          plan_expires_at: string | null
+          plan_started_at: string | null
+          plan_type: string
           updated_at: string
           user_id: string
         }
@@ -462,6 +495,9 @@ export type Database = {
           id?: string
           last_name?: string | null
           phone?: string | null
+          plan_expires_at?: string | null
+          plan_started_at?: string | null
+          plan_type?: string
           updated_at?: string
           user_id: string
         }
@@ -474,6 +510,9 @@ export type Database = {
           id?: string
           last_name?: string | null
           phone?: string | null
+          plan_expires_at?: string | null
+          plan_started_at?: string | null
+          plan_type?: string
           updated_at?: string
           user_id?: string
         }
