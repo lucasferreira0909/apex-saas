@@ -4,72 +4,42 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { 
-  Calculator, 
-  FileText, 
-  Type, 
-  Mail, 
-  Video, 
-  Tag, 
-  MessageSquareQuote, 
-  Users, 
-  Hash, 
-  MessageSquare,
-  ShoppingBag,
-  Image,
-  Box,
-  Send,
-  Loader2
-} from "lucide-react";
+import { MessageSquare, Send, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
-const iconMap: Record<string, React.ComponentType<any>> = {
-  "roi-calculator": Calculator,
-  "product-calculator": ShoppingBag,
-  "copy-generator": FileText,
-  "headline-generator": Type,
-  "email-generator": Mail,
-  "script-generator": Video,
-  "image-generator": Image,
-  "offer-generator": Tag,
-  "testimonial-generator": MessageSquareQuote,
-  "persona-generator": Users,
-  "hashtag-generator": Hash,
-  "whatsapp-generator": MessageSquare,
-};
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
 
-function AIFlowToolNodeComponent({ data, selected }: NodeProps) {
-  const nodeData = data as Record<string, any>;
-  const label = nodeData?.label || 'Ferramenta';
-  const toolId = nodeData?.toolId || '';
-  
-  const IconComponent = (toolId && iconMap[toolId]) || Box;
-
+function AIFlowChatNodeComponent({ data, selected }: NodeProps) {
+  const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
-  const [output, setOutput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleSubmit = async () => {
+  const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
 
+    const userMessage: Message = { role: 'user', content: inputValue };
+    setMessages(prev => [...prev, userMessage]);
+    setInputValue("");
     setIsLoading(true);
-    setOutput("");
 
     try {
       const { data, error } = await supabase.functions.invoke('process-tool-input', {
-        body: { toolId, input: inputValue }
+        body: { toolId: 'apex-chat', input: inputValue, messages: [...messages, userMessage] }
       });
 
       if (error) {
-        console.error('Error processing tool input:', error);
-        setOutput("Erro ao processar. Tente novamente.");
+        console.error('Error:', error);
+        setMessages(prev => [...prev, { role: 'assistant', content: 'Erro ao processar. Tente novamente.' }]);
       } else {
-        setOutput(data?.result || "Sem resultado.");
+        setMessages(prev => [...prev, { role: 'assistant', content: data?.result || 'Sem resposta.' }]);
       }
     } catch (err) {
       console.error('Error:', err);
-      setOutput("Erro de conexão. Tente novamente.");
+      setMessages(prev => [...prev, { role: 'assistant', content: 'Erro de conexão.' }]);
     } finally {
       setIsLoading(false);
     }
@@ -77,30 +47,48 @@ function AIFlowToolNodeComponent({ data, selected }: NodeProps) {
 
   return (
     <Card className={cn(
-      "w-[300px] h-[300px] shadow-md transition-all flex flex-col",
+      "w-[350px] h-[350px] shadow-md transition-all flex flex-col",
       selected && "ring-2 ring-primary",
       "border-border"
     )}>
       {/* Header */}
       <div className="p-3 border-b border-border flex items-center gap-2">
         <div className="p-2 rounded-lg bg-primary/10">
-          <IconComponent className="h-4 w-4 text-primary" />
+          <MessageSquare className="h-4 w-4 text-primary" />
         </div>
-        <p className="text-sm font-medium truncate flex-1">{label}</p>
+        <p className="text-sm font-medium">Apex Chat</p>
       </div>
 
-      {/* Output Area */}
+      {/* Messages Area */}
       <CardContent className="flex-1 p-3 overflow-hidden">
         <ScrollArea className="h-full w-full">
-          {output ? (
-            <div className="text-sm text-foreground whitespace-pre-wrap">
-              {output}
-            </div>
-          ) : (
+          {messages.length === 0 ? (
             <div className="h-full flex items-center justify-center">
               <p className="text-xs text-muted-foreground text-center">
-                Digite um prompt e clique em enviar
+                Inicie uma conversa com a IA
               </p>
+            </div>
+          ) : (
+            <div className="space-y-2 pr-2">
+              {messages.map((msg, index) => (
+                <div
+                  key={index}
+                  className={cn(
+                    "text-xs p-2 rounded-lg max-w-[85%]",
+                    msg.role === 'user' 
+                      ? "bg-primary text-primary-foreground ml-auto" 
+                      : "bg-muted text-foreground"
+                  )}
+                >
+                  {msg.content}
+                </div>
+              ))}
+              {isLoading && (
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                  <Loader2 className="h-3 w-3 animate-spin" />
+                  Digitando...
+                </div>
+              )}
             </div>
           )}
         </ScrollArea>
@@ -109,17 +97,17 @@ function AIFlowToolNodeComponent({ data, selected }: NodeProps) {
       {/* Input Area */}
       <div className="p-3 border-t border-border flex gap-2">
         <Input
-          placeholder="Digite seu prompt..."
+          placeholder="Digite sua mensagem..."
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+          onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
           className="text-xs h-8 flex-1"
           disabled={isLoading}
         />
         <Button 
           size="sm" 
           className="h-8 px-2"
-          onClick={handleSubmit}
+          onClick={handleSendMessage}
           disabled={isLoading || !inputValue.trim()}
         >
           {isLoading ? (
@@ -147,4 +135,4 @@ function AIFlowToolNodeComponent({ data, selected }: NodeProps) {
   );
 }
 
-export const AIFlowToolNode = memo(AIFlowToolNodeComponent);
+export const AIFlowChatNode = memo(AIFlowChatNodeComponent);

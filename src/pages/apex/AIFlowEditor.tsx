@@ -10,9 +10,11 @@ import { useFunnelElements } from "@/hooks/useFunnelElements";
 import { useFunnelEdges } from "@/hooks/useFunnelEdges";
 import { AIFlowSidebar } from "@/components/apex/AIFlowSidebar";
 import { AIFlowToolNode } from "@/components/apex/AIFlowToolNode";
+import { AIFlowChatNode } from "@/components/apex/AIFlowChatNode";
 
 const nodeTypes = {
   aiToolNode: AIFlowToolNode,
+  aiChatNode: AIFlowChatNode,
 };
 
 export default function AIFlowEditor() {
@@ -32,7 +34,7 @@ export default function AIFlowEditor() {
     if (elements.length > 0) {
       const loadedNodes: Node[] = elements.map((el) => ({
         id: el.id,
-        type: 'aiToolNode',
+        type: el.type === 'apex-chat' ? 'aiChatNode' : 'aiToolNode',
         position: el.position,
         data: {
           label: el.type,
@@ -87,13 +89,15 @@ export default function AIFlowEditor() {
       const tool = JSON.parse(toolData);
       const reactFlowBounds = event.currentTarget.getBoundingClientRect();
       const position = {
-        x: event.clientX - reactFlowBounds.left - 100,
-        y: event.clientY - reactFlowBounds.top - 30,
+        x: event.clientX - reactFlowBounds.left - 150,
+        y: event.clientY - reactFlowBounds.top - 150,
       };
+
+      const isChat = tool.type === 'chat' || tool.id === 'apex-chat';
 
       const newNode: Node = {
         id: `${tool.id}-${Date.now()}`,
-        type: 'aiToolNode',
+        type: isChat ? 'aiChatNode' : 'aiToolNode',
         position,
         data: {
           label: tool.title,
@@ -192,13 +196,13 @@ export default function AIFlowEditor() {
       </div>
 
       {/* Main Content */}
-      <div className="flex-1 flex">
-        {/* Sidebar */}
+      <div className="flex-1 relative">
+        {/* Sidebar Island */}
         <AIFlowSidebar />
 
         {/* Canvas */}
         <div 
-          className="flex-1 bg-muted/30"
+          className="h-full w-full bg-muted/30"
           onDrop={handleDrop}
           onDragOver={handleDragOver}
         >
