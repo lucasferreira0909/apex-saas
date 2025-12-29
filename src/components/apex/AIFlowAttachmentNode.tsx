@@ -106,13 +106,6 @@ function AIFlowAttachmentNodeComponent({ data, selected, id }: NodeProps) {
                 (e.target as HTMLImageElement).style.display = 'none';
               }}
             />
-            {attachmentType === 'video' && (
-              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                <div className="p-3 rounded-full bg-white/90">
-                  <Play className="h-6 w-6 text-foreground fill-foreground" />
-                </div>
-              </div>
-            )}
           </>
         ) : (
           <div className="flex flex-col items-center gap-2 text-muted-foreground">
