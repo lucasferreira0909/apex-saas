@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { HeadphonesIcon, Settings, Workflow, LogOut, Wrench, LayoutGrid, Zap, LayoutDashboard } from "lucide-react";
+import { HeadphonesIcon, Settings, Workflow, LogOut, Wrench, LayoutGrid, Zap, House } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
@@ -12,7 +12,7 @@ import apexLogoFull from "@/assets/apex-logo-full.png";
 const projectItems = [{
   title: "Visão Geral",
   url: "/dashboard",
-  icon: LayoutDashboard
+  icon: House
 }, {
   title: "Fluxos",
   url: "/funnels",
@@ -25,15 +25,15 @@ const projectItems = [{
   title: "Ferramentas",
   url: "/tools",
   icon: Wrench
+}, {
+  title: "Upgrades",
+  url: "/upgrades",
+  icon: Zap
 }];
 const menuItems = [{
   title: "Suporte",
   url: "/support",
   icon: HeadphonesIcon
-}, {
-  title: "Upgrades",
-  url: "/upgrades",
-  icon: Zap
 }, {
   title: "Configurações",
   url: "/settings",
