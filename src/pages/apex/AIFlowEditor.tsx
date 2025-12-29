@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,7 @@ import { AIFlowChatNode } from "@/components/apex/AIFlowChatNode";
 import { AIFlowAttachmentNode } from "@/components/apex/AIFlowAttachmentNode";
 import { AIFlowHistorySheet } from "@/components/apex/AIFlowHistorySheet";
 import { AIFlowAttachmentSheet, AttachmentData } from "@/components/apex/AIFlowAttachmentSheet";
+import { AIFlowProvider } from "@/contexts/AIFlowContext";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -27,6 +28,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
+// Memoized node types - defined outside component to avoid recreation
 const nodeTypes = {
   aiToolNode: AIFlowToolNode,
   aiChatNode: AIFlowChatNode,
@@ -51,181 +53,18 @@ export default function AIFlowEditor() {
   const [showHistory, setShowHistory] = useState(false);
   const [showExitConfirm, setShowExitConfirm] = useState(false);
   const [showAttachmentSheet, setShowAttachmentSheet] = useState(false);
+  const [isInitialized, setIsInitialized] = useState(false);
 
   const { funnel, loading: isLoadingProject } = useFunnelProject(id || '');
   const { elements, loading: isLoadingElements, saveAllElements } = useFunnelElements(id || '');
   const { edges: edgesData, loading: isLoadingEdges, saveAllEdges } = useFunnelEdges(id || '');
   const { logs, isLoading: isLoadingHistory, addLog, clearHistory, isClearing } = useAIFlowHistory(id || '');
 
-  // Delete a node
-  const handleDeleteNode = useCallback((nodeId: string) => {
-    setNodes((nds) => nds.filter((node) => node.id !== nodeId));
-    setEdges((eds) => eds.filter((edge) => edge.source !== nodeId && edge.target !== nodeId));
-    setHasUnsavedChanges(true);
-  }, [setNodes, setEdges]);
-
-  // Duplicate a node
-  const handleDuplicateNode = useCallback((nodeId: string) => {
-    setNodes((nds) => {
-      const nodeToClone = nds.find((node) => node.id === nodeId);
-      if (!nodeToClone) return nds;
-
-      const newNode: Node = {
-        ...nodeToClone,
-        id: `${nodeToClone.id}-copy-${Date.now()}`,
-        position: {
-          x: nodeToClone.position.x + 50,
-          y: nodeToClone.position.y + 50,
-        },
-        data: { ...nodeToClone.data },
-        selected: false,
-      };
-
-      return [...nds, newNode];
-    });
-    setHasUnsavedChanges(true);
-  }, [setNodes]);
-
-  // Rename an attachment node
-  const handleRenameNode = useCallback((nodeId: string, newTitle: string) => {
-    setNodes((nds) => 
-      nds.map((node) => {
-        if (node.id === nodeId) {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              title: newTitle,
-            },
-          };
-        }
-        return node;
-      })
-    );
-    setHasUnsavedChanges(true);
-  }, [setNodes]);
-
-  // Function to send output to a tool node
-  const handleSendToTool = useCallback((targetNodeId: string, output: string) => {
-    setNodes((nds) => 
-      nds.map((node) => {
-        if (node.id === targetNodeId) {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              output,
-              isProcessing: false,
-            },
-          };
-        }
-        return node;
-      })
-    );
-  }, [setNodes]);
-
-  // Get connected tools for a chat node
-  const getConnectedTools = useCallback((chatNodeId: string) => {
-    const connectedTools: { nodeId: string; toolId: string; label: string }[] = [];
-    
-    edges.forEach((edge) => {
-      // Tools connected TO the chat node (source -> chat)
-      if (edge.target === chatNodeId) {
-        const sourceNode = nodes.find(n => n.id === edge.source);
-        if (sourceNode && sourceNode.type === 'aiToolNode') {
-          connectedTools.push({
-            nodeId: sourceNode.id,
-            toolId: (sourceNode.data as any)?.toolId || '',
-            label: (sourceNode.data as any)?.label || 'Ferramenta',
-          });
-        }
-      }
-      // Chat connected TO tools (chat -> tools)
-      if (edge.source === chatNodeId) {
-        const targetNode = nodes.find(n => n.id === edge.target);
-        if (targetNode && targetNode.type === 'aiToolNode') {
-          // Check if not already added
-          if (!connectedTools.find(t => t.nodeId === targetNode.id)) {
-            connectedTools.push({
-              nodeId: targetNode.id,
-              toolId: (targetNode.data as any)?.toolId || '',
-              label: (targetNode.data as any)?.label || 'Ferramenta',
-            });
-          }
-        }
-      }
-    });
-    
-    return connectedTools;
-  }, [edges, nodes]);
-
-  // Get connected attachments for a chat node
-  const getConnectedAttachments = useCallback((chatNodeId: string) => {
-    const attachments: any[] = [];
-    
-    edges.forEach((edge) => {
-      if (edge.target === chatNodeId) {
-        const sourceNode = nodes.find(n => n.id === edge.source);
-        if (sourceNode && sourceNode.type === 'attachmentNode') {
-          attachments.push({
-            nodeId: sourceNode.id,
-            title: (sourceNode.data as any)?.title || 'Anexo',
-            type: (sourceNode.data as any)?.attachmentType || 'file',
-            url: (sourceNode.data as any)?.url || '',
-          });
-        }
-      }
-    });
-    
-    return attachments;
-  }, [edges, nodes]);
-
-  // Update nodes with connected data and callbacks
+  // Load initial data - only once when data is available
   useEffect(() => {
-    setNodes((nds) => 
-      nds.map((node) => {
-        const baseCallbacks = {
-          onDelete: handleDeleteNode,
-          onDuplicate: handleDuplicateNode,
-        };
-
-        if (node.type === 'aiChatNode') {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              ...baseCallbacks,
-              connectedTools: getConnectedTools(node.id),
-              connectedAttachments: getConnectedAttachments(node.id),
-              onSendToTool: handleSendToTool,
-            },
-          };
-        }
-        if (node.type === 'attachmentNode') {
-          return {
-            ...node,
-            data: {
-              ...node.data,
-              ...baseCallbacks,
-              onRename: handleRenameNode,
-            },
-          };
-        }
-        // aiToolNode
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            ...baseCallbacks,
-          },
-        };
-      })
-    );
-  }, [edges, getConnectedTools, getConnectedAttachments, handleSendToTool, handleDeleteNode, handleDuplicateNode, handleRenameNode, setNodes]);
-
-  // Load initial data
-  useEffect(() => {
-    if (elements.length > 0) {
+    if (isInitialized || isLoadingElements || isLoadingEdges) return;
+    
+    if (elements.length > 0 || edgesData.length > 0) {
       const loadedNodes: Node[] = elements.map((el) => {
         const isChat = el.type === 'apex-chat' || el.type === 'apex-ai';
         const isAttachment = el.type.startsWith('attachment-');
@@ -239,45 +78,40 @@ export default function AIFlowEditor() {
             toolId: isChat ? 'apex-ai' : el.type,
             config: el.stats || {},
             configured: el.configured,
-            funnelId: id,
-            addLog,
             ...(el.stats || {}),
           },
         };
       });
       setNodes(loadedNodes);
-    }
-
-    if (edgesData.length > 0) {
       setEdges(edgesData);
+      setIsInitialized(true);
     }
-  }, [elements, edgesData, setNodes, setEdges, id, addLog]);
+  }, [elements, edgesData, isLoadingElements, isLoadingEdges, isInitialized, setNodes, setEdges]);
+
+  // Mark as initialized when loading completes even with empty data
+  useEffect(() => {
+    if (!isLoadingElements && !isLoadingEdges && !isInitialized) {
+      setIsInitialized(true);
+    }
+  }, [isLoadingElements, isLoadingEdges, isInitialized]);
 
   // Validate connection
   const isValidConnection = useCallback((source: Node, target: Node): { valid: boolean; message?: string } => {
     const sourceCategory = getNodeCategory(source);
     const targetCategory = getNodeCategory(target);
 
-    // Attachment to Attachment - blocked
     if (sourceCategory === 'attachment' && targetCategory === 'attachment') {
       return { valid: false, message: 'Não é possível conectar anexos entre si' };
     }
-
-    // Tool to Tool - blocked
     if (sourceCategory === 'tool' && targetCategory === 'tool') {
       return { valid: false, message: 'Não é possível conectar ferramentas entre si' };
     }
-
-    // Attachment to Tool - blocked
     if (sourceCategory === 'attachment' && targetCategory === 'tool') {
       return { valid: false, message: 'Anexos só podem ser conectados ao Apex AI' };
     }
-
-    // Tool to Attachment - blocked
     if (sourceCategory === 'tool' && targetCategory === 'attachment') {
       return { valid: false, message: 'Ferramentas não podem se conectar a anexos' };
     }
-
     return { valid: true };
   }, []);
 
@@ -308,7 +142,13 @@ export default function AIFlowEditor() {
   const handleNodesChangeWrapper = useCallback(
     (changes: any) => {
       onNodesChange(changes);
-      setHasUnsavedChanges(true);
+      // Only mark as unsaved for position/selection changes, not internal updates
+      const hasRealChanges = changes.some((c: any) => 
+        c.type === 'position' || c.type === 'remove' || c.type === 'add'
+      );
+      if (hasRealChanges) {
+        setHasUnsavedChanges(true);
+      }
     },
     [onNodesChange]
   );
@@ -346,15 +186,13 @@ export default function AIFlowEditor() {
           toolId: isChat ? 'apex-ai' : tool.id,
           config: {},
           configured: false,
-          funnelId: id,
-          addLog,
         },
       };
 
       setNodes((nds) => [...nds, newNode]);
       setHasUnsavedChanges(true);
     },
-    [setNodes, id, addLog]
+    [setNodes]
   );
 
   const handleDragOver = useCallback((event: React.DragEvent) => {
@@ -391,11 +229,9 @@ export default function AIFlowEditor() {
 
     setIsSaving(true);
     try {
-      // Create a mapping of old IDs to new UUIDs for invalid IDs
       const idMapping: Record<string, string> = {};
       
       const elementsToSave = nodes.map((node) => {
-        // Generate new UUID if current ID is not valid
         const validId = isValidUUID(node.id) ? node.id : crypto.randomUUID();
         if (!isValidUUID(node.id)) {
           idMapping[node.id] = validId;
@@ -420,7 +256,6 @@ export default function AIFlowEditor() {
         };
       });
 
-      // Update edges with new IDs if needed
       const updatedEdges = edges.map((edge) => ({
         ...edge,
         source: idMapping[edge.source] || edge.source,
@@ -430,7 +265,6 @@ export default function AIFlowEditor() {
       await saveAllElements(elementsToSave);
       await saveAllEdges(updatedEdges);
 
-      // Update local nodes with new IDs
       if (Object.keys(idMapping).length > 0) {
         setNodes((nds) => 
           nds.map((node) => ({
@@ -471,6 +305,11 @@ export default function AIFlowEditor() {
 
   const isLoading = isLoadingProject || isLoadingElements || isLoadingEdges;
 
+  // Memoize the provider value setter
+  const setHasUnsavedChangesStable = useCallback((value: boolean) => {
+    setHasUnsavedChanges(value);
+  }, []);
+
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-full">
@@ -480,123 +319,136 @@ export default function AIFlowEditor() {
   }
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-4">
-          <Link to="/funnels" onClick={handleBackClick}>
-            <Button variant="ghost" size="icon">
-              <ArrowLeft className="h-4 w-4" />
-            </Button>
-          </Link>
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">Editor de Fluxo de IA</h1>
+    <AIFlowProvider
+      nodes={nodes}
+      edges={edges}
+      setNodes={setNodes}
+      setEdges={setEdges}
+      setHasUnsavedChanges={setHasUnsavedChangesStable}
+      addLog={addLog}
+      funnelId={id || ''}
+    >
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-4">
+            <Link to="/funnels" onClick={handleBackClick}>
+              <Button variant="ghost" size="icon">
+                <ArrowLeft className="h-4 w-4" />
+              </Button>
+            </Link>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Editor de Fluxo de IA</h1>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Canvas Card */}
-      <Card className="bg-card border-border min-h-[600px]">
-        <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="text-card-foreground">
-                {funnel?.name || 'Fluxo de IA'}
-              </CardTitle>
-              <CardDescription>
-                Configure e conecte os elementos do seu fluxo de IA
-              </CardDescription>
+        {/* Canvas Card */}
+        <Card className="bg-card border-border min-h-[600px]">
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-card-foreground">
+                  {funnel?.name || 'Fluxo de IA'}
+                </CardTitle>
+                <CardDescription>
+                  Configure e conecte os elementos do seu fluxo de IA
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={() => setShowHistory(true)}
+                >
+                  <History className="mr-2 h-4 w-4" />
+                  Histórico
+                </Button>
+                <Button 
+                  size="sm" 
+                  onClick={handleSave}
+                  disabled={isSaving || !hasUnsavedChanges}
+                >
+                  {isSaving ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Save className="mr-2 h-4 w-4" />
+                  )}
+                  Salvar Alterações
+                </Button>
+              </div>
             </div>
-            <div className="flex items-center gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setShowHistory(true)}
-              >
-                <History className="mr-2 h-4 w-4" />
-                Histórico
-              </Button>
-              <Button 
-                size="sm" 
-                onClick={handleSave}
-                disabled={isSaving || !hasUnsavedChanges}
-              >
-                {isSaving ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Save className="mr-2 h-4 w-4" />
-                )}
-                Salvar Alterações
-              </Button>
-            </div>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div 
-            className="relative bg-muted/20 rounded-lg h-[600px] w-full"
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-          >
-            {/* Sidebar Island */}
-            <AIFlowSidebar onOpenAttachmentSheet={() => setShowAttachmentSheet(true)} />
-
-            {/* ReactFlow Canvas */}
-            <ReactFlow
-              nodes={nodes}
-              edges={edges}
-              onNodesChange={handleNodesChangeWrapper}
-              onEdgesChange={handleEdgesChangeWrapper}
-              onConnect={onConnect}
-              nodeTypes={nodeTypes}
-              connectionMode={ConnectionMode.Loose}
-              fitView
-              className="bg-background rounded-lg"
+          </CardHeader>
+          <CardContent>
+            <div 
+              className="relative bg-muted/20 rounded-lg h-[600px] w-full"
+              onDrop={handleDrop}
+              onDragOver={handleDragOver}
             >
-              <Background gap={20} size={1} color="hsl(var(--muted-foreground) / 0.1)" />
-              <Controls className="bg-background border-border" />
-              <MiniMap 
-                className="bg-background border-border"
-                nodeColor="hsl(var(--primary))"
-              />
-            </ReactFlow>
-          </div>
-        </CardContent>
-      </Card>
+              {/* Sidebar Island */}
+              <AIFlowSidebar onOpenAttachmentSheet={() => setShowAttachmentSheet(true)} />
 
-      {/* History Sheet */}
-      <AIFlowHistorySheet
-        open={showHistory}
-        onOpenChange={setShowHistory}
-        logs={logs}
-        isLoading={isLoadingHistory}
-        onClearHistory={handleClearHistory}
-        isClearing={isClearing}
-      />
+              {/* ReactFlow Canvas */}
+              <ReactFlow
+                nodes={nodes}
+                edges={edges}
+                onNodesChange={handleNodesChangeWrapper}
+                onEdgesChange={handleEdgesChangeWrapper}
+                onConnect={onConnect}
+                nodeTypes={nodeTypes}
+                connectionMode={ConnectionMode.Loose}
+                nodesDraggable={true}
+                nodesConnectable={true}
+                elementsSelectable={true}
+                fitView
+                className="bg-background rounded-lg"
+              >
+                <Background gap={20} size={1} color="hsl(var(--muted-foreground) / 0.1)" />
+                <Controls className="bg-background border-border" />
+                <MiniMap 
+                  className="bg-background border-border"
+                  nodeColor="hsl(var(--primary))"
+                />
+              </ReactFlow>
+            </div>
+          </CardContent>
+        </Card>
 
-      {/* Attachment Sheet */}
-      <AIFlowAttachmentSheet
-        open={showAttachmentSheet}
-        onOpenChange={setShowAttachmentSheet}
-        onAddAttachment={handleAddAttachment}
-      />
+        {/* History Sheet */}
+        <AIFlowHistorySheet
+          open={showHistory}
+          onOpenChange={setShowHistory}
+          logs={logs}
+          isLoading={isLoadingHistory}
+          onClearHistory={handleClearHistory}
+          isClearing={isClearing}
+        />
 
-      {/* Exit Confirmation Dialog */}
-      <AlertDialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Alterações não salvas</AlertDialogTitle>
-            <AlertDialogDescription>
-              Você tem alterações não salvas. Deseja sair sem salvar?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={handleConfirmExit}>
-              Sair sem salvar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-    </div>
+        {/* Attachment Sheet */}
+        <AIFlowAttachmentSheet
+          open={showAttachmentSheet}
+          onOpenChange={setShowAttachmentSheet}
+          onAddAttachment={handleAddAttachment}
+        />
+
+        {/* Exit Confirmation Dialog */}
+        <AlertDialog open={showExitConfirm} onOpenChange={setShowExitConfirm}>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Alterações não salvas</AlertDialogTitle>
+              <AlertDialogDescription>
+                Você tem alterações não salvas. Deseja sair sem salvar?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Cancelar</AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmExit}>
+                Sair sem salvar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
+    </AIFlowProvider>
   );
 }
