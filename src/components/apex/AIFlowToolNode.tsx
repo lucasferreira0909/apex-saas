@@ -17,9 +17,19 @@ import {
   Image,
   Box,
   Loader2,
-  Plug
+  Plug,
+  MoreVertical,
+  Trash2,
+  Copy
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
 
 const iconMap: Record<string, React.ComponentType<any>> = {
   "roi-calculator": Calculator,
@@ -42,6 +52,8 @@ function AIFlowToolNodeComponent({ data, selected, id }: NodeProps) {
   const toolId = nodeData?.toolId || '';
   const externalOutput = nodeData?.output || '';
   const isProcessing = nodeData?.isProcessing || false;
+  const onDelete = nodeData?.onDelete;
+  const onDuplicate = nodeData?.onDuplicate;
   
   const IconComponent = (toolId && iconMap[toolId]) || Box;
 
@@ -56,10 +68,31 @@ function AIFlowToolNodeComponent({ data, selected, id }: NodeProps) {
 
   return (
     <Card className={cn(
-      "w-[300px] h-[250px] shadow-md transition-all flex flex-col",
+      "w-[300px] h-[250px] shadow-md transition-all flex flex-col relative group",
       selected && "ring-2 ring-primary",
       "border-border"
     )}>
+      {/* Menu Button */}
+      <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="secondary" size="icon" className="h-6 w-6 bg-background/80 backdrop-blur-sm">
+              <MoreVertical className="h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-popover border-border z-50">
+            <DropdownMenuItem onClick={() => onDuplicate?.(id)}>
+              <Copy className="h-4 w-4 mr-2" />
+              Duplicar
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onDelete?.(id)} className="text-destructive focus:text-destructive">
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       {/* Header */}
       <div className="p-3 border-b border-border flex items-center gap-2">
         <div className="p-2 rounded-lg bg-primary/10">

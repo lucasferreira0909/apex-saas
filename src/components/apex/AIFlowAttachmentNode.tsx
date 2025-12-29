@@ -1,15 +1,36 @@
-import { memo } from "react";
+import { memo, useState } from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import { Card } from "@/components/ui/card";
-import { Video, FileText, Image, Link2, Play } from "lucide-react";
+import { Video, FileText, Image, Play, MoreVertical, Trash2, Copy, Pencil } from "lucide-react";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
 
-function AIFlowAttachmentNodeComponent({ data, selected }: NodeProps) {
+function AIFlowAttachmentNodeComponent({ data, selected, id }: NodeProps) {
   const nodeData = data as Record<string, any>;
   const attachmentType = nodeData?.attachmentType || 'file';
   const title = nodeData?.title || 'Anexo';
   const thumbnailUrl = nodeData?.thumbnailUrl;
   const isVertical = nodeData?.isVertical || false;
+  const onDelete = nodeData?.onDelete;
+  const onDuplicate = nodeData?.onDuplicate;
+  const onRename = nodeData?.onRename;
+
+  const [showRenameDialog, setShowRenameDialog] = useState(false);
+  const [newTitle, setNewTitle] = useState(title);
 
   const getIcon = () => {
     switch (attachmentType) {
@@ -29,15 +50,47 @@ function AIFlowAttachmentNodeComponent({ data, selected }: NodeProps) {
   const cardHeight = isVertical ? 320 : 200;
   const thumbnailHeight = isVertical ? 240 : 140;
 
+  const handleRename = () => {
+    if (onRename && newTitle.trim()) {
+      onRename(id, newTitle.trim());
+      setShowRenameDialog(false);
+    }
+  };
+
   return (
-    <Card 
-      className={cn(
-        "shadow-md transition-all overflow-hidden",
-        selected && "ring-2 ring-primary",
-        "border-border"
-      )}
-      style={{ width: cardWidth, height: cardHeight }}
-    >
+    <>
+      <Card 
+        className={cn(
+          "shadow-md transition-all overflow-hidden relative group",
+          selected && "ring-2 ring-primary",
+          "border-border"
+        )}
+        style={{ width: cardWidth, height: cardHeight }}
+      >
+        {/* Menu Button */}
+        <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="secondary" size="icon" className="h-6 w-6 bg-background/80 backdrop-blur-sm">
+                <MoreVertical className="h-3 w-3" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="bg-popover border-border z-50">
+              <DropdownMenuItem onClick={() => setShowRenameDialog(true)}>
+                <Pencil className="h-4 w-4 mr-2" />
+                Renomear
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onDuplicate?.(id)}>
+                <Copy className="h-4 w-4 mr-2" />
+                Duplicar
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onDelete?.(id)} className="text-destructive focus:text-destructive">
+                <Trash2 className="h-4 w-4 mr-2" />
+                Excluir
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        </div>
       {/* Thumbnail Area */}
       <div 
         className="relative bg-muted flex items-center justify-center overflow-hidden"
@@ -81,13 +134,37 @@ function AIFlowAttachmentNodeComponent({ data, selected }: NodeProps) {
         </div>
       </div>
 
-      {/* Output Handle Only - attachments can only connect TO Apex AI */}
-      <Handle
-        type="source"
-        position={Position.Right}
-        className="w-3 h-3 bg-primary border-2 border-background"
-      />
-    </Card>
+        {/* Output Handle Only - attachments can only connect TO Apex AI */}
+        <Handle
+          type="source"
+          position={Position.Right}
+          className="w-3 h-3 bg-primary border-2 border-background"
+        />
+      </Card>
+
+      {/* Rename Dialog */}
+      <Dialog open={showRenameDialog} onOpenChange={setShowRenameDialog}>
+        <DialogContent className="bg-background border-border">
+          <DialogHeader>
+            <DialogTitle>Renomear anexo</DialogTitle>
+          </DialogHeader>
+          <Input
+            value={newTitle}
+            onChange={(e) => setNewTitle(e.target.value)}
+            placeholder="Nome do anexo"
+            onKeyDown={(e) => e.key === 'Enter' && handleRename()}
+          />
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowRenameDialog(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleRename}>
+              Salvar
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }
 

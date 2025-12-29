@@ -4,9 +4,15 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageSquare, Send, Loader2 } from "lucide-react";
+import { MessageSquare, Send, Loader2, MoreVertical, Trash2, Copy } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -30,6 +36,8 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
   const connectedTools: ConnectedTool[] = (data as any)?.connectedTools || [];
   const connectedAttachments: any[] = (data as any)?.connectedAttachments || [];
   const onSendToTool = (data as any)?.onSendToTool;
+  const onDelete = (data as any)?.onDelete;
+  const onDuplicate = (data as any)?.onDuplicate;
 
   const processWithTool = async (tool: ConnectedTool, input: string) => {
     setIsLoading(true);
@@ -169,10 +177,31 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
 
   return (
     <Card className={cn(
-      "w-[350px] h-[350px] shadow-md transition-all flex flex-col",
+      "w-[350px] h-[350px] shadow-md transition-all flex flex-col relative group",
       selected && "ring-2 ring-primary",
       "border-border"
     )}>
+      {/* Menu Button */}
+      <div className="absolute top-2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity">
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="secondary" size="icon" className="h-6 w-6 bg-background/80 backdrop-blur-sm">
+              <MoreVertical className="h-3 w-3" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="bg-popover border-border z-50">
+            <DropdownMenuItem onClick={() => onDuplicate?.(id)}>
+              <Copy className="h-4 w-4 mr-2" />
+              Duplicar
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => onDelete?.(id)} className="text-destructive focus:text-destructive">
+              <Trash2 className="h-4 w-4 mr-2" />
+              Excluir
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
       {/* Header */}
       <div className="p-3 border-b border-border flex items-center gap-2">
         <div className="p-2 rounded-lg bg-primary/10">
