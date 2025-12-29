@@ -46,8 +46,8 @@ export function AIFlowSidebar() {
 
   const handleChatDragStart = (event: React.DragEvent) => {
     event.dataTransfer.setData('application/json', JSON.stringify({
-      id: 'apex-chat',
-      title: 'Apex Chat',
+      id: 'apex-ai',
+      title: 'Apex AI',
       type: 'chat'
     }));
     event.dataTransfer.effectAllowed = 'move';
@@ -125,7 +125,7 @@ export function AIFlowSidebar() {
               </Button>
             </TooltipTrigger>
             <TooltipContent side="right">
-              <p>Apex Chat (arraste)</p>
+              <p>Apex AI (arraste)</p>
             </TooltipContent>
           </Tooltip>
         </div>

@@ -13,29 +13,43 @@ interface Message {
   content: string;
 }
 
-function AIFlowChatNodeComponent({ data, selected }: NodeProps) {
+function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const addLog = (data as any)?.addLog;
 
   const handleSendMessage = async () => {
     if (!inputValue.trim() || isLoading) return;
 
     const userMessage: Message = { role: 'user', content: inputValue };
+    const currentInput = inputValue;
     setMessages(prev => [...prev, userMessage]);
     setInputValue("");
     setIsLoading(true);
 
     try {
-      const { data, error } = await supabase.functions.invoke('process-tool-input', {
-        body: { toolId: 'apex-chat', input: inputValue, messages: [...messages, userMessage] }
+      const { data: responseData, error } = await supabase.functions.invoke('process-tool-input', {
+        body: { toolId: 'apex-ai', input: currentInput, messages: [...messages, userMessage] }
       });
 
       if (error) {
         console.error('Error:', error);
         setMessages(prev => [...prev, { role: 'assistant', content: 'Erro ao processar. Tente novamente.' }]);
       } else {
-        setMessages(prev => [...prev, { role: 'assistant', content: data?.result || 'Sem resposta.' }]);
+        const result = responseData?.result || 'Sem resposta.';
+        setMessages(prev => [...prev, { role: 'assistant', content: result }]);
+        
+        // Log the execution
+        if (addLog) {
+          addLog({
+            node_id: id,
+            node_type: 'apex-ai',
+            input: currentInput,
+            output: result,
+          });
+        }
       }
     } catch (err) {
       console.error('Error:', err);
@@ -56,7 +70,7 @@ function AIFlowChatNodeComponent({ data, selected }: NodeProps) {
         <div className="p-2 rounded-lg bg-primary/10">
           <MessageSquare className="h-4 w-4 text-primary" />
         </div>
-        <p className="text-sm font-medium">Apex Chat</p>
+        <p className="text-sm font-medium">Apex AI</p>
       </div>
 
       {/* Messages Area */}
