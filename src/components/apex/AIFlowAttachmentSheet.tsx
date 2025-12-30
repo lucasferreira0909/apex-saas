@@ -22,13 +22,33 @@ export interface AttachmentData {
   isVertical?: boolean;
 }
 
-// Extract video ID and get thumbnail
-const getVideoThumbnail = (url: string): { thumbnailUrl: string; isVertical: boolean; title: string } | null => {
+// Fetch real video metadata from oEmbed APIs
+const fetchVideoMetadata = async (url: string): Promise<{
+  thumbnailUrl: string;
+  isVertical: boolean;
+  title: string;
+} | null> => {
   // YouTube
   const youtubeMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
   if (youtubeMatch) {
     const videoId = youtubeMatch[1];
     const isShort = url.includes('/shorts/');
+    
+    try {
+      const response = await fetch(`https://www.youtube.com/oembed?url=${encodeURIComponent(url)}&format=json`);
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          thumbnailUrl: data.thumbnail_url || `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
+          isVertical: isShort,
+          title: data.title || 'Vídeo do YouTube'
+        };
+      }
+    } catch (error) {
+      console.error('Erro ao buscar metadados do YouTube:', error);
+    }
+    
+    // Fallback
     return {
       thumbnailUrl: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
       isVertical: isShort,
@@ -36,9 +56,24 @@ const getVideoThumbnail = (url: string): { thumbnailUrl: string; isVertical: boo
     };
   }
 
-  // Vimeo - simplified approach
+  // Vimeo
   const vimeoMatch = url.match(/vimeo\.com\/(\d+)/);
   if (vimeoMatch) {
+    try {
+      const response = await fetch(`https://vimeo.com/api/oembed.json?url=${encodeURIComponent(url)}`);
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          thumbnailUrl: data.thumbnail_url || `https://vumbnail.com/${vimeoMatch[1]}.jpg`,
+          isVertical: false,
+          title: data.title || 'Vídeo do Vimeo'
+        };
+      }
+    } catch (error) {
+      console.error('Erro ao buscar metadados do Vimeo:', error);
+    }
+    
+    // Fallback
     return {
       thumbnailUrl: `https://vumbnail.com/${vimeoMatch[1]}.jpg`,
       isVertical: false,
@@ -62,7 +97,7 @@ export function AIFlowAttachmentSheet({ open, onOpenChange, onAddAttachment }: A
     setIsLoading(true);
 
     try {
-      const videoInfo = getVideoThumbnail(linkUrl);
+      const videoInfo = await fetchVideoMetadata(linkUrl);
       
       if (videoInfo) {
         onAddAttachment({
