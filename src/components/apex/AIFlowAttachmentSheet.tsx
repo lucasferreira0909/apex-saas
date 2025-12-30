@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link2, Upload, Loader2, Video, FileText, Image } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AIFlowAttachmentSheetProps {
   open: boolean;
@@ -140,18 +141,33 @@ const fetchVideoMetadata = async (url: string): Promise<{
     const contentType = instagramMatch[1];
     const isVertical = contentType === 'reel' || contentType === 'reels' || contentType === 'stories';
     
-    // Try noembed for Instagram
-    const noembedData = await fetchFromNoembed(url);
-    
     let typeLabel = 'Post do Instagram';
     if (contentType === 'reel' || contentType === 'reels') typeLabel = 'Reel do Instagram';
     else if (contentType === 'tv') typeLabel = 'IGTV do Instagram';
     else if (contentType === 'stories') typeLabel = 'Story do Instagram';
     
+    // Use edge function to fetch Instagram metadata (noembed doesn't support Instagram)
+    try {
+      const { data, error } = await supabase.functions.invoke('fetch-social-metadata', {
+        body: { url }
+      });
+      
+      if (!error && data?.success) {
+        return {
+          thumbnailUrl: data.thumbnailUrl || '',
+          isVertical: isVertical,
+          title: data.title || typeLabel,
+          platform: 'instagram'
+        };
+      }
+    } catch (error) {
+      console.error('Erro ao buscar metadados do Instagram:', error);
+    }
+    
     return {
-      thumbnailUrl: noembedData?.thumbnailUrl || '',
+      thumbnailUrl: '',
       isVertical: isVertical,
-      title: noembedData?.title || typeLabel,
+      title: typeLabel,
       platform: 'instagram'
     };
   }
