@@ -121,15 +121,15 @@ export default function Upgrades() {
 
   return (
     <ApexLayout>
-      <div className="p-6 space-y-6">
+      <div className="space-y-6 w-full max-w-6xl mx-auto">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Upgrades</h1>
           <p className="text-muted-foreground">Gerencie seus créditos e plano</p>
         </div>
 
-        <div className="grid lg:grid-cols-[280px_1fr] gap-6">
+        <div className="flex flex-col lg:flex-row gap-6">
           {/* Sidebar Navigation */}
-          <Card className="h-fit">
+          <Card className="h-fit lg:w-[280px] shrink-0">
             <CardContent className="p-4 space-y-2">
               {tabs.map((tab) => (
                 <Button
@@ -146,7 +146,7 @@ export default function Upgrades() {
           </Card>
 
           {/* Content Area */}
-          <div className="space-y-6">
+          <div className="flex-1 space-y-6 min-w-0">
             {activeTab === "credits" && (
               <>
                 {/* Current Credits */}
