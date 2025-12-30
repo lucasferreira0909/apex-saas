@@ -22,11 +22,34 @@ export interface AttachmentData {
   isVertical?: boolean;
 }
 
+// Fetch metadata using noembed.com as fallback (supports many platforms)
+const fetchFromNoembed = async (url: string): Promise<{
+  title: string;
+  thumbnailUrl: string;
+} | null> => {
+  try {
+    const response = await fetch(`https://noembed.com/embed?url=${encodeURIComponent(url)}`);
+    if (response.ok) {
+      const data = await response.json();
+      if (!data.error) {
+        return {
+          title: data.title || '',
+          thumbnailUrl: data.thumbnail_url || ''
+        };
+      }
+    }
+  } catch (error) {
+    console.error('Erro ao buscar metadados do noembed:', error);
+  }
+  return null;
+};
+
 // Fetch real video metadata from oEmbed APIs
 const fetchVideoMetadata = async (url: string): Promise<{
   thumbnailUrl: string;
   isVertical: boolean;
   title: string;
+  platform: string;
 } | null> => {
   // YouTube
   const youtubeMatch = url.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/);
@@ -41,18 +64,19 @@ const fetchVideoMetadata = async (url: string): Promise<{
         return {
           thumbnailUrl: data.thumbnail_url || `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
           isVertical: isShort,
-          title: data.title || 'Vídeo do YouTube'
+          title: data.title || 'Vídeo do YouTube',
+          platform: 'youtube'
         };
       }
     } catch (error) {
       console.error('Erro ao buscar metadados do YouTube:', error);
     }
     
-    // Fallback
     return {
       thumbnailUrl: `https://img.youtube.com/vi/${videoId}/maxresdefault.jpg`,
       isVertical: isShort,
-      title: 'Vídeo do YouTube'
+      title: 'Vídeo do YouTube',
+      platform: 'youtube'
     };
   }
 
@@ -66,18 +90,196 @@ const fetchVideoMetadata = async (url: string): Promise<{
         return {
           thumbnailUrl: data.thumbnail_url || `https://vumbnail.com/${vimeoMatch[1]}.jpg`,
           isVertical: false,
-          title: data.title || 'Vídeo do Vimeo'
+          title: data.title || 'Vídeo do Vimeo',
+          platform: 'vimeo'
         };
       }
     } catch (error) {
       console.error('Erro ao buscar metadados do Vimeo:', error);
     }
     
-    // Fallback
     return {
       thumbnailUrl: `https://vumbnail.com/${vimeoMatch[1]}.jpg`,
       isVertical: false,
-      title: 'Vídeo do Vimeo'
+      title: 'Vídeo do Vimeo',
+      platform: 'vimeo'
+    };
+  }
+
+  // TikTok
+  const tiktokMatch = url.match(/tiktok\.com\/@[\w.-]+\/video\/(\d+)|tiktok\.com\/t\/(\w+)|vm\.tiktok\.com\/(\w+)/);
+  if (tiktokMatch) {
+    try {
+      const response = await fetch(`https://www.tiktok.com/oembed?url=${encodeURIComponent(url)}`);
+      if (response.ok) {
+        const data = await response.json();
+        return {
+          thumbnailUrl: data.thumbnail_url || '',
+          isVertical: true,
+          title: data.title || 'Vídeo do TikTok',
+          platform: 'tiktok'
+        };
+      }
+    } catch (error) {
+      console.error('Erro ao buscar metadados do TikTok:', error);
+    }
+    
+    // Try noembed as fallback
+    const noembedData = await fetchFromNoembed(url);
+    return {
+      thumbnailUrl: noembedData?.thumbnailUrl || '',
+      isVertical: true,
+      title: noembedData?.title || 'Vídeo do TikTok',
+      platform: 'tiktok'
+    };
+  }
+
+  // Instagram (Reels, Posts, Stories)
+  const instagramMatch = url.match(/instagram\.com\/(p|reel|reels|tv|stories)\/([a-zA-Z0-9_-]+)/);
+  if (instagramMatch) {
+    const contentType = instagramMatch[1];
+    const isVertical = contentType === 'reel' || contentType === 'reels' || contentType === 'stories';
+    
+    // Try noembed for Instagram
+    const noembedData = await fetchFromNoembed(url);
+    
+    let typeLabel = 'Post do Instagram';
+    if (contentType === 'reel' || contentType === 'reels') typeLabel = 'Reel do Instagram';
+    else if (contentType === 'tv') typeLabel = 'IGTV do Instagram';
+    else if (contentType === 'stories') typeLabel = 'Story do Instagram';
+    
+    return {
+      thumbnailUrl: noembedData?.thumbnailUrl || '',
+      isVertical: isVertical,
+      title: noembedData?.title || typeLabel,
+      platform: 'instagram'
+    };
+  }
+
+  // Facebook (Videos, Reels, Posts)
+  const facebookMatch = url.match(/facebook\.com\/(watch|reel|.*\/videos|.*\/posts)\/|fb\.watch\//);
+  if (facebookMatch) {
+    const isReel = url.includes('/reel/') || url.includes('fb.watch');
+    
+    // Try noembed for Facebook
+    const noembedData = await fetchFromNoembed(url);
+    
+    return {
+      thumbnailUrl: noembedData?.thumbnailUrl || '',
+      isVertical: isReel,
+      title: noembedData?.title || (isReel ? 'Reel do Facebook' : 'Vídeo do Facebook'),
+      platform: 'facebook'
+    };
+  }
+
+  // Twitter/X
+  const twitterMatch = url.match(/(?:twitter\.com|x\.com)\/\w+\/status\/(\d+)/);
+  if (twitterMatch) {
+    // Try noembed for Twitter
+    const noembedData = await fetchFromNoembed(url);
+    
+    return {
+      thumbnailUrl: noembedData?.thumbnailUrl || '',
+      isVertical: false,
+      title: noembedData?.title || 'Post do Twitter/X',
+      platform: 'twitter'
+    };
+  }
+
+  // LinkedIn Posts/Videos
+  const linkedinMatch = url.match(/linkedin\.com\/(posts|feed|video)/);
+  if (linkedinMatch) {
+    const noembedData = await fetchFromNoembed(url);
+    
+    return {
+      thumbnailUrl: noembedData?.thumbnailUrl || '',
+      isVertical: false,
+      title: noembedData?.title || 'Post do LinkedIn',
+      platform: 'linkedin'
+    };
+  }
+
+  // Pinterest
+  const pinterestMatch = url.match(/pinterest\.(com|pt|co\.uk)\/pin\/(\d+)/);
+  if (pinterestMatch) {
+    const noembedData = await fetchFromNoembed(url);
+    
+    return {
+      thumbnailUrl: noembedData?.thumbnailUrl || '',
+      isVertical: true,
+      title: noembedData?.title || 'Pin do Pinterest',
+      platform: 'pinterest'
+    };
+  }
+
+  // Spotify
+  const spotifyMatch = url.match(/open\.spotify\.com\/(track|album|playlist|episode|show)\/([a-zA-Z0-9]+)/);
+  if (spotifyMatch) {
+    const contentType = spotifyMatch[1];
+    const noembedData = await fetchFromNoembed(url);
+    
+    let typeLabel = 'Conteúdo do Spotify';
+    if (contentType === 'track') typeLabel = 'Música do Spotify';
+    else if (contentType === 'album') typeLabel = 'Álbum do Spotify';
+    else if (contentType === 'playlist') typeLabel = 'Playlist do Spotify';
+    else if (contentType === 'episode') typeLabel = 'Episódio do Spotify';
+    else if (contentType === 'show') typeLabel = 'Podcast do Spotify';
+    
+    return {
+      thumbnailUrl: noembedData?.thumbnailUrl || '',
+      isVertical: false,
+      title: noembedData?.title || typeLabel,
+      platform: 'spotify'
+    };
+  }
+
+  // SoundCloud
+  const soundcloudMatch = url.match(/soundcloud\.com\/[\w-]+\/[\w-]+/);
+  if (soundcloudMatch) {
+    const noembedData = await fetchFromNoembed(url);
+    
+    return {
+      thumbnailUrl: noembedData?.thumbnailUrl || '',
+      isVertical: false,
+      title: noembedData?.title || 'Áudio do SoundCloud',
+      platform: 'soundcloud'
+    };
+  }
+
+  // Twitch
+  const twitchMatch = url.match(/twitch\.tv\/(videos\/\d+|[\w]+\/clip\/[\w-]+|[\w]+)/);
+  if (twitchMatch) {
+    const noembedData = await fetchFromNoembed(url);
+    
+    return {
+      thumbnailUrl: noembedData?.thumbnailUrl || '',
+      isVertical: false,
+      title: noembedData?.title || 'Conteúdo da Twitch',
+      platform: 'twitch'
+    };
+  }
+
+  // Dailymotion
+  const dailymotionMatch = url.match(/dailymotion\.com\/video\/([a-zA-Z0-9]+)/);
+  if (dailymotionMatch) {
+    const noembedData = await fetchFromNoembed(url);
+    
+    return {
+      thumbnailUrl: noembedData?.thumbnailUrl || '',
+      isVertical: false,
+      title: noembedData?.title || 'Vídeo do Dailymotion',
+      platform: 'dailymotion'
+    };
+  }
+
+  // Generic fallback - try noembed for any URL
+  const genericData = await fetchFromNoembed(url);
+  if (genericData && genericData.title) {
+    return {
+      thumbnailUrl: genericData.thumbnailUrl || '',
+      isVertical: false,
+      title: genericData.title,
+      platform: 'other'
     };
   }
 
