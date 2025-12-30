@@ -60,7 +60,7 @@ export default function AIFlowEditor() {
   const { funnel, loading: isLoadingProject } = useFunnelProject(id || '');
   const { elements, loading: isLoadingElements, saveAllElements } = useFunnelElements(id || '');
   const { edges: edgesData, loading: isLoadingEdges, saveAllEdges } = useFunnelEdges(id || '');
-  const { logs, isLoading: isLoadingHistory, addLog, clearHistory, isClearing } = useAIFlowHistory(id || '');
+  const { logs, isLoading: isLoadingHistory, addLog, deleteLog, clearHistory, isClearing } = useAIFlowHistory(id || '');
 
   // Load initial data - only once when data is available
   useEffect(() => {
@@ -305,6 +305,10 @@ export default function AIFlowEditor() {
     toast.success("Histórico limpo com sucesso!");
   };
 
+  const handleDeleteLog = async (logId: string) => {
+    await deleteLog(logId);
+  };
+
   const isLoading = isLoadingProject || isLoadingElements || isLoadingEdges;
 
   // Memoize the provider value setter
@@ -423,6 +427,7 @@ export default function AIFlowEditor() {
           logs={logs}
           isLoading={isLoadingHistory}
           onClearHistory={handleClearHistory}
+          onDeleteLog={handleDeleteLog}
           isClearing={isClearing}
         />
 
