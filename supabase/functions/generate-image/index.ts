@@ -6,7 +6,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const DAILY_LIMIT = 3;
+const CREDIT_COST = 4; // Image generation costs 4 credits
 
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
@@ -20,7 +20,6 @@ serve(async (req) => {
       throw new Error('Prompt é obrigatório');
     }
 
-    // Get authorization header to identify user
     const authHeader = req.headers.get('Authorization');
     if (!authHeader) {
       throw new Error('Usuário não autenticado');
@@ -38,10 +37,8 @@ serve(async (req) => {
       throw new Error('Configuração do Supabase não encontrada');
     }
 
-    // Create Supabase client with user's token to get user_id
     const supabaseUser = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
     
-    // Get user from token
     const token = authHeader.replace('Bearer ', '');
     const { data: { user }, error: userError } = await supabaseUser.auth.getUser(token);
     
@@ -52,32 +49,29 @@ serve(async (req) => {
     const userId = user.id;
     console.log('User ID:', userId);
 
-    // Check daily usage limit
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    
-    const { count, error: countError } = await supabaseUser
-      .from('generated_images')
-      .select('*', { count: 'exact', head: true })
+    // Check user credits
+    const { data: profile, error: profileError } = await supabaseUser
+      .from('profiles')
+      .select('credits')
       .eq('user_id', userId)
-      .gte('created_at', today.toISOString());
+      .maybeSingle();
 
-    if (countError) {
-      console.error('Error checking usage:', countError);
-      throw new Error('Erro ao verificar limite de uso');
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+      throw new Error('Erro ao verificar créditos');
     }
 
-    const usageCount = count || 0;
-    console.log('Daily usage count:', usageCount);
+    const currentCredits = profile?.credits ?? 0;
+    console.log('Current credits:', currentCredits);
 
-    if (usageCount >= DAILY_LIMIT) {
+    if (currentCredits < CREDIT_COST) {
       return new Response(
         JSON.stringify({ 
-          error: 'Limite diário atingido. Você pode gerar até 3 imagens por dia.',
-          limitReached: true,
-          remaining: 0
+          error: `Créditos insuficientes. Você precisa de ${CREDIT_COST} créditos para gerar uma imagem.`,
+          creditsRequired: CREDIT_COST,
+          currentCredits: currentCredits
         }),
-        { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
@@ -107,12 +101,6 @@ serve(async (req) => {
           { status: 429, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: 'Créditos esgotados. Adicione mais créditos para continuar.' }),
-          { status: 402, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-        );
-      }
       const errorText = await response.text();
       console.error('AI Gateway error:', response.status, errorText);
       throw new Error('Erro ao gerar imagem');
@@ -127,6 +115,33 @@ serve(async (req) => {
     if (!imageData) {
       console.error('No image in response:', JSON.stringify(data));
       throw new Error('Nenhuma imagem foi gerada. Tente novamente com um prompt diferente.');
+    }
+
+    // Deduct credits AFTER successful generation
+    const newCredits = currentCredits - CREDIT_COST;
+    const { error: updateError } = await supabaseUser
+      .from('profiles')
+      .update({ credits: newCredits })
+      .eq('user_id', userId);
+
+    if (updateError) {
+      console.error('Error updating credits:', updateError);
+      // Don't fail the request, image was generated successfully
+    }
+
+    // Record credit transaction
+    const { error: transactionError } = await supabaseUser
+      .from('credit_transactions')
+      .insert({
+        user_id: userId,
+        amount: -CREDIT_COST,
+        transaction_type: 'consumption',
+        description: 'Geração de imagem',
+        tool_name: 'image_generator'
+      });
+
+    if (transactionError) {
+      console.error('Error recording transaction:', transactionError);
     }
 
     // Extract base64 data and upload to storage
@@ -148,7 +163,6 @@ serve(async (req) => {
       throw new Error('Erro ao salvar imagem');
     }
 
-    // Get public URL
     const { data: urlData } = supabaseUser.storage
       .from('generated-images')
       .getPublicUrl(storagePath);
@@ -170,17 +184,16 @@ serve(async (req) => {
 
     if (insertError) {
       console.error('Database insert error:', insertError);
-      // Don't throw, the image was still generated successfully
     }
 
-    const remaining = DAILY_LIMIT - usageCount - 1;
-    console.log('Successfully generated image. Remaining today:', remaining);
+    console.log('Successfully generated image. Credits remaining:', newCredits);
 
     return new Response(
       JSON.stringify({ 
         imageUrl: publicUrl,
         description: textContent,
-        remaining: remaining
+        creditsUsed: CREDIT_COST,
+        creditsRemaining: newCredits
       }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
