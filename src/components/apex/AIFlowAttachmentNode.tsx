@@ -144,7 +144,7 @@ function AIFlowAttachmentNodeComponent({ data, selected, id }: NodeProps) {
         <Handle
           type="source"
           position={Position.Right}
-          className="w-3 h-3 bg-primary border-2 border-background"
+          className="!w-4 !h-4 bg-primary border-2 border-background"
         />
       </Card>
 

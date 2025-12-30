@@ -23,7 +23,7 @@ export function LabeledHandle({
           position={position}
           {...props}
           className={cn(
-            "!w-3 !h-3 !border-2 !border-primary !bg-background",
+            "!w-4 !h-4 !border-2 !border-primary !bg-background",
             handleClassName
           )}
         />
@@ -34,7 +34,7 @@ export function LabeledHandle({
           position={position}
           {...props}
           className={cn(
-            "!w-3 !h-3 !border-2 !border-primary !bg-background",
+            "!w-4 !h-4 !border-2 !border-primary !bg-background",
             handleClassName
           )}
         />
