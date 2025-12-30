@@ -14,6 +14,7 @@ import { AIFlowSidebar } from "@/components/apex/AIFlowSidebar";
 import { AIFlowToolNode } from "@/components/apex/AIFlowToolNode";
 import { AIFlowChatNode } from "@/components/apex/AIFlowChatNode";
 import { AIFlowAttachmentNode } from "@/components/apex/AIFlowAttachmentNode";
+import { AIFlowTextCardNode } from "@/components/apex/AIFlowTextCardNode";
 import { AIFlowHistorySheet } from "@/components/apex/AIFlowHistorySheet";
 import { AIFlowAttachmentSheet, AttachmentData } from "@/components/apex/AIFlowAttachmentSheet";
 import { AIFlowProvider } from "@/contexts/AIFlowContext";
@@ -33,6 +34,7 @@ const nodeTypes = {
   aiToolNode: AIFlowToolNode,
   aiChatNode: AIFlowChatNode,
   attachmentNode: AIFlowAttachmentNode,
+  textCardNode: AIFlowTextCardNode,
 };
 
 // Helper to get node type category

@@ -4,7 +4,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageSquare, Send, Loader2, MoreVertical, Trash2, Copy } from "lucide-react";
+import { MessageSquare, Send, Loader2, MoreVertical, Trash2, Copy, Image, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAIFlowContext } from "@/contexts/AIFlowContext";
@@ -14,10 +14,17 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface Message {
   role: 'user' | 'assistant';
   content: string;
+  imageUrl?: string;
 }
 
 interface ConnectedTool {
@@ -32,6 +39,8 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [pendingToolSelection, setPendingToolSelection] = useState<ConnectedTool[] | null>(null);
   const [pendingInput, setPendingInput] = useState<string>("");
+  const [isImageMode, setIsImageMode] = useState(false);
+  const [lastResult, setLastResult] = useState<string | null>(null);
 
   const { 
     handleDeleteNode, 
@@ -39,7 +48,8 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
     handleSendToTool, 
     getConnectedTools, 
     getConnectedAttachments,
-    addLog 
+    addLog,
+    handleCreateTextCard,
   } = useAIFlowContext();
 
   // Get connected data using useMemo to avoid recalculation
@@ -60,6 +70,7 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
       } else {
         const result = responseData?.result || 'Sem resposta.';
         setMessages(prev => [...prev, { role: 'assistant', content: `Resultado enviado para ${tool.label}!` }]);
+        setLastResult(result);
         
         handleSendToTool(tool.nodeId, result);
         
@@ -135,41 +146,72 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
       }
     }
 
-    // No tools connected - use Apex AI directly
     setIsLoading(true);
 
     try {
-      const attachmentsData = currentConnectedAttachments.length > 0 
-        ? currentConnectedAttachments.map(a => ({
-            title: a.title,
-            type: a.type,
-            url: a.url,
-          }))
-        : undefined;
+      // Image generation mode
+      if (isImageMode) {
+        const { data: responseData, error } = await supabase.functions.invoke('generate-image', {
+          body: { prompt: currentInput, aspectRatio: '1:1' }
+        });
 
-      const { data: responseData, error } = await supabase.functions.invoke('process-tool-input', {
-        body: { 
-          toolId: 'apex-ai', 
-          input: currentInput, 
-          messages: [...messages, userMessage],
-          attachments: attachmentsData,
+        if (error) {
+          console.error('Error:', error);
+          setMessages(prev => [...prev, { role: 'assistant', content: 'Erro ao gerar imagem. Verifique seus créditos e tente novamente.' }]);
+        } else {
+          const imageUrl = responseData?.imageUrl || '';
+          const assistantMessage: Message = { 
+            role: 'assistant', 
+            content: 'Imagem gerada com sucesso!',
+            imageUrl 
+          };
+          setMessages(prev => [...prev, assistantMessage]);
+          setLastResult(`Imagem gerada: ${imageUrl}`);
+          
+          if (addLog) {
+            addLog({
+              node_id: id,
+              node_type: 'generate-image',
+              input: currentInput,
+              output: `Imagem: ${imageUrl}`,
+            });
+          }
         }
-      });
-
-      if (error) {
-        console.error('Error:', error);
-        setMessages(prev => [...prev, { role: 'assistant', content: 'Erro ao processar. Tente novamente.' }]);
       } else {
-        const result = responseData?.result || 'Sem resposta.';
-        setMessages(prev => [...prev, { role: 'assistant', content: result }]);
-        
-        if (addLog) {
-          addLog({
-            node_id: id,
-            node_type: 'apex-ai',
-            input: currentInput,
-            output: result,
-          });
+        // Regular text mode - use Apex AI
+        const attachmentsData = currentConnectedAttachments.length > 0 
+          ? currentConnectedAttachments.map(a => ({
+              title: a.title,
+              type: a.type,
+              url: a.url,
+            }))
+          : undefined;
+
+        const { data: responseData, error } = await supabase.functions.invoke('process-tool-input', {
+          body: { 
+            toolId: 'apex-ai', 
+            input: currentInput, 
+            messages: [...messages, userMessage],
+            attachments: attachmentsData,
+          }
+        });
+
+        if (error) {
+          console.error('Error:', error);
+          setMessages(prev => [...prev, { role: 'assistant', content: 'Erro ao processar. Tente novamente.' }]);
+        } else {
+          const result = responseData?.result || 'Sem resposta.';
+          setMessages(prev => [...prev, { role: 'assistant', content: result }]);
+          setLastResult(result);
+          
+          if (addLog) {
+            addLog({
+              node_id: id,
+              node_type: 'apex-ai',
+              input: currentInput,
+              output: result,
+            });
+          }
         }
       }
     } catch (err) {
@@ -178,7 +220,7 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
     } finally {
       setIsLoading(false);
     }
-  }, [inputValue, isLoading, pendingToolSelection, handleToolSelection, id, getConnectedTools, getConnectedAttachments, processWithTool, messages, addLog]);
+  }, [inputValue, isLoading, pendingToolSelection, handleToolSelection, id, getConnectedTools, getConnectedAttachments, processWithTool, messages, addLog, isImageMode]);
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
@@ -193,6 +235,16 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
   const handleDuplicate = useCallback(() => {
     handleDuplicateNode(id);
   }, [handleDuplicateNode, id]);
+
+  const handleExport = useCallback(() => {
+    if (lastResult && handleCreateTextCard) {
+      handleCreateTextCard(id, lastResult);
+    }
+  }, [lastResult, handleCreateTextCard, id]);
+
+  const toggleImageMode = useCallback(() => {
+    setIsImageMode(prev => !prev);
+  }, []);
 
   return (
     <Card className={cn(
@@ -232,6 +284,26 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
             {connectedTools.length} ferramenta{connectedTools.length > 1 ? 's' : ''}
           </span>
         )}
+        {/* Export Button */}
+        {lastResult && handleCreateTextCard && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-6 w-6 ml-auto"
+                  onClick={handleExport}
+                >
+                  <FileText className="h-3 w-3" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Exportar resultado</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
       </div>
 
       {/* Messages Area */}
@@ -242,7 +314,9 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
               <p className="text-xs text-muted-foreground text-center">
                 {connectedTools.length > 0 
                   ? 'Faça uma solicitação para enviar às ferramentas conectadas'
-                  : 'Inicie uma conversa com a IA'
+                  : isImageMode 
+                    ? 'Descreva a imagem que deseja gerar'
+                    : 'Inicie uma conversa com a IA'
                 }
               </p>
             </div>
@@ -259,12 +333,19 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
                   )}
                 >
                   {msg.content}
+                  {msg.imageUrl && (
+                    <img 
+                      src={msg.imageUrl} 
+                      alt="Generated" 
+                      className="mt-2 rounded-lg max-w-full h-auto"
+                    />
+                  )}
                 </div>
               ))}
               {isLoading && (
                 <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <Loader2 className="h-3 w-3 animate-spin" />
-                  Processando...
+                  {isImageMode ? 'Gerando imagem...' : 'Processando...'}
                 </div>
               )}
             </div>
@@ -274,8 +355,36 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
 
       {/* Input Area */}
       <div className="p-3 border-t border-border flex gap-2">
+        {/* Image Mode Toggle */}
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <Button 
+                variant={isImageMode ? "default" : "outline"}
+                size="sm" 
+                className={cn(
+                  "h-8 px-2 shrink-0",
+                  isImageMode && "bg-green-500 hover:bg-green-600 text-white"
+                )}
+                onClick={toggleImageMode}
+              >
+                <Image className="h-3 w-3" />
+              </Button>
+            </TooltipTrigger>
+            <TooltipContent>
+              <p>{isImageMode ? 'Modo imagem ativo' : 'Ativar geração de imagem'}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+
         <Input
-          placeholder={pendingToolSelection ? "Digite o nome da ferramenta..." : "Digite sua mensagem..."}
+          placeholder={
+            pendingToolSelection 
+              ? "Digite o nome da ferramenta..." 
+              : isImageMode 
+                ? "Descreva a imagem..." 
+                : "Digite sua mensagem..."
+          }
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
