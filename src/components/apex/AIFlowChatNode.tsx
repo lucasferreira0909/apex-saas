@@ -1,10 +1,10 @@
 import { memo, useState, useMemo, useCallback } from "react";
 import { Handle, Position, NodeProps } from "@xyflow/react";
 import { Card, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageSquare, Send, Loader2, MoreVertical, Trash2, Copy, Image, FileText } from "lucide-react";
+import { MessageSquare, Send, Loader2, MoreVertical, Trash2, Copy, Image, FileText, Plus, History } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useAIFlowContext } from "@/contexts/AIFlowContext";
@@ -20,6 +20,14 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { AIFlowPromptsSheet } from "./AIFlowPromptsSheet";
+import { useAIFlowHistory } from "@/hooks/useAIFlowHistory";
+import { useParams } from "react-router-dom";
 
 interface Message {
   role: 'user' | 'assistant';
@@ -41,6 +49,11 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
   const [pendingInput, setPendingInput] = useState<string>("");
   const [isImageMode, setIsImageMode] = useState(false);
   const [lastResult, setLastResult] = useState<string | null>(null);
+  const [isPromptsSheetOpen, setIsPromptsSheetOpen] = useState(false);
+  const [isPlusMenuOpen, setIsPlusMenuOpen] = useState(false);
+
+  const { funnelId } = useParams();
+  const { logs, isLoading: isLoadingLogs } = useAIFlowHistory(funnelId || '');
 
   const { 
     handleDeleteNode, 
@@ -222,11 +235,6 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
     }
   }, [inputValue, isLoading, pendingToolSelection, handleToolSelection, id, getConnectedTools, getConnectedAttachments, processWithTool, messages, addLog, isImageMode]);
 
-  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
-      handleSendMessage();
-    }
-  }, [handleSendMessage]);
 
   const handleDelete = useCallback(() => {
     handleDeleteNode(id);
@@ -242,9 +250,26 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
     }
   }, [lastResult, handleCreateTextCard, id]);
 
-  const toggleImageMode = useCallback(() => {
-    setIsImageMode(prev => !prev);
+  const handleActivateImageMode = useCallback(() => {
+    setIsImageMode(true);
+    setIsPlusMenuOpen(false);
   }, []);
+
+  const handleOpenPromptsSheet = useCallback(() => {
+    setIsPromptsSheetOpen(true);
+    setIsPlusMenuOpen(false);
+  }, []);
+
+  const handleSelectPrompt = useCallback((prompt: string) => {
+    setInputValue(prompt);
+  }, []);
+
+  const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault();
+      handleSendMessage();
+    }
+  }, [handleSendMessage]);
 
   return (
     <Card className={cn(
@@ -354,30 +379,44 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
       </CardContent>
 
       {/* Input Area */}
-      <div className="p-3 border-t border-border flex gap-2">
-        {/* Image Mode Toggle */}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button 
-                variant={isImageMode ? "default" : "outline"}
-                size="sm" 
-                className={cn(
-                  "h-8 px-2 shrink-0",
-                  isImageMode && "bg-green-500 hover:bg-green-600 text-white"
-                )}
-                onClick={toggleImageMode}
-              >
-                <Image className="h-3 w-3" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>{isImageMode ? 'Modo imagem ativo' : 'Ativar geração de imagem'}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+      <div className="p-3 border-t border-border flex gap-2 items-end">
+        {/* Plus Menu */}
+        <Popover open={isPlusMenuOpen} onOpenChange={setIsPlusMenuOpen}>
+          <PopoverTrigger asChild>
+            <Button 
+              variant={isImageMode ? "default" : "outline"}
+              size="sm" 
+              className={cn(
+                "h-8 w-8 px-0 shrink-0",
+                isImageMode && "bg-green-500 hover:bg-green-600 text-white"
+              )}
+            >
+              <Plus className="h-4 w-4" />
+            </Button>
+          </PopoverTrigger>
+          <PopoverContent className="w-48 p-1 bg-popover border-border z-50" align="start">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start gap-2 h-9"
+              onClick={handleActivateImageMode}
+            >
+              <Image className="h-4 w-4" />
+              Gerar Imagem
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="w-full justify-start gap-2 h-9"
+              onClick={handleOpenPromptsSheet}
+            >
+              <History className="h-4 w-4" />
+              Reutilizar Prompts
+            </Button>
+          </PopoverContent>
+        </Popover>
 
-        <Input
+        <Textarea
           placeholder={
             pendingToolSelection 
               ? "Digite o nome da ferramenta..." 
@@ -388,7 +427,7 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
           value={inputValue}
           onChange={(e) => setInputValue(e.target.value)}
           onKeyDown={handleKeyDown}
-          className="text-xs h-8 flex-1"
+          className="text-xs min-h-[60px] max-h-[80px] flex-1 resize-none overflow-y-auto"
           disabled={isLoading}
         />
         <Button 
@@ -417,6 +456,15 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
         type="source"
         position={Position.Right}
         className="w-3 h-3 bg-primary border-2 border-background"
+      />
+
+      {/* Prompts Sheet */}
+      <AIFlowPromptsSheet
+        open={isPromptsSheetOpen}
+        onOpenChange={setIsPromptsSheetOpen}
+        logs={logs}
+        isLoading={isLoadingLogs}
+        onSelectPrompt={handleSelectPrompt}
       />
     </Card>
   );
