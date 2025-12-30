@@ -6,6 +6,8 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+const CREDIT_COST = 2; // Image editing costs 2 credits
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -21,7 +23,6 @@ serve(async (req) => {
       );
     }
 
-    // Authenticate user
     const authHeader = req.headers.get("Authorization");
     if (!authHeader) {
       return new Response(
@@ -30,13 +31,14 @@ serve(async (req) => {
       );
     }
 
-    const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_ANON_KEY") ?? "",
-      { global: { headers: { Authorization: authHeader } } }
-    );
+    const SUPABASE_URL = Deno.env.get("SUPABASE_URL") ?? "";
+    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
+    const token = authHeader.replace("Bearer ", "");
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    
     if (authError || !user) {
       return new Response(
         JSON.stringify({ error: "Invalid authentication" }),
@@ -46,7 +48,32 @@ serve(async (req) => {
 
     console.log(`User ${user.id} editing image with prompt: ${editPrompt}`);
 
-    // Call Lovable AI Gateway for image editing
+    // Check user credits
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('credits')
+      .eq('user_id', user.id)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error('Error fetching profile:', profileError);
+      throw new Error('Erro ao verificar créditos');
+    }
+
+    const currentCredits = profile?.credits ?? 0;
+    console.log('Current credits:', currentCredits);
+
+    if (currentCredits < CREDIT_COST) {
+      return new Response(
+        JSON.stringify({ 
+          error: `Créditos insuficientes. Você precisa de ${CREDIT_COST} créditos para editar uma imagem.`,
+          creditsRequired: CREDIT_COST,
+          currentCredits: currentCredits
+        }),
+        { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) {
       throw new Error("LOVABLE_API_KEY is not configured");
@@ -91,12 +118,6 @@ serve(async (req) => {
           { status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
-      if (response.status === 402) {
-        return new Response(
-          JSON.stringify({ error: "Créditos insuficientes. Por favor, adicione créditos à sua conta." }),
-          { status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-        );
-      }
       
       throw new Error(`AI Gateway error: ${response.status}`);
     }
@@ -107,6 +128,32 @@ serve(async (req) => {
 
     if (!editedImageBase64) {
       throw new Error("No image generated from AI");
+    }
+
+    // Deduct credits AFTER successful generation
+    const newCredits = currentCredits - CREDIT_COST;
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update({ credits: newCredits })
+      .eq('user_id', user.id);
+
+    if (updateError) {
+      console.error('Error updating credits:', updateError);
+    }
+
+    // Record credit transaction
+    const { error: transactionError } = await supabase
+      .from('credit_transactions')
+      .insert({
+        user_id: user.id,
+        amount: -CREDIT_COST,
+        transaction_type: 'consumption',
+        description: 'Edição de imagem',
+        tool_name: 'image_editor'
+      });
+
+    if (transactionError) {
+      console.error('Error recording transaction:', transactionError);
     }
 
     // Extract base64 data
@@ -132,7 +179,7 @@ serve(async (req) => {
       .from("generated-images")
       .getPublicUrl(fileName);
 
-    // Save to database (as edited version, doesn't count towards daily limit)
+    // Save to database
     const { error: dbError } = await supabase
       .from("generated_images")
       .insert({
@@ -148,10 +195,14 @@ serve(async (req) => {
       console.error("Database insert error:", dbError);
     }
 
+    console.log('Successfully edited image. Credits remaining:', newCredits);
+
     return new Response(
       JSON.stringify({
         imageUrl: publicUrlData.publicUrl,
-        description: aiDescription
+        description: aiDescription,
+        creditsUsed: CREDIT_COST,
+        creditsRemaining: newCredits
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
