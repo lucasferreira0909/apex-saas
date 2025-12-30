@@ -250,8 +250,8 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
     }
   }, [lastResult, handleCreateTextCard, id]);
 
-  const handleActivateImageMode = useCallback(() => {
-    setIsImageMode(true);
+  const handleToggleImageMode = useCallback(() => {
+    setIsImageMode(prev => !prev);
     setIsPlusMenuOpen(false);
   }, []);
 
@@ -396,13 +396,16 @@ function AIFlowChatNodeComponent({ data, selected, id }: NodeProps) {
           </PopoverTrigger>
           <PopoverContent className="w-48 p-1 bg-popover border-border z-50" align="start">
             <Button
-              variant="ghost"
+              variant={isImageMode ? "secondary" : "ghost"}
               size="sm"
-              className="w-full justify-start gap-2 h-9"
-              onClick={handleActivateImageMode}
+              className={cn(
+                "w-full justify-start gap-2 h-9",
+                isImageMode && "bg-green-500/20 text-green-600 hover:bg-green-500/30"
+              )}
+              onClick={handleToggleImageMode}
             >
               <Image className="h-4 w-4" />
-              Gerar Imagem
+              {isImageMode ? "Desativar Imagem" : "Gerar Imagem"}
             </Button>
             <Button
               variant="ghost"
