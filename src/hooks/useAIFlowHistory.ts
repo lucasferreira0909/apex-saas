@@ -54,6 +54,23 @@ export function useAIFlowHistory(funnelId: string) {
     },
   });
 
+  const deleteLogMutation = useMutation({
+    mutationFn: async (logId: string) => {
+      if (!user?.id) return;
+      
+      const { error } = await supabase
+        .from('ai_flow_execution_logs')
+        .delete()
+        .eq('id', logId)
+        .eq('user_id', user.id);
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ai-flow-history', funnelId] });
+    },
+  });
+
   const clearHistoryMutation = useMutation({
     mutationFn: async () => {
       if (!user?.id || !funnelId) return;
@@ -81,6 +98,10 @@ export function useAIFlowHistory(funnelId: string) {
     });
   };
 
+  const deleteLog = async (logId: string) => {
+    await deleteLogMutation.mutateAsync(logId);
+  };
+
   const clearHistory = async () => {
     await clearHistoryMutation.mutateAsync();
   };
@@ -89,7 +110,9 @@ export function useAIFlowHistory(funnelId: string) {
     logs,
     isLoading,
     addLog,
+    deleteLog,
     clearHistory,
     isClearing: clearHistoryMutation.isPending,
+    isDeleting: deleteLogMutation.isPending,
   };
 }
