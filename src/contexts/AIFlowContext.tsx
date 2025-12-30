@@ -21,6 +21,7 @@ interface AIFlowContextType {
   handleDuplicateNode: (nodeId: string) => void;
   handleRenameNode: (nodeId: string, newTitle: string) => void;
   handleSendToTool: (targetNodeId: string, output: string) => void;
+  handleCreateTextCard: (sourceNodeId: string, content: string) => void;
   getConnectedTools: (chatNodeId: string) => ConnectedTool[];
   getConnectedAttachments: (chatNodeId: string) => ConnectedAttachment[];
   addLog: ((log: { node_id: string; node_type: string; input: string; output: string }) => void) | undefined;
@@ -130,6 +131,29 @@ export function AIFlowProvider({
     );
   }, [setNodes]);
 
+  const handleCreateTextCard = useCallback((sourceNodeId: string, content: string) => {
+    const currentNodes = nodesRef.current;
+    const sourceNode = currentNodes.find(n => n.id === sourceNodeId);
+    
+    // Position the new card to the right of the source node
+    const position = sourceNode 
+      ? { x: sourceNode.position.x + 400, y: sourceNode.position.y }
+      : { x: 300, y: 300 };
+
+    const newNode: Node = {
+      id: crypto.randomUUID(),
+      type: 'textCardNode',
+      position,
+      data: {
+        title: 'Resultado Exportado',
+        content,
+      },
+    };
+
+    setNodes((nds) => [...nds, newNode]);
+    setHasUnsavedChanges(true);
+  }, [setNodes, setHasUnsavedChanges]);
+
   const getConnectedTools = useCallback((chatNodeId: string): ConnectedTool[] => {
     const currentNodes = nodesRef.current;
     const currentEdges = edgesRef.current;
@@ -192,6 +216,7 @@ export function AIFlowProvider({
     handleDuplicateNode,
     handleRenameNode,
     handleSendToTool,
+    handleCreateTextCard,
     getConnectedTools,
     getConnectedAttachments,
     addLog,

@@ -71,7 +71,7 @@ export default function Funnels() {
   const getTypeBadge = (templateType: string | null) => {
     switch (templateType) {
       case 'ai_flow':
-        return <Badge variant="secondary" className="bg-primary/10 text-primary capitalize">Fluxo de IA</Badge>;
+        return <Badge variant="secondary" className="capitalize">Fluxo de IA</Badge>;
       case 'funnel':
         return <Badge variant="secondary" className="capitalize">Funil</Badge>;
       case 'ltv':
