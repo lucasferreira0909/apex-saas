@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { HeadphonesIcon, Settings, Workflow, LogOut, Wrench, LayoutGrid, Zap, House, Search, Sparkles, Image, MessageSquare, FileText, Columns, CheckSquare, ListTodo } from "lucide-react";
+import { HeadphonesIcon, Settings, Workflow, LogOut, Wrench, LayoutGrid, House, Search, Sparkles, Image, MessageSquare, FileText, Columns, CheckSquare, ListTodo } from "lucide-react";
 import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "@/hooks/use-toast";
@@ -42,10 +42,6 @@ const projectItems = [{
   title: "Ferramentas",
   url: "/tools",
   icon: Wrench
-}, {
-  title: "Upgrades",
-  url: "/upgrades",
-  icon: Zap
 }];
 const menuItems = [{
   title: "Suporte",
